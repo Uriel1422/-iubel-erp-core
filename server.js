@@ -8,10 +8,19 @@ import jwt from 'jsonwebtoken';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
+
+// Servir archivos estáticos del Frontend (Glassmorphism UI)
+app.use(express.static(path.join(__dirname, 'dist')));
 
 import AnalyticCache from './server/AnalyticCache.js';
 import ImmutableLedger from './server/ImmutableLedger.js';
@@ -918,8 +927,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', db: process.env.DB_NAME, ts: new Date() });
 });
 
+// ─── Catch-all for React Router ──────────────────────────────────────────────
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.listen(PORT, () => {
-    console.log(`🚀 Iubel ERP API (Multi-Empresa) → http://localhost:${PORT}`);
-    console.log(`📦 MySQL: ${process.env.DB_NAME} @ ${process.env.DB_HOST}:${process.env.DB_PORT}`);
-    console.log(`🔐 JWT Auth activado`);
+    console.log(`🚀 Iubel ERP Sovereign Edition Online → Port: ${PORT}`);
+    console.log(`📦 Cloud Engine Active: ${process.env.NODE_ENV || 'development'}`);
 });
