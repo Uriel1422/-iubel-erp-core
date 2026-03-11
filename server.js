@@ -956,8 +956,8 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', db: process.env.DB_NAME, ts: new Date() });
 });
 
-// ─── Catch-all for React Router ──────────────────────────────────────────────
-app.get('*', (req, res) => {
+// ─── Catch-all for React Router (Express v5 compatible) ──────────────────────
+app.use((req, res) => {
     const indexPath = path.join(__dirname, 'dist', 'index.html');
     res.sendFile(indexPath, (err) => {
         if (err) {
@@ -965,7 +965,7 @@ app.get('*', (req, res) => {
             res.status(200).send(`
                 <!DOCTYPE html><html><head><title>Iubel ERP</title></head>
                 <body style="background:#0a0a0f;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column">
-                <h1>🚀 Iubel ERP API</h1><p>El motor financiero está activo. Construyendo la interfaz...</p>
+                <h1>🚀 Iubel ERP API</h1><p>Motor financiero activo. Interfaz en construcción...</p>
                 <p style="color:#888">API: /health | /api/auth/register</p>
                 </body></html>
             `);
