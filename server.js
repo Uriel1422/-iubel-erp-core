@@ -32,6 +32,9 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
+// Requerido para que Railway/NGINX funcione correctamente con Express
+app.set('trust proxy', 1);
+
 // Servir archivos estáticos del Frontend (Glassmorphism UI)
 app.use(express.static(path.join(__dirname, 'dist')));
 
@@ -955,10 +958,25 @@ app.get('/health', (req, res) => {
 
 // ─── Catch-all for React Router ──────────────────────────────────────────────
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('⚠️ Frontend no encontrado:', err.message);
+            res.status(200).send(`
+                <!DOCTYPE html><html><head><title>Iubel ERP</title></head>
+                <body style="background:#0a0a0f;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column">
+                <h1>🚀 Iubel ERP API</h1><p>El motor financiero está activo. Construyendo la interfaz...</p>
+                <p style="color:#888">API: /health | /api/auth/register</p>
+                </body></html>
+            `);
+        }
+    });
 });
 
-app.listen(PORT, () => {
+// Escuchar en 0.0.0.0 es requerido en contenedores para aceptar conexiones externas
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Iubel ERP Sovereign Edition Online → Port: ${PORT}`);
-    console.log(`📦 Cloud Engine Active: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📦 Cloud Engine: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 MYSQLHOST: ${process.env.MYSQLHOST || process.env.DB_HOST || 'localhost'}`);
+    console.log(`🌐 dist path: ${path.join(__dirname, 'dist')}`);
 });
