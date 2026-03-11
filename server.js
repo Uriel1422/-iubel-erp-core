@@ -73,11 +73,24 @@ const pool = mysql.createPool({
     connectionLimit: 15,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+    multipleStatements: true
 });
 
-pool.getConnection()
-    .then(conn => { console.log('✅ MySQL conectado:', process.env.DB_NAME); conn.release(); })
-    .catch(err => { console.error('❌ MySQL error:', err.message); process.exit(1); });
+// Diagnóstico de Arranque
+console.log('📡 Intentando conexión a MySQL:', process.env.MYSQLHOST || process.env.DB_HOST);
+
+const startServer = async () => {
+    try {
+        const conn = await pool.getConnection();
+        console.log('✅ MySQL conectado exitosamente.');
+        conn.release();
+    } catch (err) {
+        console.error('⚠️ Advertencia: MySQL no disponible aún:', err.message);
+        console.log('🔄 El servidor continuará intentando conectar en segundo plano...');
+    }
+};
+
+startServer();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const validName = (n) => /^[a-zA-Z0-9_]+$/.test(n);

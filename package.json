@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --open",
     "server": "node server.js",
-    "start": "node server/cloud-migrate.js && node server.js",
+    "start": "node server.js",
     "start:all": "concurrently \"npm run server\" \"npm run dev\"",
     "db:schema": "node db/run-schema.js",
     "db:migrate": "node db/migrate.js",
