@@ -27,38 +27,39 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 8080; // Railway prefiere 8080
+const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
-// ─── BYPASS DE RED CRÍTICO ──────────────────────────────────────────────────
+// ─── APERTURA DE PUERTO INMEDIATA (Protección contra 502) ─────────────────────
+// Abrimos el puerto ANTES de procesar cualquier otra cosa.
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🛡️ MOTOR IUBEL ACTIVO | PUERTO: ${PORT} | ${new Date().toISOString()}`);
+});
+
 app.set('trust proxy', 1);
 
-// 0. Ruta de Super-Emergencia (Antes de TODO)
+// 0. Ruta de Super-Emergencia (Bypass de Red)
 app.get('/', (req, res) => {
-    console.log('!!! HIT PUBLIC URL !!!');
+    console.log('✅ [GLOBAL] PUBLIC HIT DETECTED');
     res.status(200).send(`
-        <!DOCTYPE html><html><head><title>Iubel ERP Online</title>
+        <!DOCTYPE html><html><head><title>Iubel ERP Sovereign</title>
         <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
         </head><body>
         <div><h1 style="color:#8b5cf6">🛡️ Iubel ERP Sovereign Online</h1>
-        <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Conexión Establecida 🟢</p>
-        <p>Sincronizando interfaz de usuario...</p>
+        <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Conexión Establecida con el Motor AI</p>
+        <p>Sincronizando interfaz de usuario... | ID: ${Math.random().toString(36).substring(7)}</p>
         </div></body></html>
     `);
 });
 
 app.get('/health', (req, res) => {
-    res.status(200).send('OK');
+    res.status(200).send('HEALTHY');
 });
 
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
-
-// 1. Logger de Diagnóstico
+// 1. Logger de Tráfico
 app.use((req, res, next) => {
-    console.log(`[REQ] ${req.method} ${req.path} from ${req.ip}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} from ${req.ip}`);
     next();
 });
 
@@ -981,18 +982,13 @@ app.use((req, res) => {
         res.sendFile(indexPath);
     } else {
         res.status(200).send(`
-            <!DOCTYPE html><html><head><title>Iubel AI Node</title>
+            <!DOCTYPE html><html><head><title>Iubel AI Node Online</title>
             <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
             </head><body>
-            <div><h1 style="color:#8b5cf6">🚀 Iubel AI Node Online</h1>
-            <p>El motor financiero está sincronizado. Interfaz en proceso...</p>
-            <p><a href="/health" style="color:#4f46e5">System Health</a></p></div>
-            </body></html>
+            <div><h1 style="color:#8b5cf6">🚀 Iubel AI Node Status</h1>
+            <p>Motor en línea. Procediendo con el despliegue de interfaz...</p>
+            </div></body></html>
         `);
     }
 });
-
-// Escuchar en el puerto asignado por Railway
-app.listen(PORT, () => {
-    console.log(`🚀 Iubel ERP Online → Puerto: ${PORT}`);
-});
+// Fin del servidor
