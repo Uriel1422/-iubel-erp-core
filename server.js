@@ -987,34 +987,46 @@ app.delete('/api/:entity/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// ─── Health ───────────────────────────────────────────────────────────────────
+// ─── Health check (Crítico para Railway) ─────────────────────────────────────
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', db: process.env.DB_NAME, ts: new Date() });
+    res.status(200).json({ 
+        status: 'ok', 
+        time: new Date().toISOString(),
+        engine: 'Iubel Sovereign 2.0',
+        port: PORT
+    });
 });
 
 // ─── Catch-all for React Router (Express v5 compatible) ──────────────────────
 app.use((req, res) => {
     const indexPath = path.join(__dirname, 'dist', 'index.html');
-    if (fs.existsSync(indexPath)) {
-        const html = fs.readFileSync(indexPath, 'utf8');
-        res.setHeader('Content-Type', 'text/html');
-        res.status(200).send(html);
-    } else {
-        console.log('⚠️ dist/index.html not found, serving fallback page');
-        res.status(200).send(`<!DOCTYPE html><html><head><title>Iubel ERP</title>
-        <style>body{background:#0a0a0f;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column}</style>
-        </head><body>
-        <h1>🚀 Iubel ERP API Online</h1>
-        <p>Motor financiero activo en puerto ${PORT}</p>
-        <p><a href='/health' style='color:#8b5cf6'>Ver health check</a></p>
-        </body></html>`);
+    try {
+        if (fs.existsSync(indexPath)) {
+            const html = fs.readFileSync(indexPath, 'utf8');
+            res.setHeader('Content-Type', 'text/html');
+            return res.status(200).send(html);
+        }
+    } catch (e) {
+        console.error('Error sirviendo index.html:', e.message);
     }
+
+    // Fallback si dist/index.html no existe
+    console.log('⚠️ dist/index.html no disponible, sirviendo página de estado API');
+    res.status(200).send(`
+        <!DOCTYPE html><html><head><title>Iubel ERP API</title>
+        <style>body{background:#0a0a0f;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;text-align:center;padding:20px}</style>
+        </head><body>
+        <h1 style="color:#8b5cf6">🚀 Iubel ERP Sovereign API</h1>
+        <p>El motor financiero está funcionando correctamente.</p>
+        <p style="background:#1a1a2e;padding:10px;border-radius:8px;font-family:monospace;border:1px solid #334">Status: ONLINE | Port: ${PORT}</p>
+        <p style="color:#888;font-size:0.9em">La interfaz de usuario se está sincronizando...</p>
+        </body></html>
+    `);
 });
 
-// Escuchar en 0.0.0.0 es requerido en contenedores para aceptar conexiones externas
+// Escuchar en 0.0.0.0 es requerido en contenedores
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Iubel ERP Sovereign Edition Online → Port: ${PORT}`);
     console.log(`📦 Cloud Engine: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 MYSQLHOST: ${process.env.MYSQLHOST || process.env.DB_HOST || 'localhost'}`);
-    console.log(`🌐 dist path: ${distPath} | exists: ${distExists}`);
+    console.log(`🔗 MYSQLHOST: ${process.env.MYSQLHOST || 'localhost'}`);
 });
