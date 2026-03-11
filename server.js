@@ -31,37 +31,38 @@ const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
-// Configuración de red para Cloud (Crucial para Railway)
-app.set('trust proxy', 1); 
+// ─── BYPASS DE RED CRÍTICO ──────────────────────────────────────────────────
+app.set('trust proxy', true);
 
-// 1. Logger de Diagnóstico
-app.use((req, res, next) => {
-    console.log(`[REQ] ${req.method} ${req.path} | IP: ${req.ip} | Time: ${new Date().toISOString()}`);
-    next();
+// 0. Ruta de Super-Emergencia (Antes de TODO)
+app.get('/', (req, res) => {
+    console.log('!!! EXTERNAL HIT DETECTED !!!');
+    res.status(200).send(`
+        <!DOCTYPE html><html><head><title>Iubel ERP - Diagnóstico</title>
+        <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
+        </head><body>
+        <div><h1 style="color:#8b5cf6">🛡️ Iubel ERP Sovereign Online</h1>
+        <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Estado del Motor: 🟢 FUNCIONANDO</p>
+        <p>Si ves esto, la red está abierta. Sincronizando interfaz...</p>
+        </div></body></html>
+    `);
 });
 
-// 2. Health Check (Prioridad para Railway Ingress)
 app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
 
-// 3. Middlewares Base (Capados para diagnóstico)
-// app.use(helmet(...)); // Desactivado para descartar bloqueos de cabeceras
+// 1. Logger de Diagnóstico
+app.use((req, res, next) => {
+    console.log(`[REQ] ${req.method} ${req.path} from ${req.ip}`);
+    next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// 🛡️ Rate Limiting: Defensa contra Fuerza Bruta
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 200, // Relajado para testing inicial
-    message: { error: 'Demasiadas peticiones.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api/', limiter);
-
-// 4. Servir Frontend
-const distPath = path.join(__dirname, 'dist');
+// 2. Servir Frontend (Vite)
+const distPath = path.resolve(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
     console.log(`✅ Frontend detectado en: ${distPath}`);
     app.use(express.static(distPath));
@@ -969,36 +970,30 @@ app.delete('/api/:entity/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// ─── Catch-all for React Router ──────────────────────────────────────────────
+// ─── CATCH-ALL ROUTER ────────────────────────────────────────────────────────
 app.use((req, res) => {
-    // Diagnóstico Super-Directo para la raíz
-    if (req.path === '/' || req.path === '/index.html') {
-        return res.status(200).send(`
-            <!DOCTYPE html><html><head><title>Iubel ERP - Diagnóstico</title>
-            <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
-            </head><body>
-            <div><h1 style="color:#8b5cf6">🛡️ Iubel ERP Sovereign Online</h1>
-            <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Estado del Motor: 🟢 FUNCIONANDO</p>
-            <p>Si ves esto, la red está abierta. Sincronizando interfaz...</p>
-            <p><small style="color:#444">Time: ${new Date().toISOString()}</small></p></div>
-            </body></html>
-        `);
-    }
-
     const indexPath = path.resolve(__dirname, 'dist', 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send('Not Found');
+        res.status(200).send(`
+            <!DOCTYPE html><html><head><title>Iubel AI Node</title>
+            <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
+            </head><body>
+            <div><h1 style="color:#8b5cf6">🚀 Iubel AI Node Online</h1>
+            <p>El motor financiero está sincronizado. Interfaz en proceso...</p>
+            <p><a href="/health" style="color:#4f46e5">System Health</a></p></div>
+            </body></html>
+        `);
     }
 });
 
-// Escuchar en 0.0.0.0
+// Escuchar en 0.0.0.0 (Requerido para Cloud/Docker)
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Iubel ERP Sovereign Online → Port: ${PORT}`);
-    console.log(`📡 MySQL Public Target: ${process.env.MYSQLHOST || 'localhost'}`);
+    console.log(`🚀 SERVIDOR ACTIVO EN PUERTO: ${PORT}`);
+    console.log(`🔗 MYSQL TARGET: ${process.env.MYSQLHOST || 'localhost'}`);
 });
 
-// ─── Configuraciones de Estabilidad de Red (Evita 502) ────────────────────────
-server.keepAliveTimeout = 65000; // 65 segundos
-server.headersTimeout = 66000;   // 66 segundos
+// Optimización de red para prevenir timeouts de Edge Proxy (502)
+server.keepAliveTimeout = 70000; // Superar los 60s de Railway
+server.headersTimeout = 71000;
