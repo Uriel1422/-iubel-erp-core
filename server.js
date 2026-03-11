@@ -53,13 +53,13 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter); // Aplicar solo a rutas de API
 
-// ─── MySQL Pool ───────────────────────────────────────────────────────────────
+// ─── MySQL Pool (Sovereign Cloud Compatible) ──────────────────────────────────
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASS || '',
-    database: process.env.DB_NAME || 'iubel_erp',
+    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+    port: Number(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
+    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
+    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'iubel_erp',
     waitForConnections: true,
     connectionLimit: 15,
     enableKeepAlive: true,
