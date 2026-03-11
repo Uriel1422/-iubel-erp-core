@@ -99,6 +99,8 @@ const pool = mysql.createPool({
     database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'iubel_erp',
     waitForConnections: true,
     connectionLimit: 15,
+    queueLimit: 10,
+    connectTimeout: 10000,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
     multipleStatements: true
