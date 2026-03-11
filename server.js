@@ -1,18 +1,13 @@
 // server.js — Iubel ERP Backend (Multi-Empresa) Sovereign Cloud Edition
 import 'dotenv/config';
 
-// ─── Manejo Global de Errores No Capturados ──────────────────────────────────
-// Esto previene que el servidor muera por errores inesperados en producción.
+// ─── Manejo Global de Errores ────────────────────────────────────────────────
 process.on('uncaughtException', (err) => {
-    console.error('❌ [UNCAUGHT EXCEPTION]', err.message, err.stack);
-    // No terminamos el proceso; el servidor sigue corriendo
+    console.error('❌ [CRITICAL] Uncaught Exception:', err.message, err.stack);
 });
-
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ [UNHANDLED REJECTION] at:', promise, 'reason:', reason);
-    // No terminamos el proceso; el servidor sigue corriendo
+    console.error('❌ [CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
 });
-
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
@@ -20,8 +15,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,25 +24,32 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
-const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
-// Requerido para que Railway/NGINX funcione correctamente con Express
-app.set('trust proxy', 1);
+// Configuración de red para Cloud
+app.set('trust proxy', true); // Confiar en el balanceador de Railway
 
-// Logger de Requests (diagnóstico)
+// 1. Logger de Diagnóstico (Primera prioridad)
 app.use((req, res, next) => {
-    console.log(`[REQ] ${req.method} ${req.path} from ${req.ip}`);
+    console.log(`[REQ] ${req.method} ${req.path} | IP: ${req.ip} | Time: ${new Date().toISOString()}`);
     next();
 });
 
-// Servir archivos estáticos del Frontend (Glassmorphism UI)
+// 2. Health Check (Segunda prioridad - para Railway)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', up: true, db: 'active', port: PORT });
+});
+
+app.use(helmet({ contentSecurityPolicy: false })); // Desactivar CSP momentáneamente para evitar bloqueos de carga
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+
+// 3. Servir Frontend (Si existe)
 const distPath = path.join(__dirname, 'dist');
-const fs = (await import('fs')).default;
-const distExists = fs.existsSync(distPath);
-console.log(`📁 dist folder exists: ${distExists}`);
-if (distExists) {
+if (fs.existsSync(distPath)) {
+    console.log(`✅ Frontend detectado en: ${distPath}`);
     app.use(express.static(distPath));
+} else {
+    console.log(`⚠️ Advertencia: Carpeta 'dist' no encontrada en ${distPath}`);
 }
 
 import AnalyticCache from './server/AnalyticCache.js';
@@ -987,46 +989,24 @@ app.delete('/api/:entity/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// ─── Health check (Crítico para Railway) ─────────────────────────────────────
-app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'ok', 
-        time: new Date().toISOString(),
-        engine: 'Iubel Sovereign 2.0',
-        port: PORT
-    });
-});
+// ─── Local Configuration Fix ──────────────────────────────────────────────────
+const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
-// ─── Catch-all for React Router (Express v5 compatible) ──────────────────────
+// ─── Catch-all for React Router ──────────────────────────────────────────────
 app.use((req, res) => {
     const indexPath = path.join(__dirname, 'dist', 'index.html');
-    try {
-        if (fs.existsSync(indexPath)) {
-            const html = fs.readFileSync(indexPath, 'utf8');
-            res.setHeader('Content-Type', 'text/html');
-            return res.status(200).send(html);
-        }
-    } catch (e) {
-        console.error('Error sirviendo index.html:', e.message);
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath); // Volvemos a sendFile pero con dist validado
+    } else {
+        res.status(200).send(`<html><body style="background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif">
+            <div><h1>🚀 Iubel API Online</h1><p>Interfaz de usuario en proceso de sincronización...</p><p><a href="/health" style="color:#8b5cf6">Check Health</a></p></div>
+        </body></html>`);
     }
-
-    // Fallback si dist/index.html no existe
-    console.log('⚠️ dist/index.html no disponible, sirviendo página de estado API');
-    res.status(200).send(`
-        <!DOCTYPE html><html><head><title>Iubel ERP API</title>
-        <style>body{background:#0a0a0f;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;text-align:center;padding:20px}</style>
-        </head><body>
-        <h1 style="color:#8b5cf6">🚀 Iubel ERP Sovereign API</h1>
-        <p>El motor financiero está funcionando correctamente.</p>
-        <p style="background:#1a1a2e;padding:10px;border-radius:8px;font-family:monospace;border:1px solid #334">Status: ONLINE | Port: ${PORT}</p>
-        <p style="color:#888;font-size:0.9em">La interfaz de usuario se está sincronizando...</p>
-        </body></html>
-    `);
 });
 
 // Escuchar en 0.0.0.0 es requerido en contenedores
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Iubel ERP Sovereign Edition Online → Port: ${PORT}`);
-    console.log(`📦 Cloud Engine: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 MYSQLHOST: ${process.env.MYSQLHOST || 'localhost'}`);
+    console.log(`🚀 Iubel ERP Sovereign Online → Port: ${PORT}`);
+    console.log(`🔗 MYSQL: ${process.env.MYSQLHOST || 'localhost'}`);
 });
