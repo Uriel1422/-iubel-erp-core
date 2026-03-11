@@ -1,5 +1,18 @@
-// server.js — Iubel ERP Backend (Multi-Empresa)
+// server.js — Iubel ERP Backend (Multi-Empresa) Sovereign Cloud Edition
 import 'dotenv/config';
+
+// ─── Manejo Global de Errores No Capturados ──────────────────────────────────
+// Esto previene que el servidor muera por errores inesperados en producción.
+process.on('uncaughtException', (err) => {
+    console.error('❌ [UNCAUGHT EXCEPTION]', err.message, err.stack);
+    // No terminamos el proceso; el servidor sigue corriendo
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ [UNHANDLED REJECTION] at:', promise, 'reason:', reason);
+    // No terminamos el proceso; el servidor sigue corriendo
+});
+
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
