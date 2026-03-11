@@ -1,37 +1,38 @@
 # Dockerfile — Motor Unificado Iubel ERP Sovereign Edition 🚀🐳🏗️
 
-# ETAPA 1: Construcción (Compilando la Interfaz Glassmorphism)
+# ETAPA 1: Construcción
 FROM node:20-slim AS builder
 WORKDIR /app
 
 # Instalar dependencias para la construcción
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm install
 
 # Copiar el código fuente y construir el frontend
-COPY . .
+COPY --chown=node:node . .
 RUN npm run build
 
-# ETAPA 2: Producción (Ejecutando el Motor Financiero)
+# ETAPA 2: Producción
 FROM node:20-slim
 WORKDIR /app
 
-# Instalar solo dependencias de ejecución para ligereza y seguridad
-COPY package*.json ./
+# Instalar solo dependencias de ejecución
+COPY --chown=node:node package*.json ./
 RUN npm install --production
 
-# Copiar la API y la interfaz compilada desde la etapa anterior
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server ./server
-COPY --from=builder /app/db ./db
-COPY --from=builder /app/server.js ./server.js
+# Copiar la API y la interfaz compilada asegurando permisos
+COPY --chown=node:node --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/server ./server
+COPY --chown=node:node --from=builder /app/db ./db
+COPY --chown=node:node --from=builder /app/server.js ./server.js
 
 # Configuración de Entorno
 ENV NODE_ENV=production
+ENV PORT=8080
 EXPOSE 8080
 
-# Seguridad: No operar como root
+# Seguridad: Operar como usuario node con permisos correctos
 USER node
 
-# Comando de Inicio Maestro
+# Comando de Inicio Directo
 CMD ["node", "server.js"]
