@@ -28,7 +28,7 @@ COPY --from=builder /app/server.js ./server.js
 
 # Configuración de Entorno
 ENV NODE_ENV=production
-EXPOSE 3001
+EXPOSE 8080
 
 # Seguridad: No operar como root
 USER node

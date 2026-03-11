@@ -992,7 +992,7 @@ app.use((req, res) => {
     }
 });
 
-// Escuchar en 0.0.0.0
-app.listen(PORT, '0.0.0.0', () => {
+// Escuchar en el puerto asignado por Railway
+app.listen(PORT, () => {
     console.log(`🚀 Iubel ERP Online → Puerto: ${PORT}`);
 });
