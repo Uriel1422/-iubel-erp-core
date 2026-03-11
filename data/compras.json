@@ -1,0 +1,36 @@
+[
+  {
+    "proveedorNombre": "PAPEL",
+    "proveedorRnc": "85456888",
+    "ncf": "B010000001",
+    "fechaFactura": "2026-02-12",
+    "tipoGasto": "02",
+    "condicion": "Credito",
+    "cuentaDestinoId": "6101",
+    "subtotal": 5000,
+    "itbis": 900,
+    "total": 5900,
+    "id": "1772177146567",
+    "numeroInterno": "COM-00002",
+    "estado": "Pendiente",
+    "fechaRegistro": "2026-02-27T07:25:46.567Z",
+    "asientoId": "1772177146567"
+  },
+  {
+    "proveedorNombre": ".",
+    "proveedorRnc": ".",
+    "ncf": "B010000001",
+    "fechaFactura": "2026-02-27",
+    "tipoGasto": "09",
+    "condicion": "Contado",
+    "cuentaDestinoId": "110401",
+    "subtotal": 19999.99,
+    "itbis": 3599.9982,
+    "total": 23599.9882,
+    "id": "1772177348067",
+    "numeroInterno": "COM-00002",
+    "estado": "Pagada",
+    "fechaRegistro": "2026-02-27T07:29:08.067Z",
+    "asientoId": "1772177348067"
+  }
+]

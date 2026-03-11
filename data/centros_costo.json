@@ -1,0 +1,23 @@
+[
+  {
+    "id": "ADM",
+    "codigo": "ADM",
+    "nombre": "Administración",
+    "color": "#2563eb",
+    "activo": true
+  },
+  {
+    "id": "VTA",
+    "codigo": "VTA",
+    "nombre": "Ventas",
+    "color": "#10b981",
+    "activo": true
+  },
+  {
+    "id": "OPE",
+    "codigo": "OPE",
+    "nombre": "Operaciones",
+    "color": "#f59e0b",
+    "activo": true
+  }
+]

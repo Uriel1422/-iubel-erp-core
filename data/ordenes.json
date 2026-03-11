@@ -1,0 +1,23 @@
+[
+  {
+    "proveedorId": "2",
+    "proveedorNombre": "Proveedor Estrella",
+    "proveedorRnc": "101010101",
+    "articulos": [
+      {
+        "articuloId": "1772157389158",
+        "nombre": "Servicio de Prueba R",
+        "cantidad": 1,
+        "costo": 0,
+        "gravado": true
+      }
+    ],
+    "subtotal": 0,
+    "itbis": 0,
+    "total": 0,
+    "id": "1772158922663",
+    "numeroInterno": "ORD-00001",
+    "estado": "Cancelada",
+    "fechaRegistro": "2026-02-27T02:22:02.664Z"
+  }
+]

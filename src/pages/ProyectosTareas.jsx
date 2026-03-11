@@ -1,0 +1,288 @@
+import React, { useState, useEffect } from 'react';
+import { api } from '../utils/api';
+import { Briefcase, Plus, CheckCircle2, Circle, Clock, Users, BarChart3, Trash2, Edit3, AlertTriangle, ChevronRight } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
+
+const PRIORIDAD_STYLES = {
+    alta:   { color: '#991b1b', bg: '#fee2e2', label: 'Alta' },
+    media:  { color: '#92400e', bg: '#fef3c7', label: 'Media' },
+    baja:   { color: '#065f46', bg: '#ecfdf5', label: 'Baja' },
+};
+
+const ESTADO_STYLES = {
+    pendiente:   { color: '#1d4ed8', bg: '#eff6ff',  label: 'Pendiente',   Icon: Circle },
+    en_progreso: { color: '#92400e', bg: '#fef3c7',  label: 'En Progreso', Icon: Clock },
+    completado:  { color: '#065f46', bg: '#ecfdf5',  label: 'Completado',  Icon: CheckCircle2 },
+    bloqueado:   { color: '#991b1b', bg: '#fee2e2',  label: 'Bloqueado',   Icon: AlertTriangle },
+};
+
+const ProyectosTareas = () => {
+    const [proyectos, setProyectos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // 🔄 API PERSISTENCE
+    useEffect(() => {
+        const loadProyectos = async () => {
+            const data = await api.get('proyectos');
+            if (data && Array.isArray(data)) setProyectos(data);
+            setIsLoading(false);
+        };
+        loadProyectos();
+    }, []);
+
+    useEffect(() => {
+        if (!isLoading) {
+            api.save('proyectos', proyectos);
+        }
+    }, [proyectos, isLoading]);
+    const [proyectoActivo, setProyectoActivo] = useState(null);
+    const [showNuevoProyecto, setShowNuevoProyecto] = useState(false);
+    const [showNuevaTarea, setShowNuevaTarea] = useState(false);
+    const [confirmDel, setConfirmDel] = useState({ open: false, id: null });
+    const [nuevoProyecto, setNuevoProyecto] = useState({ nombre: '', descripcion: '', prioridad: 'media', responsable: '', fechaFin: '' });
+    const [nuevaTarea, setNuevaTarea] = useState({ titulo: '', responsable: '', estado: 'pendiente' });
+
+    const statsGlobales = {
+        total: proyectos.length,
+        enProgreso: proyectos.filter(p => p.estado === 'en_progreso').length,
+        completados: proyectos.filter(p => p.estado === 'completado').length,
+        tareasTotal: proyectos.reduce((a, p) => a + p.tareas.length, 0),
+        tareasComp: proyectos.reduce((a, p) => a + p.tareas.filter(t => t.estado === 'completado').length, 0),
+    };
+
+    const proyectoActualizado = proyectos.find(p => p.id === proyectoActivo?.id);
+
+    const cambiarEstadoTarea = (proyId, tareaId, nuevoEstado) => {
+        setProyectos(prev => prev.map(p => p.id === proyId ? {
+            ...p,
+            tareas: p.tareas.map(t => t.id === tareaId ? { ...t, estado: nuevoEstado } : t),
+            progreso: Math.round((p.tareas.filter(t => t.id === tareaId ? nuevoEstado === 'completado' : t.estado === 'completado').length / p.tareas.length) * 100)
+        } : p));
+    };
+
+    const handleNuevoProyecto = (e) => {
+        e.preventDefault();
+        const p = { id: Date.now().toString(), ...nuevoProyecto, estado: 'pendiente', progreso: 0, tareas: [] };
+        setProyectos(prev => [...prev, p]);
+        setShowNuevoProyecto(false);
+        setNuevoProyecto({ nombre: '', descripcion: '', prioridad: 'media', responsable: '', fechaFin: '' });
+    };
+
+    const handleNuevaTarea = (e) => {
+        e.preventDefault();
+        setProyectos(prev => prev.map(p => p.id === proyectoActivo.id ? {
+            ...p, tareas: [...p.tareas, { id: Date.now().toString(), ...nuevaTarea }]
+        } : p));
+        setShowNuevaTarea(false);
+        setNuevaTarea({ titulo: '', responsable: '', estado: 'pendiente' });
+    };
+
+    return (
+        <div className="animate-up">
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'linear-gradient(135deg,#10b981,#059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(16,185,129,0.3)' }}>
+                        <Briefcase size={22} color="white" />
+                    </div>
+                    <div>
+                        <h1 className="page-title" style={{ margin: 0 }}>Proyectos & Tareas</h1>
+                        <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>Gestión de Proyectos Institucionales y seguimiento de tareas en equipo</p>
+                    </div>
+                </div>
+                {!proyectoActivo && (
+                    <button className="btn btn-primary" onClick={() => setShowNuevoProyecto(true)}>
+                        <Plus size={18} /> Nuevo Proyecto
+                    </button>
+                )}
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: '1rem', marginBottom: '2rem' }} className="stagger-children">
+                {[
+                    { label: 'Total Proyectos',  val: statsGlobales.total,      grad: 'linear-gradient(135deg,#6366f1,#8b5cf6)' },
+                    { label: 'En Progreso',      val: statsGlobales.enProgreso, grad: 'linear-gradient(135deg,#f59e0b,#fbbf24)' },
+                    { label: 'Completados',      val: statsGlobales.completados, grad: 'linear-gradient(135deg,#10b981,#34d399)' },
+                    { label: 'Tareas Completadas', val: `${statsGlobales.tareasComp}/${statsGlobales.tareasTotal}`, grad: 'linear-gradient(135deg,#2563eb,#3b82f6)' },
+                ].map(({ label, val, grad }) => (
+                    <div key={label} className="card" style={{ padding: '1.25rem' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>{label}</div>
+                        <div style={{ fontSize: '1.75rem', fontWeight: 900, background: grad, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{val}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Project Detail View */}
+            {proyectoActivo ? (
+                <div>
+                    <button onClick={() => setProyectoActivo(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem', fontFamily: 'inherit' }}>
+                        ← Volver a Proyectos
+                    </button>
+                    {proyectoActualizado && (
+                        <div className="card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                                <div>
+                                    <h2 style={{ fontWeight: 800, fontSize: '1.35rem', marginBottom: '0.35rem' }}>{proyectoActualizado.nombre}</h2>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem' }}>{proyectoActualizado.descripcion}</p>
+                                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.625rem', borderRadius: '6px', ...PRIORIDAD_STYLES[proyectoActualizado.prioridad] }}>
+                                            Prioridad: {PRIORIDAD_STYLES[proyectoActualizado.prioridad].label}
+                                        </span>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.625rem', borderRadius: '6px', background: 'var(--primary-light)', color: 'var(--primary)' }}>
+                                            <Users size={11} style={{ marginRight: 3 }} />{proyectoActualizado.responsable}
+                                        </span>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.625rem', borderRadius: '6px', background: 'var(--background)', color: 'var(--text-muted)' }}>
+                                            Fin: {proyectoActualizado.fechaFin}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button className="btn btn-primary" style={{ flexShrink: 0 }} onClick={() => setShowNuevaTarea(true)}>
+                                    <Plus size={16} /> Nueva Tarea
+                                </button>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div style={{ marginBottom: '2rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Progreso General</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)' }}>{proyectoActualizado.progreso}%</span>
+                                </div>
+                                <div style={{ height: 10, background: 'var(--border)', borderRadius: '999px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${proyectoActualizado.progreso}%`, background: 'linear-gradient(90deg,#2563eb,#7c3aed)', borderRadius: '999px', transition: 'width 0.5s ease', boxShadow: '0 0 8px rgba(37,99,235,0.4)' }} />
+                                </div>
+                            </div>
+
+                            {/* Tasks */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                                {proyectoActualizado.tareas.map(tarea => {
+                                    const st = ESTADO_STYLES[tarea.estado] || ESTADO_STYLES.pendiente;
+                                    const Icon = st.Icon;
+                                    return (
+                                        <div key={tarea.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem 1rem', borderRadius: '10px', border: '1px solid var(--border)', background: tarea.estado === 'completado' ? 'var(--background)' : 'var(--bg-card)' }}>
+                                            <Icon size={20} color={st.color} />
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 600, fontSize: '0.9rem', textDecoration: tarea.estado === 'completado' ? 'line-through' : 'none', color: tarea.estado === 'completado' ? 'var(--text-muted)' : 'var(--text-main)' }}>{tarea.titulo}</div>
+                                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>Responsable: {tarea.responsable}</div>
+                                            </div>
+                                            <select value={tarea.estado} onChange={e => cambiarEstadoTarea(proyectoActualizado.id, tarea.id, e.target.value)} style={{ padding: '0.3rem 0.625rem', borderRadius: '6px', border: '1px solid var(--border)', background: st.bg, color: st.color, fontSize: '0.78rem', fontWeight: 700, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}>
+                                                {Object.entries(ESTADO_STYLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                                            </select>
+                                        </div>
+                                    );
+                                })}
+                                {proyectoActualizado.tareas.length === 0 && (
+                                    <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                                        No hay tareas. Añade la primera con "Nueva Tarea".
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                /* Project Grid */
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px,1fr))', gap: '1.5rem' }}>
+                    {proyectos.map(p => {
+                        const estadoSt = ESTADO_STYLES[p.estado] || ESTADO_STYLES.pendiente;
+                        const priorSt = PRIORIDAD_STYLES[p.prioridad] || PRIORIDAD_STYLES.media;
+                        const EIcon = estadoSt.Icon;
+                        return (
+                            <div key={p.id} className="card" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => setProyectoActivo(p)}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: 'calc(100% - 80px)' }}>
+                                        <EIcon size={18} color={estadoSt.color} style={{ flexShrink: 0 }} />
+                                        <h3 style={{ fontWeight: 800, fontSize: '1rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nombre}</h3>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+                                        <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, background: priorSt.bg, color: priorSt.color }}>{priorSt.label}</span>
+                                    </div>
+                                </div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '1.25rem', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.descripcion}</p>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>Progreso</span>
+                                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--primary)' }}>{p.progreso}%</span>
+                                    </div>
+                                    <div style={{ height: 7, background: 'var(--border)', borderRadius: '999px', overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${p.progreso}%`, background: 'linear-gradient(90deg,#2563eb,#7c3aed)', borderRadius: '999px', transition: 'width 0.5s ease' }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.875rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <Users size={13} /> {p.responsable}
+                                        <span style={{ margin: '0 0.25rem' }}>·</span>
+                                        <BarChart3 size={13} /> {p.tareas.filter(t=>t.estado==='completado').length}/{p.tareas.length} tareas
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                                        <button onClick={e => { e.stopPropagation(); setConfirmDel({ open: true, id: p.id, nombre: p.nombre }); }} style={{ padding: '0.3rem', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--danger)' }}>
+                                            <Trash2 size={14} />
+                                        </button>
+                                        <ChevronRight size={16} color="var(--text-muted)" />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Modal Nuevo Proyecto */}
+            {showNuevoProyecto && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div className="card glass" style={{ width: '100%', maxWidth: '500px' }}>
+                        <h2 style={{ marginBottom: '1.5rem' }}><Briefcase size={22} color="var(--success)" style={{ verticalAlign: 'middle', marginRight: 8 }} />Nuevo Proyecto</h2>
+                        <form onSubmit={handleNuevoProyecto}>
+                            <div className="input-group"><label className="input-label">Nombre del Proyecto</label><input required className="input-field" value={nuevoProyecto.nombre} onChange={e => setNuevoProyecto({...nuevoProyecto, nombre: e.target.value})} /></div>
+                            <div className="input-group"><label className="input-label">Descripción</label><textarea className="input-field" rows={2} value={nuevoProyecto.descripcion} onChange={e => setNuevoProyecto({...nuevoProyecto, descripcion: e.target.value})} style={{ resize: 'vertical' }} /></div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="input-group"><label className="input-label">Responsable</label><input className="input-field" value={nuevoProyecto.responsable} onChange={e => setNuevoProyecto({...nuevoProyecto, responsable: e.target.value})} /></div>
+                                <div className="input-group"><label className="input-label">Prioridad</label>
+                                    <select className="input-field" value={nuevoProyecto.prioridad} onChange={e => setNuevoProyecto({...nuevoProyecto, prioridad: e.target.value})}>
+                                        <option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="input-group"><label className="input-label">Fecha de Entrega</label><input type="date" className="input-field" value={nuevoProyecto.fechaFin} onChange={e => setNuevoProyecto({...nuevoProyecto, fechaFin: e.target.value})} /></div>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowNuevoProyecto(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}><Plus size={16} /> Crear Proyecto</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Nueva Tarea */}
+            {showNuevaTarea && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div className="card glass" style={{ width: '100%', maxWidth: '420px' }}>
+                        <h2 style={{ marginBottom: '1.5rem' }}><Plus size={20} color="var(--primary)" style={{ verticalAlign: 'middle', marginRight: 8 }} />Nueva Tarea</h2>
+                        <form onSubmit={handleNuevaTarea}>
+                            <div className="input-group"><label className="input-label">Título de la tarea</label><input required className="input-field" value={nuevaTarea.titulo} onChange={e => setNuevaTarea({...nuevaTarea, titulo: e.target.value})} /></div>
+                            <div className="input-group"><label className="input-label">Responsable</label><input className="input-field" value={nuevaTarea.responsable} onChange={e => setNuevaTarea({...nuevaTarea, responsable: e.target.value})} /></div>
+                            <div className="input-group"><label className="input-label">Estado Inicial</label>
+                                <select className="input-field" value={nuevaTarea.estado} onChange={e => setNuevaTarea({...nuevaTarea, estado: e.target.value})}>
+                                    {Object.entries(ESTADO_STYLES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                                </select>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowNuevaTarea(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Añadir Tarea</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            <ConfirmModal
+                isOpen={confirmDel.open}
+                onClose={() => setConfirmDel({ ...confirmDel, open: false })}
+                onConfirm={() => setProyectos(prev => prev.filter(p => p.id !== confirmDel.id))}
+                title="Eliminar Proyecto"
+                message={`¿Eliminar "${confirmDel.nombre}" y todas sus tareas? Esta acción es permanente.`}
+            />
+        </div>
+    );
+};
+
+export default ProyectosTareas;

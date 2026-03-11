@@ -1,0 +1,192 @@
+[
+  {
+    "id": "1772176985471",
+    "numero": "AS-00001",
+    "fecha": "2026-02-27T07:23:05.471Z",
+    "descripcion": "Venta: Fac FAC-00001 - Cliente: Cliente Genérico",
+    "referencia": "FAC-00001",
+    "origen": "Facturación",
+    "detalles": [
+      {
+        "cuentaId": "110201",
+        "debito": 14750,
+        "credito": 0,
+        "cuentaCodigo": "110201"
+      },
+      {
+        "cuentaId": "210301",
+        "debito": 0,
+        "credito": 2250,
+        "cuentaCodigo": "210301"
+      },
+      {
+        "cuentaId": "4101",
+        "debito": 0,
+        "credito": 12500,
+        "cuentaCodigo": "4101"
+      },
+      {
+        "cuentaId": "5101",
+        "debito": 10000,
+        "credito": 0,
+        "cuentaCodigo": "5101"
+      },
+      {
+        "cuentaId": "110401",
+        "debito": 0,
+        "credito": 10000,
+        "cuentaCodigo": "110401"
+      }
+    ]
+  },
+  {
+    "id": "1772177146567",
+    "numero": "AS-00003",
+    "fecha": "2026-02-27T07:25:46.567Z",
+    "descripcion": "Compra: NCF B010000001 - Prov: PAPEL",
+    "referencia": "COM-00002",
+    "origen": "Compras",
+    "detalles": [
+      {
+        "cuentaId": "210101",
+        "debito": 0,
+        "credito": 5900
+      },
+      {
+        "cuentaId": "110501",
+        "debito": 900,
+        "credito": 0
+      },
+      {
+        "cuentaId": "6101",
+        "debito": 5000,
+        "credito": 0
+      }
+    ]
+  },
+  {
+    "id": "1772177239942",
+    "numero": "AS-00004",
+    "fecha": "2026-02-27T07:27:19.941Z",
+    "descripcion": "Venta: Fac FAC-00002 - Cliente: RO",
+    "referencia": "FAC-00002",
+    "origen": "Facturación",
+    "detalles": [
+      {
+        "cuentaId": "110201",
+        "debito": 7375,
+        "credito": 0,
+        "cuentaCodigo": "110201"
+      },
+      {
+        "cuentaId": "210301",
+        "debito": 0,
+        "credito": 1125,
+        "cuentaCodigo": "210301"
+      },
+      {
+        "cuentaId": "4101",
+        "debito": 0,
+        "credito": 6250,
+        "cuentaCodigo": "4101"
+      },
+      {
+        "cuentaId": "5101",
+        "debito": 5000,
+        "credito": 0,
+        "cuentaCodigo": "5101"
+      },
+      {
+        "cuentaId": "110401",
+        "debito": 0,
+        "credito": 5000,
+        "cuentaCodigo": "110401"
+      }
+    ]
+  },
+  {
+    "id": "1772177348067",
+    "numero": "AS-00004",
+    "fecha": "2026-02-27T07:29:08.067Z",
+    "descripcion": "Compra: NCF B010000001 - Prov: .",
+    "referencia": "COM-00002",
+    "origen": "Compras",
+    "detalles": [
+      {
+        "cuentaId": "110101",
+        "debito": 0,
+        "credito": 23599.9882
+      },
+      {
+        "cuentaId": "110501",
+        "debito": 3599.9982,
+        "credito": 0
+      },
+      {
+        "cuentaId": "110401",
+        "debito": 19999.99,
+        "credito": 0
+      }
+    ]
+  },
+  {
+    "id": "1772425077425",
+    "numero": "AS-00005",
+    "fecha": "2026-03-02T04:17:57.425Z",
+    "descripcion": "Cobro Factura NCF: B0100000002 - Cliente: Cliente Genérico",
+    "referencia": "REC-5471",
+    "origen": "Tesorería",
+    "detalles": [
+      {
+        "cuentaId": "110101",
+        "debito": 14750,
+        "credito": 0
+      },
+      {
+        "cuentaId": "110201",
+        "debito": 0,
+        "credito": 14750
+      }
+    ]
+  },
+  {
+    "id": "1772425203086",
+    "numero": "AS-00007",
+    "fecha": "2026-03-02T04:20:03.086Z",
+    "descripcion": "Recibo de Ingreso: Pago Fac FAC-00001",
+    "referencia": "FAC-00001",
+    "origen": "Tesorería",
+    "detalles": [
+      {
+        "cuentaId": "110101",
+        "debito": 14750,
+        "credito": 0
+      },
+      {
+        "cuentaId": "110201",
+        "debito": 0,
+        "credito": 14750
+      }
+    ]
+  },
+  {
+    "id": "1772425206600",
+    "numero": "AS-00009",
+    "fecha": "2026-03-02T04:20:06.600Z",
+    "descripcion": "Recibo de Ingreso: Pago Fac FAC-00002",
+    "referencia": "FAC-00002",
+    "origen": "Tesorería",
+    "detalles": [
+      {
+        "cuentaId": "110101",
+        "debito": 7375,
+        "credito": 0
+      },
+      {
+        "cuentaId": "110201",
+        "debito": 0,
+        "credito": 7375
+      }
+    ]
+  }
+]

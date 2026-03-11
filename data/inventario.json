@@ -1,0 +1,17 @@
+[
+  {
+    "codigo": "ART-001",
+    "nombre": "RESMA DE PAPEL",
+    "tipo": "Producto",
+    "costo": "200",
+    "precioVenta": "250",
+    "gravado": true,
+    "existencia": 25,
+    "cuentaIngresoId": "4101",
+    "cuentaInventarioId": "110401",
+    "cuentaCostoId": "5101",
+    "metodoCosteo": "PROMEDIO",
+    "activa": true,
+    "id": "1772176945432"
+  }
+]

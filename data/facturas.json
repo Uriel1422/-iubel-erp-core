@@ -1,0 +1,84 @@
+[
+  {
+    "clienteNombre": "Cliente Genérico",
+    "clienteRnc": "...",
+    "tipoComprobante": "B01",
+    "condicion": "Credito",
+    "subtotal": 12500,
+    "itbis": 2250,
+    "total": 14750,
+    "monedaId": "1",
+    "tasa": 1,
+    "id": "1772176985471",
+    "numeroInterno": "FAC-00001",
+    "ncf": "B0100000002",
+    "estado": "Pagada",
+    "fecha": "2026-02-27T07:23:05.471Z",
+    "subtotalDOP": 12500,
+    "itbisDOP": 2250,
+    "totalDOP": 14750,
+    "asientoId": "1772176985471",
+    "detalles": [
+      {
+        "articulo": {
+          "codigo": "ART-001",
+          "nombre": "RESMA DE PAPEL",
+          "tipo": "Producto",
+          "costo": "200",
+          "precioVenta": "250",
+          "gravado": true,
+          "existencia": "100",
+          "cuentaIngresoId": "4101",
+          "cuentaInventarioId": "110401",
+          "cuentaCostoId": "5101",
+          "metodoCosteo": "PROMEDIO",
+          "activa": true,
+          "id": "1772176945432"
+        },
+        "cantidad": 50,
+        "precio": 250
+      }
+    ]
+  },
+  {
+    "clienteNombre": "RO",
+    "clienteRnc": "IG",
+    "tipoComprobante": "B02",
+    "condicion": "Credito",
+    "subtotal": 6250,
+    "itbis": 1125,
+    "total": 7375,
+    "monedaId": "1",
+    "tasa": 1,
+    "id": "1772177239941",
+    "numeroInterno": "FAC-00002",
+    "ncf": "B0200000001",
+    "estado": "Pagada",
+    "fecha": "2026-02-27T07:27:19.941Z",
+    "subtotalDOP": 6250,
+    "itbisDOP": 1125,
+    "totalDOP": 7375,
+    "asientoId": "1772177239942",
+    "detalles": [
+      {
+        "articulo": {
+          "codigo": "ART-001",
+          "nombre": "RESMA DE PAPEL",
+          "tipo": "Producto",
+          "costo": "200",
+          "precioVenta": "250",
+          "gravado": true,
+          "existencia": 50,
+          "cuentaIngresoId": "4101",
+          "cuentaInventarioId": "110401",
+          "cuentaCostoId": "5101",
+          "metodoCosteo": "PROMEDIO",
+          "activa": true,
+          "id": "1772176945432"
+        },
+        "cantidad": 25,
+        "precio": 250
+      }
+    ]
+  }
+]

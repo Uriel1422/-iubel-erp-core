@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "nombre": "Pesos Dominicanos",
+    "simbolo": "RD$",
+    "codigo": "DOP",
+    "tasa": 1,
+    "esBase": true
+  },
+  {
+    "id": "2",
+    "nombre": "Dólares Estadounidenses",
+    "simbolo": "US$",
+    "codigo": "USD",
+    "tasa": 58.5,
+    "esBase": false
+  },
+  {
+    "id": "3",
+    "nombre": "Euros",
+    "simbolo": "€",
+    "codigo": "EUR",
+    "tasa": 63.2,
+    "esBase": false
+  }
+]

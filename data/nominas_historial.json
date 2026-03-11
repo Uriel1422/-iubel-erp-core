@@ -1,0 +1,48 @@
+[
+  {
+    "id": "1772153069362",
+    "mes": "febrero de 2026",
+    "fecha": "2026-02-27T00:44:29.362Z",
+    "detalle": [
+      {
+        "id": "1",
+        "nombre": "Uriel F J",
+        "cargo": "Director Ejecutivo",
+        "sueldo": 120000,
+        "cedula": "001-0000000-1",
+        "activo": true,
+        "calculos": {
+          "sueldoBruto": 120000,
+          "afp": 3444,
+          "sfs": 3648,
+          "isr": 16809.937291666665,
+          "deducciones": 23901.937291666665,
+          "sueldoNeto": 96098.06270833334
+        }
+      },
+      {
+        "id": "2",
+        "nombre": "Carmen Jimenez",
+        "cargo": "Gerente Financiera",
+        "sueldo": 85000,
+        "cedula": "001-0000000-2",
+        "activo": true,
+        "calculos": {
+          "sueldoBruto": 85000,
+          "afp": 2439.5,
+          "sfs": 2584,
+          "isr": 8577.062291666667,
+          "deducciones": 13600.562291666667,
+          "sueldoNeto": 71399.43770833334
+        }
+      }
+    ],
+    "totales": {
+      "totalSueldos": 205000,
+      "totalNeto": 167497.50041666668,
+      "totalAFP": 5883.5,
+      "totalSFS": 6232,
+      "totalISR": 25386.99958333333
+    }
+  }
+]
