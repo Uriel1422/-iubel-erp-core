@@ -1,38 +1,41 @@
-/**
- * Iubel ERP — Cloud Migration Script
- * Este script inicializa la estructura de la base de datos en un entorno nuevo (producción).
- */
 import mysql from 'mysql2/promise';
+import fs from 'fs';
+import path from 'path';
 import 'dotenv/config';
 
 async function migrate() {
     console.log('🚀 Iniciando migración a la nube...');
     
     const config = {
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD || process.env.DB_PASS,
-        database: process.env.DB_NAME,
-        port: Number(process.env.DB_PORT) || 3306
+        host: process.env.MYSQLHOST || process.env.DB_HOST,
+        user: process.env.MYSQLUSER || process.env.DB_USER,
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || process.env.DB_PASS,
+        database: process.env.MYSQLDATABASE || process.env.DB_NAME,
+        port: Number(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
+        multipleStatements: true // Crítico para ejecutar el archivo SQL
     };
 
     try {
         const connection = await mysql.createConnection(config);
         console.log('✅ Conectado a la base de datos de producción.');
 
-        // Aquí irían los comandos CREATE TABLE si no existen
-        // Por ahora, validamos la conexión para que el usuario pueda empezar.
+        const schemaPath = path.join(process.cwd(), 'db', 'schema.sql');
+        const schema = fs.readFileSync(schemaPath, 'utf8');
+
+        console.log('📄 Leyendo esquema SQL...');
         
+        // Ejecutar el esquema (MySQL maneja múltiples declaraciones si multipleStatements es true)
+        await connection.query(schema);
+        
+        console.log('✨ Estructura de tablas creada con éxito.');
+
         const [rows] = await connection.query('SHOW TABLES');
-        console.log(`📊 Tablas encontradas: ${rows.length}`);
-        
-        if (rows.length === 0) {
-            console.log('⚠️ La base de datos está vacía. Ready for provisioning.');
-        }
+        console.log(`📊 Total de tablas inicializadas: ${rows.length}`);
 
         await connection.end();
+        console.log('🚀 Migración completada. Sistema listo para operar.');
     } catch (error) {
-        console.error('❌ Error de conexión/migración:', error.message);
+        console.error('❌ Error de migración:', error.message);
         process.exit(1);
     }
 }
