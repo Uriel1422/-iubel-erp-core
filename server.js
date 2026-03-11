@@ -1,13 +1,4 @@
-// server.js — Iubel ERP Backend (Multi-Empresa) Sovereign Cloud Edition
 import 'dotenv/config';
-
-// ─── Manejo Global de Errores ────────────────────────────────────────────────
-process.on('uncaughtException', (err) => {
-    console.error('❌ [CRITICAL] Uncaught Exception:', err.message, err.stack);
-});
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ [CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
-});
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
@@ -19,42 +10,65 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+// Módulos Iubel
+import AnalyticCache from './server/AnalyticCache.js';
+import ImmutableLedger from './server/ImmutableLedger.js';
+import FraudShield from './server/FraudShield.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ─── Manejo Global de Errores ────────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+    console.error('❌ [CRITICAL] Uncaught Exception:', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ [CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
-// Configuración de red para Cloud
-app.set('trust proxy', true); // Confiar en el balanceador de Railway
+// Configuración de red para Cloud (Crucial para Railway)
+app.set('trust proxy', 1); 
 
-// 1. Logger de Diagnóstico (Primera prioridad)
+// 1. Logger de Diagnóstico
 app.use((req, res, next) => {
     console.log(`[REQ] ${req.method} ${req.path} | IP: ${req.ip} | Time: ${new Date().toISOString()}`);
     next();
 });
 
-// 2. Health Check (Segunda prioridad - para Railway)
+// 2. Health Check (Prioridad para Railway Ingress)
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', up: true, db: 'active', port: PORT });
+    res.status(200).send('OK');
 });
 
-app.use(helmet({ contentSecurityPolicy: false })); // Desactivar CSP momentáneamente para evitar bloqueos de carga
+// 3. Middlewares Base (Consolidados)
+app.use(helmet({ 
+    contentSecurityPolicy: false, // Desactivar CSP para evitar bloqueos de carga de scripts/estilos en esta fase
+    crossOriginEmbedderPolicy: false
+}));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// 3. Servir Frontend (Si existe)
+// 🛡️ Rate Limiting: Defensa contra Fuerza Bruta
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 200, // Relajado para testing inicial
+    message: { error: 'Demasiadas peticiones.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', limiter);
+
+// 4. Servir Frontend
 const distPath = path.join(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
     console.log(`✅ Frontend detectado en: ${distPath}`);
     app.use(express.static(distPath));
-} else {
-    console.log(`⚠️ Advertencia: Carpeta 'dist' no encontrada en ${distPath}`);
 }
-
-import AnalyticCache from './server/AnalyticCache.js';
-import ImmutableLedger from './server/ImmutableLedger.js';
-import FraudShield from './server/FraudShield.js';
 
 // ─── Motor Predictivo Iubel "Oracle" ──────────────────────────────────────────
 const predictTrend = (dataPoints) => {
@@ -69,36 +83,14 @@ const predictTrend = (dataPoints) => {
     }
     const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     const intercept = (sumY - slope * sumX) / n;
-    
-    // Predecir los próximos 3 puntos
-    return [
-        intercept + slope * n,
-        intercept + slope * (n + 1),
-        intercept + slope * (n + 2)
-    ];
+    return [intercept + slope * n, intercept + slope * (n + 1), intercept + slope * (n + 2)];
 };
 
-app.use(helmet()); // Seguridad de cabeceras HTTP
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
-// 🛡️ Rate Limiting: Defensa contra Fuerza Bruta y DoS
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // Límite de 100 peticiones por IP cada 15 min
-    message: { error: 'Demasiadas peticiones. Por favor, intente más tarde.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api/', limiter); // Aplicar solo a rutas de API
-
 // ─── MySQL Pool (Sovereign Cloud Compatible) ──────────────────────────────────
-// Parsear la URL pública de MySQL si está disponible (más confiable que la red privada)
 const mysqlPublicUrl = process.env.MYSQL_PUBLIC_URL || process.env.DATABASE_URL || null;
 let dbConfig;
 
 if (mysqlPublicUrl) {
-    // Parsear del formato: mysql://user:pass@host:port/database
     const url = new URL(mysqlPublicUrl);
     dbConfig = {
         host: url.hostname,
@@ -107,7 +99,6 @@ if (mysqlPublicUrl) {
         password: url.password,
         database: url.pathname.replace('/', ''),
     };
-    console.log(`🌐 Usando MySQL Public URL → ${url.hostname}:${url.port}`);
 } else {
     dbConfig = {
         host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
@@ -116,7 +107,6 @@ if (mysqlPublicUrl) {
         password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
         database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'iubel_erp',
     };
-    console.log(`🔗 Usando MySQL individual vars → ${dbConfig.host}:${dbConfig.port}`);
 }
 
 const pool = mysql.createPool({
@@ -125,13 +115,7 @@ const pool = mysql.createPool({
     connectionLimit: 15,
     queueLimit: 10,
     connectTimeout: 10000,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 0,
-    multipleStatements: true
 });
-
-// Diagnóstico de Arranque
-console.log('📡 Intentando conexión a MySQL:', process.env.MYSQLHOST || process.env.DB_HOST);
 
 const startServer = async () => {
     try {
@@ -139,8 +123,7 @@ const startServer = async () => {
         console.log('✅ MySQL conectado exitosamente.');
         conn.release();
     } catch (err) {
-        console.error('⚠️ Advertencia: MySQL no disponible aún:', err.message);
-        console.log('🔄 El servidor continuará intentando conectar en segundo plano...');
+        console.error('⚠️ MySQL no disponible aún:', err.message);
     }
 };
 
@@ -989,24 +972,26 @@ app.delete('/api/:entity/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// ─── Local Configuration Fix ──────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
-const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
-
 // ─── Catch-all for React Router ──────────────────────────────────────────────
 app.use((req, res) => {
-    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    const indexPath = path.resolve(__dirname, 'dist', 'index.html');
     if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath); // Volvemos a sendFile pero con dist validado
+        res.sendFile(indexPath);
     } else {
-        res.status(200).send(`<html><body style="background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif">
-            <div><h1>🚀 Iubel API Online</h1><p>Interfaz de usuario en proceso de sincronización...</p><p><a href="/health" style="color:#8b5cf6">Check Health</a></p></div>
-        </body></html>`);
+        res.status(200).send(`
+            <!DOCTYPE html><html><head><title>Iubel AI Node</title>
+            <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
+            </head><body>
+            <div><h1 style="color:#8b5cf6">🚀 Iubel AI Node Online</h1>
+            <p>El motor financiero está sincronizado. Interfaz en proceso...</p>
+            <p><a href="/health" style="color:#4f46e5">System Health</a></p></div>
+            </body></html>
+        `);
     }
 });
 
-// Escuchar en 0.0.0.0 es requerido en contenedores
+// Escuchar en 0.0.0.0
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Iubel ERP Sovereign Online → Port: ${PORT}`);
-    console.log(`🔗 MYSQL: ${process.env.MYSQLHOST || 'localhost'}`);
+    console.log(`📡 MySQL Public Target: ${process.env.MYSQLHOST || 'localhost'}`);
 });
