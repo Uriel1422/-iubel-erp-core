@@ -27,25 +27,29 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080; // Railway prefiere 8080
 const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
 const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
 
 // ─── BYPASS DE RED CRÍTICO ──────────────────────────────────────────────────
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // 0. Ruta de Super-Emergencia (Antes de TODO)
 app.get('/', (req, res) => {
-    console.log('!!! EXTERNAL HIT DETECTED !!!');
+    console.log('!!! HIT PUBLIC URL !!!');
     res.status(200).send(`
-        <!DOCTYPE html><html><head><title>Iubel ERP - Diagnóstico</title>
+        <!DOCTYPE html><html><head><title>Iubel ERP Online</title>
         <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
         </head><body>
         <div><h1 style="color:#8b5cf6">🛡️ Iubel ERP Sovereign Online</h1>
-        <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Estado del Motor: 🟢 FUNCIONANDO</p>
-        <p>Si ves esto, la red está abierta. Sincronizando interfaz...</p>
+        <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Conexión Establecida 🟢</p>
+        <p>Sincronizando interfaz de usuario...</p>
         </div></body></html>
     `);
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
 });
 
 app.get('/health', (req, res) => {
@@ -988,12 +992,7 @@ app.use((req, res) => {
     }
 });
 
-// Escuchar en 0.0.0.0 (Requerido para Cloud/Docker)
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SERVIDOR ACTIVO EN PUERTO: ${PORT}`);
-    console.log(`🔗 MYSQL TARGET: ${process.env.MYSQLHOST || 'localhost'}`);
+// Escuchar en 0.0.0.0
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Iubel ERP Online → Puerto: ${PORT}`);
 });
-
-// Optimización de red para prevenir timeouts de Edge Proxy (502)
-server.keepAliveTimeout = 70000; // Superar los 60s de Railway
-server.headersTimeout = 71000;
