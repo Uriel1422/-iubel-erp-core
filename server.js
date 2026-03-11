@@ -91,12 +91,34 @@ const limiter = rateLimit({
 app.use('/api/', limiter); // Aplicar solo a rutas de API
 
 // ─── MySQL Pool (Sovereign Cloud Compatible) ──────────────────────────────────
+// Parsear la URL pública de MySQL si está disponible (más confiable que la red privada)
+const mysqlPublicUrl = process.env.MYSQL_PUBLIC_URL || process.env.DATABASE_URL || null;
+let dbConfig;
+
+if (mysqlPublicUrl) {
+    // Parsear del formato: mysql://user:pass@host:port/database
+    const url = new URL(mysqlPublicUrl);
+    dbConfig = {
+        host: url.hostname,
+        port: Number(url.port) || 3306,
+        user: url.username,
+        password: url.password,
+        database: url.pathname.replace('/', ''),
+    };
+    console.log(`🌐 Usando MySQL Public URL → ${url.hostname}:${url.port}`);
+} else {
+    dbConfig = {
+        host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+        port: Number(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
+        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
+        database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'iubel_erp',
+    };
+    console.log(`🔗 Usando MySQL individual vars → ${dbConfig.host}:${dbConfig.port}`);
+}
+
 const pool = mysql.createPool({
-    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-    port: Number(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
-    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-    password: process.env.MYSQLPASSWORD || process.env.DB_PASS || '',
-    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'iubel_erp',
+    ...dbConfig,
     waitForConnections: true,
     connectionLimit: 15,
     queueLimit: 10,
