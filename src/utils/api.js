@@ -1,4 +1,5 @@
-const BASE_URL = 'http://localhost:3001/api';
+const isLocal = window.location.hostname === 'localhost';
+const BASE_URL = isLocal ? 'http://localhost:3001/api' : '/api';
 
 const getToken = () => localStorage.getItem('iubel_token');
 
@@ -64,8 +65,9 @@ export const api = {
     },
     // Auth-specific calls
     authPost: async (path, data) => {
+        const url = isLocal ? `http://localhost:3001${path}` : path;
         try {
-            const resp = await fetch(`http://localhost:3001${path}`, {
+            const resp = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -77,8 +79,9 @@ export const api = {
         }
     },
     authGet: async (path) => {
+        const url = isLocal ? `http://localhost:3001${path}` : path;
         try {
-            const resp = await fetch(`http://localhost:3001${path}`, {
+            const resp = await fetch(url, {
                 headers: authHeaders()
             });
             const json = await resp.json();

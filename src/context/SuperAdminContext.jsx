@@ -55,7 +55,8 @@ export const SuperAdminProvider = ({ children }) => {
 
         const validateToken = async () => {
             try {
-                const resp = await fetch('http://localhost:3001/api/superadmin/me', {
+                const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/me' : '/api/superadmin/me';
+                const resp = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${savedToken}`,
                         'Content-Type': 'application/json'
@@ -87,7 +88,8 @@ export const SuperAdminProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const resp = await fetch('http://localhost:3001/api/superadmin/login', {
+        const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/login' : '/api/superadmin/login';
+        const resp = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })

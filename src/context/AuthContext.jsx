@@ -26,7 +26,8 @@ export const AuthProvider = ({ children }) => {
         if (!savedToken) return;
 
         try {
-            const resp = await fetch('http://localhost:3001/api/auth/me', {
+            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/auth/me' : '/api/auth/me';
+            const resp = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${savedToken}`,
                     'Content-Type': 'application/json'
@@ -87,7 +88,8 @@ export const AuthProvider = ({ children }) => {
 
         const validateToken = async () => {
             try {
-                const resp = await fetch('http://localhost:3001/api/auth/me', {
+                const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/auth/me' : '/api/auth/me';
+                const resp = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${savedToken}`,
                         'Content-Type': 'application/json'
