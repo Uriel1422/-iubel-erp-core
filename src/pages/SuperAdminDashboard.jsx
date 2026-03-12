@@ -219,8 +219,14 @@ const SuperAdminDashboard = () => {
                             <p style={{ margin: 0, color: '#64748b', fontSize: '0.68rem' }}>Super Administrador</p>
                         </div>
                     </div>
-                    <button onClick={() => { logout(); navigate('/superadmin/login'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.65rem', background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', fontFamily: 'inherit' }}>
+                    <button onClick={() => { logout(); navigate('/superadmin/login'); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.65rem', background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', marginBottom: '0.5rem', fontFamily: 'inherit' }}>
                         <LogOut size={14} /> Cerrar Sesión
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('nuclear')}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.65rem', background: activeTab === 'nuclear' ? '#ef4444' : 'rgba(255,255,255,0.05)', color: activeTab === 'nuclear' ? 'white' : '#ef4444', border: '1px solid #ef444455', borderRadius: '8px', cursor: 'pointer', fontWeight: 800, fontSize: '0.8rem', fontFamily: 'inherit' }}
+                    >
+                        <Zap size={14} /> RESET MAESTRO
                     </button>
                 </div>
             </aside>

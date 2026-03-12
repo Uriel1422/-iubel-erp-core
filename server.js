@@ -180,13 +180,14 @@ const validName = (n) => /^[a-zA-Z0-9_]+$/.test(n);
 
 const ensureTable = async (tableName) => {
     if (!validName(tableName)) throw new Error(`Nombre inválido: ${tableName}`);
+    // Iubel Elastic Schema: Permite crecimiento dinámico sin migraciones rígidas
     await pool.execute(`
         CREATE TABLE IF NOT EXISTS \`${tableName}\` (
             id          VARCHAR(64)  PRIMARY KEY,
             data        JSON         NOT NULL,
             created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
             updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 };
 
@@ -387,6 +388,56 @@ app.post('/api/superadmin/settings', superadminMiddleware, async (req, res) => {
     } catch (err) {
         console.error('Error updating global settings:', err);
         res.status(500).json({ error: 'Error al actualizar configuraciones' });
+    }
+});
+
+/**
+ * 💣 OPERACIÓN NUCLEAR: DEEP CLEAN
+ * Borra absolutamente todos los inquilinos, sus datos y sus tablas.
+ */
+app.post('/api/superadmin/system/deep-clean', superadminMiddleware, async (req, res) => {
+    const { confirmCode } = req.body;
+    if (confirmCode !== 'IUBEL_NUCLEAR_REBOOT') {
+        return res.status(400).json({ error: 'Código de confirmación incorrecto' });
+    }
+
+    const mysqlConn = await pool.getConnection();
+    try {
+        console.log('☢️ [NUCLEAR] Iniciando Deep Clean del sistema...');
+        await mysqlConn.beginTransaction();
+
+        // 1. Obtener todas las tablas
+        const [tables] = await mysqlConn.execute('SHOW TABLES');
+        const dbNameKey = Object.keys(tables[0])[0];
+        const allTableNames = tables.map(t => t[dbNameKey]);
+
+        // 2. Identificar y borrar tablas dinámicas (las que contienen guión bajo y no son core)
+        // Patrón: tablas que NO son: superadmins, empresas, usuarios, global_settings, auditoria, prestamos_core, cuotas_core, transacciones_core
+        const coreTables = ['superadmins', 'empresas', 'usuarios', 'global_settings', 'auditoria', 'prestamos_core', 'cuotas_core', 'transacciones_core'];
+        
+        for (const tableName of allTableNames) {
+            if (!coreTables.includes(tableName)) {
+                console.log(`🧹 Borrando tabla dinámica: ${tableName}`);
+                await mysqlConn.execute(`DROP TABLE IF EXISTS \`${tableName}\``);
+            }
+        }
+
+        // 3. Vaciar tablas core (excepto superadmins)
+        const tablesToClear = ['empresas', 'usuarios', 'auditoria', 'prestamos_core', 'cuotas_core', 'transacciones_core'];
+        for (const tableName of tablesToClear) {
+            console.log(`🧽 Vaciando tabla core: ${tableName}`);
+            await mysqlConn.execute(`DELETE FROM \`${tableName}\``);
+        }
+
+        await mysqlConn.commit();
+        console.log('✅ [NUCLEAR] Sistema purificado exitosamente.');
+        res.json({ success: true, message: 'Deep Clean completado. El sistema está 100% virgen.' });
+    } catch (err) {
+        await mysqlConn.rollback();
+        console.error('❌ [NUCLEAR] Falla en limpieza profunda:', err);
+        res.status(500).json({ error: 'Falla crítica durante la limpieza profunda.' });
+    } finally {
+        mysqlConn.release();
     }
 });
 
