@@ -1,32 +1,30 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import FeatureProtectedRoute from './components/FeatureProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
 import Dashboard from './pages/Dashboard';
-import Cuentas from './pages/Cuentas';
-import Inventario from './pages/Inventario';
-import Facturacion from './pages/Facturacion';
-import DiarioGeneral from './pages/DiarioGeneral';
-import Compras from './pages/Compras';
-import Reportes from './pages/Reportes';
-import Tesoreria from './pages/Tesoreria';
 import Contactos from './pages/Contactos';
-import Bancos from './pages/Bancos';
-import ReportesFiscales from './pages/ReportesFiscales';
-import Cotizaciones from './pages/Cotizaciones';
-import Prestamos from './pages/Prestamos';
-import FixedAssets from './pages/FixedAssets';
 import Socios from './pages/Socios';
 import Caja from './pages/Caja';
 import PagosEnCaja from './pages/PagosEnCaja';
 import Boveda from './pages/Boveda';
 import BankingHub from './pages/BankingHub';
+import Prestamos from './pages/Prestamos';
+import Cotizaciones from './pages/Cotizaciones';
+import Cuentas from './pages/Cuentas';
+import Bancos from './pages/Bancos';
+import Inventario from './pages/Inventario';
+import Facturacion from './pages/Facturacion';
+import Compras from './pages/Compras';
+import Tesoreria from './pages/Tesoreria';
+import DiarioGeneral from './pages/DiarioGeneral';
+import Reportes from './pages/Reportes';
+import ReportesFiscales from './pages/ReportesFiscales';
+import FixedAssets from './pages/FixedAssets';
+import Nomina from './pages/Nomina';
 import Settings from './pages/Settings';
 import Help from './pages/Help';
-import Nomina from './pages/Nomina';
 import MayorGeneral from './pages/MayorGeneral';
 import AgingReports from './pages/AgingReports';
 import Presupuestos from './pages/Presupuestos';
@@ -43,26 +41,33 @@ import NCFManager from './pages/NCFManager';
 import TalentoHumano from './pages/TalentoHumano';
 import BalanceSocial from './pages/BalanceSocial';
 import ControlInterno from './pages/ControlInterno';
+import ParametrosCore from './pages/ParametrosCore';
 import Segmentacion from './pages/Segmentacion';
 import CobrosYDeducciones from './pages/CobrosYDeducciones';
-import ParametrosCore from './pages/ParametrosCore';
 import Juridico from './pages/Juridico';
 import Ahorros from './pages/Ahorros';
 import Procesos from './pages/Procesos';
-import UsuariosRoles from './pages/UsuariosRoles';
-import CuentasPorCobrar from './pages/CuentasPorCobrar';
-import CuentasPorPagar from './pages/CuentasPorPagar';
-import WealthTerminal from './pages/WealthTerminal';
 import Copilot from './pages/Copilot';
 import Tarjetas from './pages/Tarjetas';
 import DataNode from './pages/DataNode';
 import Exchange from './pages/Exchange';
+import WealthTerminal from './pages/WealthTerminal';
+import CuentasPorCobrar from './pages/CuentasPorCobrar';
+import CuentasPorPagar from './pages/CuentasPorPagar';
+import UsuariosRoles from './pages/UsuariosRoles';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
-// Providers
+// Contexts
 import { AuthProvider } from './context/AuthContext';
+import { NCFProvider } from './context/NCFContext';
+import { PrestamosProvider } from './context/PrestamosContext';
+import { BovedaProvider } from './context/BovedaContext';
+import { CajaProvider } from './context/CajaContext';
+import { SociosProvider } from './context/SociosContext';
+import { ContabilidadProvider } from './context/ContabilidadContext';
 import { CuentasProvider } from './context/CuentasContext';
 import { InventarioProvider } from './context/InventarioContext';
-import { ContabilidadProvider } from './context/ContabilidadContext';
 import { FacturacionProvider } from './context/FacturacionContext';
 import { ComprasProvider } from './context/ComprasContext';
 import { ContactosProvider } from './context/ContactosContext';
@@ -78,11 +83,6 @@ import { NotasProvider } from './context/NotasContext';
 import { RecurrentesProvider } from './context/RecurrentesContext';
 import { CierreProvider } from './context/CierreContext';
 import { CentrosCostoProvider } from './context/CentrosCostoContext';
-import { NCFProvider } from './context/NCFContext';
-import { PrestamosProvider } from './context/PrestamosContext';
-import { BovedaProvider } from './context/BovedaContext';
-import { CajaProvider } from './context/CajaContext';
-import { SociosProvider } from './context/SociosContext';
 import { TalentoHumanoProvider } from './context/TalentoHumanoContext';
 import { ControlInternoProvider } from './context/ControlInternoContext';
 import { JuridicoProvider } from './context/JuridicoContext';
@@ -103,10 +103,14 @@ import SecuritySovereign from './pages/SecuritySovereign';
 import Portal from './pages/Portal';
 
 const GlobalUIWrapper = ({ children }) => {
-  const { globalKillSwitch, broadcastMessage } = useSuperAdmin();
-  const isSuperAdminRoute = window.location.pathname.startsWith('/superadmin');
+  const { globalKillSwitch, broadcastMessage, token: saToken } = useSuperAdmin();
+  const location = useLocation();
+  
+  // Inmunidad Total: Si estás en una ruta de superadmin O tienes el token de SA activo, BYPASS TOTAL.
+  const isSuperAdminRoute = location.pathname.startsWith('/superadmin');
+  const isImmune = isSuperAdminRoute || !!saToken;
 
-  if (globalKillSwitch && !isSuperAdminRoute) {
+  if (globalKillSwitch && !isImmune) {
     return (
       <div style={{ height: '100vh', width: '100vw', background: '#020617', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', gap: '2rem', textAlign: 'center', padding: '2rem', position: 'fixed', inset: 0, zIndex: 99999 }}>
         <style>{`@keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }`}</style>
@@ -162,39 +166,39 @@ const GlobalUIWrapper = ({ children }) => {
 function App() {
   return (
     <SuperAdminProvider>
-      <GlobalUIWrapper>
-        <AuthProvider>
-          <NCFProvider>
-            <PrestamosProvider>
-              <BovedaProvider>
-                <CajaProvider>
-                  <SociosProvider>
-                    <ContabilidadProvider>
-                      <CuentasProvider>
-                        <InventarioProvider>
-                          <FacturacionProvider>
-                            <ComprasProvider>
-                              <ContactosProvider>
-                                <BancosProvider>
-                                  <CotizacionesProvider>
-                                    <NotificationProvider>
-                                      <SettingsProvider>
-                                        <FixedAssetsProvider>
-                                          <NominaProvider>
-                                            <MonedaProvider>
-                                              <PresupuestoProvider>
-                                                <NotasProvider>
-                                                  <RecurrentesProvider>
-                                                    <CierreProvider>
-                                                      <CentrosCostoProvider>
-                                                        <TalentoHumanoProvider>
-                                                          <ControlInternoProvider>
-                                                            <JuridicoProvider>
-                                                              <BalanceSocialProvider>
-                                                                <CobrosProvider>
-                                                                  <SegmentacionProvider>
-                                                                    <AhorrosProvider>
-                                                                      <BrowserRouter>
+      <BrowserRouter>
+        <GlobalUIWrapper>
+          <AuthProvider>
+            <NCFProvider>
+              <PrestamosProvider>
+                <BovedaProvider>
+                  <CajaProvider>
+                    <SociosProvider>
+                      <ContabilidadProvider>
+                        <CuentasProvider>
+                          <InventarioProvider>
+                            <FacturacionProvider>
+                              <ComprasProvider>
+                                <ContactosProvider>
+                                  <BancosProvider>
+                                    <CotizacionesProvider>
+                                      <NotificationProvider>
+                                        <SettingsProvider>
+                                          <FixedAssetsProvider>
+                                            <NominaProvider>
+                                              <MonedaProvider>
+                                                <PresupuestoProvider>
+                                                  <NotasProvider>
+                                                    <RecurrentesProvider>
+                                                      <CierreProvider>
+                                                        <CentrosCostoProvider>
+                                                          <TalentoHumanoProvider>
+                                                            <ControlInternoProvider>
+                                                              <JuridicoProvider>
+                                                                <BalanceSocialProvider>
+                                                                  <CobrosProvider>
+                                                                    <SegmentacionProvider>
+                                                                      <AhorrosProvider>
                                                                         <Routes>
                                                                           <Route path="/login" element={<LoginPage />} />
                                                                           <Route path="/register" element={<RegisterPage />} />
@@ -266,39 +270,39 @@ function App() {
                                                                           <Route path="/superadmin/sovereign" element={<SecuritySovereign />} />
                                                                           <Route path="/superadmin" element={<Navigate to="/superadmin/dashboard" replace />} />
                                                                         </Routes>
-                                                                      </BrowserRouter>
-                                                                    </AhorrosProvider>
-                                                                  </SegmentacionProvider>
-                                                                </CobrosProvider>
-                                                              </BalanceSocialProvider>
-                                                            </JuridicoProvider>
-                                                          </ControlInternoProvider>
-                                                        </TalentoHumanoProvider>
-                                                      </CentrosCostoProvider>
-                                                    </CierreProvider>
-                                                  </RecurrentesProvider>
-                                                </NotasProvider>
-                                              </PresupuestoProvider>
-                                            </MonedaProvider>
-                                          </NominaProvider>
-                                        </FixedAssetsProvider>
-                                      </SettingsProvider>
-                                    </NotificationProvider>
-                                  </CotizacionesProvider>
-                                </BancosProvider>
-                              </ContactosProvider>
-                            </ComprasProvider>
-                          </FacturacionProvider>
-                        </InventarioProvider>
-                      </CuentasProvider>
-                    </ContabilidadProvider>
-                  </SociosProvider>
-                </CajaProvider>
-              </BovedaProvider>
-            </PrestamosProvider>
-          </NCFProvider>
-        </AuthProvider>
-      </GlobalUIWrapper>
+                                                                      </AhorrosProvider>
+                                                                    </SegmentacionProvider>
+                                                                  </CobrosProvider>
+                                                                </BalanceSocialProvider>
+                                                              </JuridicoProvider>
+                                                            </ControlInternoProvider>
+                                                          </TalentoHumanoProvider>
+                                                        </CentrosCostoProvider>
+                                                      </CierreProvider>
+                                                    </RecurrentesProvider>
+                                                  </NotasProvider>
+                                                </PresupuestoProvider>
+                                              </MonedaProvider>
+                                            </NominaProvider>
+                                          </FixedAssetsProvider>
+                                        </SettingsProvider>
+                                      </NotificationProvider>
+                                    </CotizacionesProvider>
+                                  </BancosProvider>
+                                </ContactosProvider>
+                              </ComprasProvider>
+                            </FacturacionProvider>
+                          </InventarioProvider>
+                        </CuentasProvider>
+                      </ContabilidadProvider>
+                    </SociosProvider>
+                  </CajaProvider>
+                </BovedaProvider>
+              </PrestamosProvider>
+            </NCFProvider>
+          </AuthProvider>
+        </GlobalUIWrapper>
+      </BrowserRouter>
     </SuperAdminProvider>
   );
 }

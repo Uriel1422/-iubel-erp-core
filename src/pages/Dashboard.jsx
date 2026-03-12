@@ -321,21 +321,21 @@ const Dashboard = () => {
             <h3 style={{ marginBottom: '1.5rem' }}>Acceso Rápido</h3>
             <div className="quick-actions">
                 {hasAccess('facturacion') && (
-                    <Link to="/facturas" className="card glass quick-card">
+                    <Link to="/erp/facturas" className="card glass quick-card">
                         <Receipt size={24} />
                         <span>Nueva Factura</span>
                         <ArrowRight size={16} />
                     </Link>
                 )}
                 {hasAccess('compras') && (
-                    <Link to="/compras" className="card glass quick-card">
+                    <Link to="/erp/compras" className="card glass quick-card">
                         <ShoppingCart size={24} />
                         <span>Registrar Gasto</span>
                         <ArrowRight size={16} />
                     </Link>
                 )}
                 {hasAccess('contabilidad') && (
-                    <Link to="/diario" className="card glass quick-card">
+                    <Link to="/erp/diario" className="card glass quick-card">
                         <Calculator size={24} />
                         <span>Movimientos</span>
                         <ArrowRight size={16} />
