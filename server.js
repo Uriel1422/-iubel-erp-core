@@ -108,7 +108,9 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 15,
     queueLimit: 10,
-    connectTimeout: 10000,
+    connectTimeout: 30000,
+    // SSL requerido para conexiones externas (Render -> Railway)
+    ssl: mysqlPublicUrl ? { rejectUnauthorized: false } : undefined,
 });
 
 const startServer = async () => {
