@@ -82,7 +82,7 @@ const BiAnalytics = () => {
         setLoadingAI(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:3001/api/ai/predictive-insight', {
+            const res = await fetch('/api/ai/predictive-insight', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) setPredictions(await res.json());

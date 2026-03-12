@@ -17,7 +17,7 @@ const ReportesFiscales = () => {
         const endpoint = reporteActivo === '606' ? '/api/fiscal/export-606' : '/api/fiscal/export-607';
 
         try {
-            const resp = await fetch(`http://localhost:3001${endpoint}`, {
+            const resp = await fetch(`${endpoint}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!resp.ok) throw new Error('Error al generar el archivo');

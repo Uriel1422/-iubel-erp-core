@@ -56,7 +56,7 @@ const SuperAdminDashboard = () => {
 
     const fetchEmpresas = useCallback(async () => {
         try {
-            const res = await fetch('http://localhost:3001/api/superadmin/empresas', {
+            const res = await fetch('/api/superadmin/empresas', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) setEmpresas(await res.json());
@@ -67,7 +67,7 @@ const SuperAdminDashboard = () => {
     const fetchAuditLogs = useCallback(async () => {
         setLoadingAudit(true);
         try {
-            const res = await fetch('http://localhost:3001/api/auditoria', {
+            const res = await fetch('/api/auditoria', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -92,7 +92,7 @@ const SuperAdminDashboard = () => {
 
     const handleUpdateEmpresa = async (id, plan, activa, features) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/superadmin/empresas/${id}`, {
+            const res = await fetch(`/api/superadmin/empresas/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ plan, activa, features })
@@ -104,7 +104,7 @@ const SuperAdminDashboard = () => {
 
     const handleDeleteEmpresa = async (id) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/superadmin/empresas/${id}`, {
+            const res = await fetch(`/api/superadmin/empresas/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

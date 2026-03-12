@@ -55,7 +55,7 @@ const Settings = () => {
     const fetchUsuarios = async () => {
         setLoadingUsers(true);
         try {
-            const res = await fetch('http://localhost:3001/api/auth/usuarios', {
+            const res = await fetch('/api/auth/usuarios', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -72,7 +72,7 @@ const Settings = () => {
     const handleAddUser = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:3001/api/auth/usuarios', {
+            const res = await fetch('/api/auth/usuarios', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(newUser)
@@ -92,7 +92,7 @@ const Settings = () => {
     const handleDeleteUser = async (id) => {
         if (!window.confirm('¿Eliminar este usuario del sistema?')) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/auth/usuarios/${id}`, {
+            const res = await fetch(`/api/auth/usuarios/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

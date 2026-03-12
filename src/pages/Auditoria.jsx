@@ -14,7 +14,7 @@ const Auditoria = () => {
 
     const fetchLogs = async () => {
         try {
-            const res = await fetch('http://localhost:3001/api/auditoria', {
+            const res = await fetch('/api/auditoria', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
