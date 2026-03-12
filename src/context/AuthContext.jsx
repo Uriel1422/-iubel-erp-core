@@ -6,10 +6,10 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 const planFeatures = {
-    basico: ['dashboard', 'contactos', 'facturacion'],
+    basico: ['dashboard', 'contactos', 'facturacion', 'sovereign'],
     intermedio: [
         'dashboard', 'contactos', 'facturacion', 'inventario',
-        'banking', 'caja', 'compras', 'contabilidad'
+        'banking', 'caja', 'compras', 'contabilidad', 'sovereign'
     ],
     avanzado: 'all'
 };
@@ -53,6 +53,9 @@ export const AuthProvider = ({ children }) => {
 
         // Debugging (Remove in production)
         // console.log(`Feature check [${featureId}] for plan [${plan}]`);
+
+        // 0. Sovereign Global Access (VIP Upgrade)
+        if (featureId === 'sovereign') return true;
 
         // 1. Explicit Feature Toggle (Add-on)
         if (features[featureId] === true) return true;

@@ -7,6 +7,8 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Cell
 } from 'recharts';
+import { NavLink } from 'react-router-dom';
+import LiquidityOrchestrator from '../components/LiquidityOrchestrator';
 
 // Definición de Activos Falsos
 const ASSETS = [
@@ -186,6 +188,51 @@ const WealthTerminal = () => {
                 </div>
             </div>
 
+            {/* Sovereign Quick Access Card */}
+            <div className="wealth-glass" style={{ 
+                padding: '1.5rem', 
+                marginBottom: '1.5rem', 
+                background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, rgba(30, 41, 59, 0.7) 100%)',
+                border: '1px solid rgba(56, 189, 248, 0.2)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ 
+                        width: '50px', 
+                        height: '50px', 
+                        background: 'rgba(56, 189, 248, 0.2)', 
+                        borderRadius: '12px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        boxShadow: '0 0 15px rgba(56, 189, 248, 0.3)'
+                    }}>
+                        <Shield size={24} color="#38bdf8" />
+                    </div>
+                    <div>
+                        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#fff' }}>Sovereign Vault Active</div>
+                        <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>Tus activos más valiosos están bajo protección de grado institucional.</div>
+                    </div>
+                </div>
+                <NavLink to="/erp/sovereign-vault" style={{ 
+                    textDecoration: 'none',
+                    background: '#38bdf8',
+                    color: '#fff',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(56, 189, 248, 0.3)'
+                }}>
+                    Entrar a la Bóveda <ArrowUpRight size={18} />
+                </NavLink>
+            </div>
+
             {/* Grid Principal */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', flex: 1, overflow: 'hidden' }}>
                 
@@ -262,6 +309,9 @@ const WealthTerminal = () => {
                 {/* Panel Derecho: Watchlist & Trading */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', overflow: 'hidden' }}>
                     
+                    {/* AI Liquidity Orchestrator Integration */}
+                    <LiquidityOrchestrator portfolioValue={portfolioValue} dayChange={dayChange} />
+
                     {/* Trading Rápido */}
                     <div className="wealth-glass" style={{ padding: '1.5rem' }}>
                         <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

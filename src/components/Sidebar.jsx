@@ -85,11 +85,12 @@ const Sidebar = () => {
             label: 'FinTech Enterprise',
             display: true,
             items: [
+                { path: 'sovereign-vault', icon: <ShieldCheck className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Sovereign Vault <span style={{ fontSize: '9px', border: '1px solid #38bdf8', color: '#38bdf8', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>VIP</span></span>, display: true },
+                { path: 'wealth', icon: <TrendingUp className="nav-icon" style={{ color: '#10b981' }} />, label: 'Wealth Terminal', display: true, featureId: 'banking' },
                 { path: 'tarjetas', icon: <CreditCard className="nav-icon" style={{ color: '#0ea5e9' }} />, label: <span>Card Issuing <span style={{ fontSize: '9px', background: '#0ea5e9', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>HOT</span></span>, display: true, featureId: 'banking' },
                 { path: 'datanode', icon: <Network className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Data Node <span style={{ fontSize: '9px', background: '#38bdf8', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>GOLD</span></span>, display: true, featureId: 'banking' },
                 { path: 'exchange', icon: <Repeat className="nav-icon" style={{ color: '#facc15' }} />, label: <span>Exchange & Tokens <span style={{ fontSize: '9px', background: '#facc15', color: 'black', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>NEW</span></span>, display: true, featureId: 'banking' },
-                { path: 'wealth', icon: <TrendingUp className="nav-icon" style={{ color: '#10b981' }} />, label: 'Wealth Terminal', display: true, featureId: 'banking' },
-            ].filter(i => i.display && hasAccess(i.featureId))
+            ].filter(i => i.display && (i.featureId ? hasAccess(i.featureId) : true))
         },
         {
             label: 'Talento y RRHH',

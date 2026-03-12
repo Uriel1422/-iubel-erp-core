@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
     Bot, User, Send, Sparkles, BrainCircuit, Activity, 
     BarChart2, PieChart, ShieldAlert, Zap, TrendingUp,
-    CheckCircle2, AlertTriangle, Info
+    CheckCircle2, AlertTriangle, Info, BookOpen
 } from 'lucide-react';
+import { SYSTEM_KNOWLEDGE } from '../data/SystemKnowledge';
 import { useAuth } from '../context/AuthContext';
 import { useContabilidad } from '../context/ContabilidadContext';
 import {
@@ -154,21 +155,21 @@ const Copilot = () => {
             } else {
                 aiResponse.text = 'Aún estoy procesando los datos maestros para generar una predicción precisa. Mi motor de IA requiere al menos 3 meses de historial para activar el modo de alta precisión.';
             }
-        } else if (textLower.includes('como') || textLower.includes('cómo') || textLower.includes('paso a paso') || textLower.includes('guia') || textLower.includes('guía')) {
-            if (textLower.includes('factura') || textLower.includes('ventas')) {
-                const guide = IUBEL_GUIDES.facturacion;
-                aiResponse.text = `¡Excelente! Aquí tienes la guía del manual para **${guide.title}**:\n\n${guide.steps.join('\n')}\n\n¿Necesitas ayuda con otra parte del manual?`;
-            } else if (textLower.includes('socio') || textLower.includes('kyc')) {
-                const guide = IUBEL_GUIDES.socios;
-                aiResponse.text = `Para mantener el orden institucional, sigue estos pasos para **${guide.title}**:\n\n${guide.steps.join('\n')}\n\nPuedes ver el puntaje de salud financiera una vez guardado.`;
-            } else if (textLower.includes('prestamo') || textLower.includes('préstamo')) {
-                const guide = IUBEL_GUIDES.prestamos;
-                aiResponse.text = `El motor de crédito es potente. Así es como realizas **${guide.title}**:\n\n${guide.steps.join('\n')}\n\nRecuerda revisar el Scoring del socio antes.`;
-            } else if (textLower.includes('contabilidad') || textLower.includes('cierre') || textLower.includes('ncf')) {
-                const guide = IUBEL_GUIDES.contabilidad;
-                aiResponse.text = `La integridad contable es clave. Aquí los pasos para **${guide.title}**:\n\n${guide.steps.join('\n')}\n\n¿Quieres que revise el balance actual?`;
+        } else if (textLower.includes('como') || textLower.includes('cómo') || textLower.includes('ayuda') || textLower.includes('paso a paso') || textLower.includes('indicaciones')) {
+            // Motor de búsqueda de conocimiento dinámico
+            let foundKey = null;
+            Object.keys(SYSTEM_KNOWLEDGE).forEach(key => {
+                if (textLower.includes(key.replace('_', ' ')) || SYSTEM_KNOWLEDGE[key].tags.some(tag => textLower.includes(tag))) {
+                    foundKey = key;
+                }
+            });
+
+            if (foundKey) {
+                const info = SYSTEM_KNOWLEDGE[foundKey];
+                aiResponse.text = `He consultado el Manual Maestro. Aquí tienes las indicaciones para **${info.title}**:\n\n**Descripción:** ${info.description}\n\n**Paso a Paso:**\n${info.how_to.join('\n')}\n\n**Funciones Clave:**\n- ${info.functions.join('\n- ')}`;
+                aiResponse.widget = 'knowledgeCard';
             } else {
-                aiResponse.text = "Tengo manuales paso a paso para: **Facturación**, **Socios**, **Préstamos** y **Contabilidad**. ¿Sobre cuál de estos temas deseas aprender?";
+                aiResponse.text = "Tengo acceso a los manuales de: **Bóveda Soberana**, **Facturación**, **Nómina**, **Inventario**, **Bancos** y **Wealth Terminal**. ¿Sobre cuál de estos módulos necesitas indicaciones hoy?";
             }
         } else if (textLower.includes('riesgo') || textLower.includes('aml') || textLower.includes('lavado')) {
             aiResponse.text = 'Protocolo de Cumplimiento activado. He cruzado las últimas transacciones con las listas de control global. El **FraudShield** reporta integridad total, pero sugiero una debida diligencia ampliada para transacciones por encima de $500K.';
@@ -370,6 +371,18 @@ const Copilot = () => {
                                                 <span>Aceptable</span>
                                                 <span style={{ color: '#10b981' }}>98%</span>
                                             </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {msg.widget === 'knowledgeCard' && (
+                                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '16px', width: '320px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#6366f1' }}>
+                                            <BookOpen size={16} />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>FRAGMENTO DEL MANUAL</span>
+                                        </div>
+                                        <div style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic' }}>
+                                            "El cumplimiento de estos pasos garantiza la integridad de los datos en el Sovereign Ledger."
                                         </div>
                                     </div>
                                 )}
