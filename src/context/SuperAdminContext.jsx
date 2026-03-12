@@ -77,25 +77,20 @@ export const SuperAdminProvider = ({ children }) => {
 
         const savedToken = localStorage.getItem('sa_token');
 
-        if (!savedToken) {
-            setIsLoading(false);
-            return;
-        }
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => {
-            controller.abort();
-        }, 5000);
-
         const validateToken = async () => {
-            try {
-                // Fetch Global Settings first (Public)
-                const settingsUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
-                fetch(settingsUrl).then(r => r.json()).then(data => {
-                    if (data.killSwitch !== undefined) setGlobalKillSwitch(data.killSwitch);
-                    if (data.broadcastMessage !== undefined) setBroadcastMessage(data.broadcastMessage);
-                }).catch(() => {});
+            // CARGA UNIVERSAL DE SETTINGS (No requiere token)
+            const settingsUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
+            fetch(settingsUrl).then(r => r.json()).then(data => {
+                if (data.killSwitch !== undefined) setGlobalKillSwitch(data.killSwitch);
+                if (data.broadcastMessage !== undefined) setBroadcastMessage(data.broadcastMessage);
+            }).catch(() => {});
 
+            if (!savedToken) {
+                setIsLoading(false);
+                return;
+            }
+
+            try {
                 const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/me' : '/api/superadmin/me';
                 const resp = await fetch(url, {
                     headers: {

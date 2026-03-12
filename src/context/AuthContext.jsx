@@ -117,33 +117,13 @@ export const AuthProvider = ({ children }) => {
 
         validateToken();
 
-        // Polling para Kill Switch y Broadcast (cada 30 segundos)
-        const checkGlobalStatus = async () => {
-            try {
-                const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
-                const resp = await fetch(url);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    // El SuperAdminContext se encarga de la UI si está envuelto, 
-                    // pero podemos forzar un evento custom si es necesario.
-                    // Para simplicidad, el Layout.jsx reacciona al SuperAdminContext.
-                    // Solo necesitamos asegurarnos que el SuperAdminProvider esté POR ENCIMA del AuthProvider (Ya lo está en App.jsx)
-                }
-            } catch (e) {}
-        };
-
-        const globalInterval = setInterval(checkGlobalStatus, 30000);
-
         // Add focus listener for "real-time" updates
         window.addEventListener('focus', refreshAuth);
-        window.addEventListener('focus', checkGlobalStatus);
 
         return () => {
             controller.abort();
             clearTimeout(timeout);
-            clearInterval(globalInterval);
             window.removeEventListener('focus', refreshAuth);
-            window.removeEventListener('focus', checkGlobalStatus);
         };
     }, []);
 
