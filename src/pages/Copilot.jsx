@@ -15,10 +15,56 @@ const INITIAL_MESSAGES = [
     {
         id: 1,
         sender: 'ai',
-        text: '¡Hola! Soy **Iubel Copilot**, tu asistente de Inteligencia Artificial Financiera. He analizado el estado actual de tu empresa y todo parece estar en orden. ¿Te gustaría realizar una proyección de flujo de caja o revisar el cumplimiento AML?',
+        text: '¡Hola! Soy **Iubel Copilot**, tu guía operativa. He analizado el estado de tu empresa y estoy listo para ayudarte. ¿Deseas saber cómo realizar alguna operación o una proyección financiera?',
         timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     }
 ];
+
+const IUBEL_GUIDES = {
+    facturacion: {
+        title: "Emisión de Facturas y NCF",
+        steps: [
+            "1. Ve al módulo de **Ventas/Facturas**.",
+            "2. Haz clic en **Nueva Factura**.",
+            "3. Selecciona el **Cliente** (puedes crear uno nuevo ahí mismo).",
+            "4. Elige el **Tipo de Comprobante (NCF)** correspondiente.",
+            "5. Agrega los productos o servicios con sus precios.",
+            "6. Verifica el ITBIS y haz clic en **Emitir Factura**."
+        ]
+    },
+    socios: {
+        title: "Registro de Socios y KYC",
+        steps: [
+            "1. Dirígete a **Fintech/Socios**.",
+            "2. Presiona el botón **+ Nuevo Socio**.",
+            "3. Completa los datos personales y de contacto.",
+            "4. En la pestaña **KYC**, sube el documento de identidad.",
+            "5. El sistema asignará un **Socio Score** inicial automáticamente.",
+            "6. Haz clic en **Guardar Registro**."
+        ]
+    },
+    prestamos: {
+        title: "Desembolso de Préstamos",
+        steps: [
+            "1. Entra a **Fintech/Préstamos**.",
+            "2. Haz clic en **Nueva Solicitud**.",
+            "3. Selecciona al socio y el monto aprobado.",
+            "4. Define la **Tasa de Interés** y el **Plazo**.",
+            "5. Selecciona el método de amortización (Francés o Alemán).",
+            "6. Pulsa **Procesar Desembolso** para generar la tabla de pagos."
+        ]
+    },
+    contabilidad: {
+        title: "Cierre de Mes y Catalogo de Cuentas",
+        steps: [
+            "1. Verifica el **Libro Mayor** en Contabilidad.",
+            "2. Asegúrate de que todos los asientos diarios estén cuadrados.",
+            "3. Ve a **Configuración -> Plan de Cuentas** si necesitas añadir auxiliares.",
+            "4. Dirígete a **Cierre Fiscal** para bloquear el periodo actual.",
+            "5. Genera el reporte 606 y 607 para la DGII."
+        ]
+    }
+};
 
 const Copilot = () => {
     const { user, empresa } = useAuth();
@@ -107,6 +153,22 @@ const Copilot = () => {
                 aiResponse.widget = 'oracleForecast';
             } else {
                 aiResponse.text = 'Aún estoy procesando los datos maestros para generar una predicción precisa. Mi motor de IA requiere al menos 3 meses de historial para activar el modo de alta precisión.';
+            }
+        } else if (textLower.includes('como') || textLower.includes('cómo') || textLower.includes('paso a paso') || textLower.includes('guia') || textLower.includes('guía')) {
+            if (textLower.includes('factura') || textLower.includes('ventas')) {
+                const guide = IUBEL_GUIDES.facturacion;
+                aiResponse.text = `¡Excelente! Aquí tienes la guía del manual para **${guide.title}**:\n\n${guide.steps.join('\n')}\n\n¿Necesitas ayuda con otra parte del manual?`;
+            } else if (textLower.includes('socio') || textLower.includes('kyc')) {
+                const guide = IUBEL_GUIDES.socios;
+                aiResponse.text = `Para mantener el orden institucional, sigue estos pasos para **${guide.title}**:\n\n${guide.steps.join('\n')}\n\nPuedes ver el puntaje de salud financiera una vez guardado.`;
+            } else if (textLower.includes('prestamo') || textLower.includes('préstamo')) {
+                const guide = IUBEL_GUIDES.prestamos;
+                aiResponse.text = `El motor de crédito es potente. Así es como realizas **${guide.title}**:\n\n${guide.steps.join('\n')}\n\nRecuerda revisar el Scoring del socio antes.`;
+            } else if (textLower.includes('contabilidad') || textLower.includes('cierre') || textLower.includes('ncf')) {
+                const guide = IUBEL_GUIDES.contabilidad;
+                aiResponse.text = `La integridad contable es clave. Aquí los pasos para **${guide.title}**:\n\n${guide.steps.join('\n')}\n\n¿Quieres que revise el balance actual?`;
+            } else {
+                aiResponse.text = "Tengo manuales paso a paso para: **Facturación**, **Socios**, **Préstamos** y **Contabilidad**. ¿Sobre cuál de estos temas deseas aprender?";
             }
         } else if (textLower.includes('riesgo') || textLower.includes('aml') || textLower.includes('lavado')) {
             aiResponse.text = 'Protocolo de Cumplimiento activado. He cruzado las últimas transacciones con las listas de control global. El **FraudShield** reporta integridad total, pero sugiero una debida diligencia ampliada para transacciones por encima de $500K.';

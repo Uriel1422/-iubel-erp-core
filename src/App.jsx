@@ -104,8 +104,9 @@ import Portal from './pages/Portal';
 
 const GlobalUIWrapper = ({ children }) => {
   const { globalKillSwitch, broadcastMessage } = useSuperAdmin();
+  const isSuperAdminRoute = window.location.pathname.startsWith('/superadmin');
 
-  if (globalKillSwitch) {
+  if (globalKillSwitch && !isSuperAdminRoute) {
     return (
       <div style={{ height: '100vh', width: '100vw', background: '#020617', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', gap: '2rem', textAlign: 'center', padding: '2rem', position: 'fixed', inset: 0, zIndex: 99999 }}>
         <style>{`@keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }`}</style>

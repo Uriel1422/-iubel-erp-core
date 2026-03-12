@@ -15,7 +15,9 @@ export const SuperAdminProvider = ({ children }) => {
     // Persistencia y Sincronización Inter-pestañas y Cloud
     const fetchGlobalSettings = async () => {
         try {
-            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
+            const url = window.location.hostname === 'localhost' 
+                ? `http://localhost:3001/api/system/settings?v=${Date.now()}` 
+                : `/api/system/settings?v=${Date.now()}`;
             const resp = await fetch(url);
             if (resp.ok) {
                 const data = await resp.json();
@@ -31,7 +33,7 @@ export const SuperAdminProvider = ({ children }) => {
             if (e.key === 'sa_broadcast_msg') setBroadcastMessage(e.newValue || '');
         };
 
-        const interval = setInterval(fetchGlobalSettings, 10000); // Polling cada 10s para máxima respuesta
+        const interval = setInterval(fetchGlobalSettings, 5000); // Polling cada 5s para respuesta cuasi-instantánea
 
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('focus', fetchGlobalSettings);
