@@ -41,19 +41,8 @@ app.listen(PORT, '0.0.0.0', () => {
 
 app.set('trust proxy', 1);
 
-// 0. Ruta de Super-Emergencia (Bypass de Red)
-app.get('/', (req, res) => {
-    console.log('✅ [GLOBAL] PUBLIC HIT DETECTED');
-    res.status(200).send(`
-        <!DOCTYPE html><html><head><title>Iubel ERP Sovereign</title>
-        <style>body{background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;margin:0;text-align:center}</style>
-        </head><body>
-        <div><h1 style="color:#8b5cf6">🛡️ Iubel ERP Sovereign Online</h1>
-        <p style="background:#1a1a2e;padding:15px;border-radius:10px;border:1px solid #334">Conexión Establecida con el Motor AI</p>
-        <p>Sincronizando interfaz de usuario... | ID: ${Math.random().toString(36).substring(7)}</p>
-        </div></body></html>
-    `);
-});
+// 0. Health check (mantener para monitoreo)
+
 
 app.get('/health', (req, res) => {
     res.status(200).send('HEALTHY');
@@ -991,6 +980,16 @@ app.use((req, res) => {
             <p>Motor en línea. Procediendo con el despliegue de interfaz...</p>
             </div></body></html>
         `);
+    }
+});
+
+// ─── Catch-All: Servir React App (React Router) ───────────────────────────────
+app.get('*', (req, res) => {
+    const indexPath = path.resolve(__dirname, 'dist', 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('ERP no compilado. Ejecuta npm run build.');
     }
 });
 // Fin del servidor
