@@ -608,6 +608,59 @@ const SuperAdminDashboard = () => {
                     </>
                 )}
 
+                {/* ─── TAB: NUCLEAR RESET ─── */}
+                {activeTab === 'nuclear' && (
+                    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center' }}>
+                        <div style={{ width: 100, height: 100, background: '#fee2e2', color: '#ef4444', borderRadius: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', boxShadow: '0 20px 40px rgba(239,68,68,0.2)' }}>
+                            <Zap size={50} fill="#ef4444" />
+                        </div>
+                        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#0f172a', marginBottom: '1rem' }}>RESETEO MAESTRO NUCLEAR</h1>
+                        <p style={{ maxWidth: '600px', color: '#64748b', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '2.5rem' }}>
+                            Esta acción es <strong style={{ color: '#ef4444' }}>IRREVERSIBLE</strong>. Se eliminarán todas las empresas, todos los usuarios (excepto superadmins) y todas las tablas dinámicas de la base de datos. El sistema quedará vacío y listo para un nuevo despliegue.
+                        </p>
+
+                        <div className="card" style={{ padding: '2.5rem', width: '100%', maxWidth: '500px', border: '2px dashed #ef4444' }}>
+                            <label style={{ display: 'block', fontWeight: 800, fontSize: '0.8rem', color: '#ef4444', textTransform: 'uppercase', marginBottom: '1rem' }}>
+                                Escribe "IUBEL_NUCLEAR_REBOOT" para confirmar
+                            </label>
+                            <input 
+                                type="text"
+                                placeholder="..."
+                                id="nuclear_code"
+                                style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '2px solid #cbd5e1', textAlign: 'center', fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.5rem', outline: 'none' }}
+                            />
+                            <button 
+                                onClick={async () => {
+                                    const code = document.getElementById('nuclear_code').value;
+                                    if (code !== 'IUBEL_NUCLEAR_REBOOT') return alert('Código incorrecto');
+                                    
+                                    if (!window.confirm('¿ESTÁS ABSOLUTAMENTE SEGURO? Esta acción destruirá todos los datos de los inquilinos.')) return;
+
+                                    try {
+                                        const res = await fetch('/api/superadmin/system/deep-clean', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                            body: JSON.stringify({ confirmCode: code })
+                                        });
+                                        if (res.ok) {
+                                            alert('Limpieza absoluta completada. Redirigiendo...');
+                                            window.location.reload();
+                                        } else {
+                                            const data = await res.json();
+                                            alert(data.error);
+                                        }
+                                    } catch (err) {
+                                        alert('Error crítico de red');
+                                    }
+                                }}
+                                style={{ width: '100%', padding: '1.25rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 900, fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239,68,68,0.3)' }}
+                            >
+                                EJECUTAR LIMPIEZA NUCLEAR ☢️
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Modal Módulos */}
                 {selectingFeatures && (
                     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
