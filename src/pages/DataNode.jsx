@@ -11,26 +11,10 @@ import {
 } from 'recharts';
 
 // Datos simulados para el Mapa de Nodos (Grafo)
-const MOCK_NODES = [
-    { id: 1, label: 'Socio: Juan Pérez', type: 'person', x: 200, y: 150, risk: 'low' },
-    { id: 2, label: 'Txn: $45k USD', type: 'transaction', x: 400, y: 100, risk: 'high' },
-    { id: 3, label: 'Empresa: Betacorp', type: 'entity', x: 600, y: 150, risk: 'medium' },
-    { id: 4, label: 'IP: 192.168.1.45', type: 'network', x: 400, y: 250, risk: 'medium' },
-    { id: 5, label: 'Cuenta: Caribbean Bank', type: 'bank', x: 600, y: 280, risk: 'high' },
-];
-
-const MOCK_EDGES = [
-    { from: 1, to: 2 },
-    { from: 2, to: 3 },
-    { from: 2, to: 4 },
-    { from: 3, to: 5 },
-];
-
-const MOCK_ANOMALIES = [
-    { id: 1, title: 'Transferencia Atípica', desc: 'Desvío de patrón en horario no laborable (3:00 AM)', score: 88, severity: 'critical' },
-    { id: 2, title: 'Multi-Login Detectado', desc: 'Mismo usuario desde 3 países diferentes en 10 min', score: 94, severity: 'critical' },
-    { id: 3, title: 'Fraccionamiento Smurfing', desc: '15 depósitos bajo el umbral legal en 1 hora', score: 72, severity: 'high' },
-];
+// Datos del mapa de nodos (vacío por defecto)
+const MOCK_NODES = [];
+const MOCK_EDGES = [];
+const MOCK_ANOMALIES = [];
 
 const DataNode = () => {
     const [activeNode, setActiveNode] = useState(null);
@@ -107,9 +91,9 @@ const DataNode = () => {
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.7rem' }}>
-                    <div style={{ color: '#94a3b8' }}>NODES: <span style={{ color: '#fff' }}>1,245</span></div>
-                    <div style={{ color: '#94a3b8' }}>LINKS: <span style={{ color: '#fff' }}>8,902</span></div>
-                    <div style={{ color: '#94a3b8' }}>ANOMALIES: <span style={{ color: '#ef4444' }}>14</span></div>
+                    <div style={{ color: '#94a3b8' }}>NODES: <span style={{ color: '#fff' }}>0</span></div>
+                    <div style={{ color: '#94a3b8' }}>LINKS: <span style={{ color: '#fff' }}>0</span></div>
+                    <div style={{ color: '#94a3b8' }}>ANOMALIES: <span style={{ color: '#10b981' }}>0</span></div>
                 </div>
             </div>
 

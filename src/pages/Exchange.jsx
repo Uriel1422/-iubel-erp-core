@@ -10,38 +10,15 @@ import {
     Tooltip, CartesianGrid, BarChart, Bar, Cell
 } from 'recharts';
 
-const MOCK_TRADES = [
-    { id: 1, type: 'buy', price: 105.50, amount: 250, time: '16:05:22' },
-    { id: 2, type: 'sell', price: 105.55, amount: 100, time: '16:05:15' },
-    { id: 3, type: 'buy', price: 105.45, amount: 1500, time: '16:04:58' },
-    { id: 4, type: 'sell', price: 106.00, amount: 800, time: '16:04:30' },
-    { id: 5, type: 'buy', price: 105.30, amount: 50, time: '16:04:10' },
-];
-
-const MOCK_ORDER_BOOK_SELL = [
-    { price: 106.10, amount: 1200, total: 1200 },
-    { price: 106.00, amount: 850, total: 2050 },
-    { price: 105.80, amount: 400, total: 2450 },
-    { price: 105.65, amount: 95, total: 2545 },
-    { price: 105.55, amount: 310, total: 2855 },
-];
-
-const MOCK_ORDER_BOOK_BUY = [
-    { price: 105.50, amount: 500, total: 500 },
-    { price: 105.45, amount: 1250, total: 1750 },
-    { price: 105.30, amount: 2100, total: 3850 },
-    { price: 105.10, amount: 150, total: 4000 },
-    { price: 104.90, amount: 3200, total: 7200 },
-];
+const MOCK_TRADES = [];
+const MOCK_ORDER_BOOK_SELL = [];
+const MOCK_ORDER_BOOK_BUY = [];
 
 const Exchange = () => {
     const [price, setPrice] = useState(105.52);
     const [change, setChange] = useState(+2.45);
     const [activeTab, setActiveTab] = useState('trading'); // trading, tokens
-    const [tokenizedAssets, setTokenizedAssets] = useState([
-        { name: 'Aportaciones Clase A', symbol: 'IUB-A', balance: 5000, color: '#38bdf8' },
-        { name: 'Reserva de Liquidez', symbol: 'IUB-LQ', balance: 1200, color: '#10b981' },
-    ]);
+    const [tokenizedAssets, setTokenizedAssets] = useState([]);
 
     // Simular tickers de mercado
     useEffect(() => {
@@ -79,7 +56,7 @@ const Exchange = () => {
                     </div>
                     <div>
                         <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>24h Volume</div>
-                        <div style={{ fontWeight: 700 }}>$1.2M</div>
+                        <div style={{ fontWeight: 700 }}>$0.00</div>
                     </div>
                 </div>
 
@@ -240,9 +217,9 @@ const Exchange = () => {
                         </div>
                         <div className="card glass layout-card" style={{ padding: '1.5rem' }}>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Valor de Capitalización</div>
-                            <div style={{ fontSize: '2rem', fontWeight: 800 }}>$1.3B</div>
-                            <div style={{ fontSize: '0.75rem', marginTop: '1rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <TrendingUp size={14} /> +12.4% este mes
+                            <div style={{ fontSize: '2rem', fontWeight: 800 }}>$0.00</div>
+                            <div style={{ fontSize: '0.75rem', marginTop: '1rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <TrendingUp size={14} /> n/a
                             </div>
                         </div>
                         <div className="card glass layout-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', border: '2px dashed var(--primary)', cursor: 'pointer' }}>

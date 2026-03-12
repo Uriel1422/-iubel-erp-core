@@ -50,9 +50,9 @@ const LIVE_VOL_DATA = generateLiveFeedData();
 
 const WealthTerminal = () => {
     const [assets, setAssets] = useState(ASSETS);
-    const [chartData, setChartData] = useState(INITIAL_CHART_DATA);
-    const [portfolioValue, setPortfolioValue] = useState(164230.50);
-    const [dayChange, setDayChange] = useState(2450.00);
+    const [chartData, setChartData] = useState([]);
+    const [portfolioValue, setPortfolioValue] = useState(0.00);
+    const [dayChange, setDayChange] = useState(0.00);
     
     // Simulación de "Live Ticker" - Precios cambian cada 3 segundos
     useEffect(() => {

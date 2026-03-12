@@ -298,22 +298,22 @@ const Dashboard = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0ea5e9', marginBottom: '0.5rem' }}>
                             <CreditCard size={16} /> <span style={{ fontWeight: 800, fontSize: '0.7rem' }}>CARD ISSUING</span>
                         </div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>24 Tarjetas activas</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>0 intentos de fraude</div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>Cero tarjetas</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Security Shield activo</div>
                     </Link>
                     <Link to="/erp/datanode" style={{ textDecoration: 'none', color: 'inherit', padding: '1rem', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.1)', transition: '0.2s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#38bdf8', marginBottom: '0.5rem' }}>
                             <Network size={16} /> <span style={{ fontWeight: 800, fontSize: '0.7rem' }}>DATA NODE</span>
                         </div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>Anomalías: 0</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Risk cluster estable</div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>Red purificada</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Sin anomalías</div>
                     </Link>
                     <Link to="/erp/exchange" style={{ textDecoration: 'none', color: 'inherit', padding: '1rem', borderRadius: '12px', background: 'rgba(250, 204, 21, 0.05)', border: '1px solid rgba(250, 204, 21, 0.1)', transition: '0.2s' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#facc15', marginBottom: '0.5rem' }}>
                             <Repeat size={16} /> <span style={{ fontWeight: 800, fontSize: '0.7rem' }}>EXCHANGE</span>
                         </div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>IUB: $105.52</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Market Cap: $1.3B</div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>IUB: $--.--</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Market Cap: $0.00</div>
                     </Link>
                 </div>
             </div>
