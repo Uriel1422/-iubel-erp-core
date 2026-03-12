@@ -132,11 +132,12 @@ export const AuthProvider = ({ children }) => {
         // Wipe any residual cached data so next login starts fresh
         const keysToRemove = Object.keys(localStorage).filter(k => k !== 'iubel_token');
         keysToRemove.forEach(k => localStorage.removeItem(k));
+        sessionStorage.clear();
         setToken(null);
         setUser(null);
         setEmpresa(null);
-        // FORCE RELOAD TO CLEAR ALL CONTEXTS STATE FROM IN-MEMORY
-        window.location.href = '/';
+        // FORCE RELOAD TO CLEAR ALL CONTEXTS STATE FROM IN-MEMORY AND PREVENT BACK BUTTON
+        window.location.replace('/login');
     };
 
     const login = async (empresaNombre, email, password) => {

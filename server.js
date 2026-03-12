@@ -29,7 +29,7 @@ process.on('unhandledRejection', (reason, promise) => {
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'iubel_erp_secret_2026';
-const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '8h';
+const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '4h';
 
 // ─── APERTURA DE PUERTO INMEDIATA (Protección contra 502) ─────────────────────
 app.listen(PORT, '0.0.0.0', () => {

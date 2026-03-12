@@ -96,7 +96,15 @@ export const CuentasProvider = ({ children }) => {
     }, [cuentas, hasLoaded]);
 
     const addCuenta = (nuevaCuenta) => {
-        setCuentas([...cuentas, { ...nuevaCuenta, id: Date.now().toString() }]);
+        const id = Date.now().toString();
+        const cuentaNormalizada = {
+            ...nuevaCuenta,
+            id,
+            padreId: nuevaCuenta.padreId || null,
+            activa: nuevaCuenta.activa !== undefined ? nuevaCuenta.activa : true,
+            created_at: new Date().toISOString()
+        };
+        setCuentas(prev => [...prev, cuentaNormalizada]);
     };
 
     const updateCuenta = (id, cuentaActualizada) => {
