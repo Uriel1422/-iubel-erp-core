@@ -12,29 +12,63 @@ export const SuperAdminProvider = ({ children }) => {
     const [broadcastMessage, setBroadcastMessage] = useState(() => localStorage.getItem('sa_broadcast_msg') || '');
     const initialized = useRef(false);
 
-    // Persistencia y Sincronización Inter-pestañas
-    useEffect(() => {
-        const handleStorageChange = (e) => {
-            if (e.key === 'sa_kill_switch') {
-                setGlobalKillSwitch(e.newValue === 'true');
+    // Persistencia y Sincronización Inter-pestañas y Cloud
+    const fetchGlobalSettings = async () => {
+        try {
+            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
+            const resp = await fetch(url);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.killSwitch !== undefined) setGlobalKillSwitch(data.killSwitch);
+                if (data.broadcastMessage !== undefined) setBroadcastMessage(data.broadcastMessage);
             }
-            if (e.key === 'sa_broadcast_msg') {
-                setBroadcastMessage(e.newValue || '');
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
-    const updateKillSwitch = (val) => {
-        setGlobalKillSwitch(val);
-        localStorage.setItem('sa_kill_switch', val);
+        } catch (err) {}
     };
 
-    const updateBroadcast = (msg) => {
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'sa_kill_switch') setGlobalKillSwitch(e.newValue === 'true');
+            if (e.key === 'sa_broadcast_msg') setBroadcastMessage(e.newValue || '');
+        };
+
+        const interval = setInterval(fetchGlobalSettings, 20000); // Polling cada 20s
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('focus', fetchGlobalSettings);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('focus', fetchGlobalSettings);
+            clearInterval(interval);
+        };
+    }, []);
+
+    const updateKillSwitch = async (val) => {
+        setGlobalKillSwitch(val);
+        try {
+            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/settings' : '/api/superadmin/settings';
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ killSwitch: val })
+            });
+        } catch (err) {
+            console.error('Error syncing kill switch:', err);
+        }
+    };
+
+    const updateBroadcast = async (msg) => {
         setBroadcastMessage(msg);
-        localStorage.setItem('sa_broadcast_msg', msg);
+        try {
+            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/settings' : '/api/superadmin/settings';
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ broadcastMessage: msg })
+            });
+        } catch (err) {
+            console.error('Error syncing broadcast:', err);
+        }
     };
 
     useEffect(() => {
@@ -55,6 +89,13 @@ export const SuperAdminProvider = ({ children }) => {
 
         const validateToken = async () => {
             try {
+                // Fetch Global Settings first (Public)
+                const settingsUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
+                fetch(settingsUrl).then(r => r.json()).then(data => {
+                    if (data.killSwitch !== undefined) setGlobalKillSwitch(data.killSwitch);
+                    if (data.broadcastMessage !== undefined) setBroadcastMessage(data.broadcastMessage);
+                }).catch(() => {});
+
                 const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/me' : '/api/superadmin/me';
                 const resp = await fetch(url, {
                     headers: {

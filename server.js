@@ -126,6 +126,28 @@ const startServer = async () => {
 
 startServer();
 
+// ─── Global System State ──────────────────────────────────────────────────────
+let globalKillSwitch = false;
+let globalBroadcastMsg = '';
+
+const refreshGlobalSettings = async () => {
+    try {
+        const [rows] = await pool.execute('SELECT `key`, `value` FROM global_settings');
+        const settings = rows.reduce((acc, row) => {
+            acc[row.key] = row.value;
+            return acc;
+        }, {});
+        globalKillSwitch = settings.sa_kill_switch === 'true';
+        globalBroadcastMsg = settings.sa_broadcast_msg || '';
+        // console.log(`[SYS] Global State Updated: KillSwitch=${globalKillSwitch}, Broadcast="${globalBroadcastMsg}"`);
+    } catch (err) {
+        console.error('[SYS] Error refreshing global settings:', err.message);
+    }
+};
+
+// Refresh settings every 10 seconds automatically
+setInterval(refreshGlobalSettings, 10000);
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const validName = (n) => /^[a-zA-Z0-9_]+$/.test(n);
 
@@ -250,6 +272,33 @@ const slugify = (str) =>
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '');
 
+// ─── Kill Switch Middleware ──────────────────────────────────────────────────────
+const killSwitchMiddleware = (req, res, next) => {
+    // Si el Kill Switch está activo, bloqueamos a todos EXCEPTO a los SuperAdmins
+    // Las rutas de login de superadmin y assets estáticos siempre deben permitirse
+    const isSuperAdminRoute = req.path.startsWith('/api/superadmin');
+    const isStaticFile = !req.path.startsWith('/api/');
+    
+    if (globalKillSwitch && !isSuperAdminRoute && !isStaticFile) {
+        // Intentar verificar si es un SA antes de bloquear
+        const header = req.headers['authorization'];
+        if (header && header.startsWith('Bearer ')) {
+            try {
+                const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
+                if (decoded.role === 'sysadmin') return next();
+            } catch (e) {}
+        }
+        return res.status(503).json({ 
+            error: 'SISTEMA TEMPORALMENTE SUSPENDIDO', 
+            message: 'El administrador global ha activado el modo de emergencia.',
+            killSwitch: true 
+        });
+    }
+    next();
+};
+
+app.use(killSwitchMiddleware);
+
 // ─── Superadmin Middleware ────────────────────────────────────────────────────────
 const superadminMiddleware = (req, res, next) => {
     const header = req.headers['authorization'];
@@ -303,6 +352,39 @@ app.get('/api/superadmin/me', superadminMiddleware, async (req, res) => {
         res.json({ user: admins[0] });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// --- SETTINGS GLOBALES ---
+app.get('/api/system/settings', async (req, res) => {
+    try {
+        // En lugar de ir a BD cada vez (lento), usamos las variables en memoria que se refrescan cada 10s
+        res.json({ 
+            killSwitch: globalKillSwitch, 
+            broadcastMessage: globalBroadcastMsg 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/superadmin/settings', superadminMiddleware, async (req, res) => {
+    const { killSwitch, broadcastMessage } = req.body;
+    try {
+        if (killSwitch !== undefined) {
+            await pool.execute('INSERT INTO global_settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = ?', 
+                ['sa_kill_switch', String(killSwitch), String(killSwitch)]);
+            globalKillSwitch = !!killSwitch;
+        }
+        if (broadcastMessage !== undefined) {
+            await pool.execute('INSERT INTO global_settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = ?', 
+                ['sa_broadcast_msg', String(broadcastMessage), String(broadcastMessage)]);
+            globalBroadcastMsg = String(broadcastMessage);
+        }
+        res.json({ success: true, killSwitch: globalKillSwitch, broadcastMessage: globalBroadcastMsg });
+    } catch (err) {
+        console.error('Error updating global settings:', err);
+        res.status(500).json({ error: 'Error al actualizar configuraciones' });
     }
 });
 
