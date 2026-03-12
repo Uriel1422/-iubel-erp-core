@@ -31,7 +31,7 @@ export const SuperAdminProvider = ({ children }) => {
             if (e.key === 'sa_broadcast_msg') setBroadcastMessage(e.newValue || '');
         };
 
-        const interval = setInterval(fetchGlobalSettings, 20000); // Polling cada 20s
+        const interval = setInterval(fetchGlobalSettings, 10000); // Polling cada 10s para máxima respuesta
 
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('focus', fetchGlobalSettings);
@@ -72,55 +72,41 @@ export const SuperAdminProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        if (initialized.current) return;
-        initialized.current = true;
+        // 1. CARGA INMEDIATA DE SETTINGS (No requiere token)
+        fetchGlobalSettings();
 
+        // 2. VALIDACIÓN DE TOKEN SA (Si existe)
         const savedToken = localStorage.getItem('sa_token');
+        if (savedToken && !initialized.current) {
+            initialized.current = true;
+            
+            const validateToken = async () => {
+                try {
+                    const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/me' : '/api/superadmin/me';
+                    const resp = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${savedToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
 
-        const validateToken = async () => {
-            // CARGA UNIVERSAL DE SETTINGS (No requiere token)
-            const settingsUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/system/settings' : '/api/system/settings';
-            fetch(settingsUrl).then(r => r.json()).then(data => {
-                if (data.killSwitch !== undefined) setGlobalKillSwitch(data.killSwitch);
-                if (data.broadcastMessage !== undefined) setBroadcastMessage(data.broadcastMessage);
-            }).catch(() => {});
-
-            if (!savedToken) {
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/me' : '/api/superadmin/me';
-                const resp = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${savedToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    signal: controller.signal
-                });
-
-                if (resp.ok) {
-                    const data = await resp.json();
-                    setToken(savedToken);
-                    setUser(data.user);
-                } else {
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        setToken(savedToken);
+                        setUser(data.user);
+                    } else {
+                        localStorage.removeItem('sa_token');
+                    }
+                } catch {
                     localStorage.removeItem('sa_token');
+                } finally {
+                    setIsLoading(false);
                 }
-            } catch {
-                localStorage.removeItem('sa_token');
-            } finally {
-                clearTimeout(timeout);
-                setIsLoading(false);
-            }
-        };
-
-        validateToken();
-
-        return () => {
-            controller.abort();
-            clearTimeout(timeout);
-        };
+            };
+            validateToken();
+        } else {
+            setIsLoading(false);
+        }
     }, []);
 
     const login = async (email, password) => {

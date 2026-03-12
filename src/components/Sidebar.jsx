@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-    LayoutDashboard, BookOpen, Package, FileText, ShoppingCart,
+    LayoutDashboard, BookOpen, Package, FileText, ShoppingCart, LogOut,
     Calculator, PieChart, Users, Landmark, ShieldCheck, ClipboardList,
     HardDrive, Briefcase, Calendar, Clock, Target, Activity, FilePlus,
     GitMerge, FileX, RefreshCw, UserSquare, Banknote, Lock, BarChart2, TrendingUp, CreditCard, DollarSign, Scale, Wallet, Server,
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const Sidebar = () => {
-    const { user, empresa, hasAccess } = useAuth();
+    const { user, empresa, hasAccess, logout } = useAuth();
     const role = user?.role || 'contador';
 
     // Roles: admin, contador, auditor, cajero, auxiliar
@@ -117,6 +117,19 @@ const Sidebar = () => {
                 { path: 'auditoria', icon: <ShieldCheck className="nav-icon" />, label: 'Registro Auditoría', display: hasRole(['admin', 'auditor']), featureId: 'auditoria' },
                 { path: 'seguridad', icon: <UserCheck className="nav-icon" />, label: '👥 Usuarios y Roles', display: hasRole(['admin']), featureId: 'auditoria' },
             ].filter(i => i.display && hasAccess(i.featureId))
+        },
+        {
+            label: 'Sistema y Sesión',
+            display: true,
+            items: [
+                { 
+                    path: '#logout', 
+                    icon: <LogOut className="nav-icon" style={{ color: '#fca5a5' }} />, 
+                    label: <span style={{ color: '#fca5a5' }}>Cerrar Sesión</span>, 
+                    display: true, 
+                    action: logout 
+                },
+            ].filter(i => i.display)
         }
     ].filter(s => s.display && s.items.length > 0);
 
@@ -142,6 +155,7 @@ const Sidebar = () => {
                                 to={item.path}
                                 end={item.exact}
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                                onClick={item.action ? (e) => { e.preventDefault(); item.action(); } : undefined}
                             >
                                 {item.icon}
                                 <span>{item.label}</span>

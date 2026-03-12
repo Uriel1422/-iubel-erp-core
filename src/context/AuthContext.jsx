@@ -136,6 +136,13 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
         setUser(null);
         setEmpresa(null);
+        
+        // DISABLE BACK BUTTON
+        window.history.pushState(null, '', window.location.href);
+        window.onpopstate = function() {
+            window.history.pushState(null, '', window.location.href);
+        };
+
         // FORCE RELOAD TO CLEAR ALL CONTEXTS STATE FROM IN-MEMORY AND PREVENT BACK BUTTON
         window.location.replace('/login');
     };

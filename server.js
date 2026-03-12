@@ -57,6 +57,32 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+// ─── Kill Switch Middleware (PRIORITY) ──────────────────────────────────────────
+// Se define aquí pero se usará antes de otras rutas
+const killSwitchMiddleware = (req, res, next) => {
+    const isSuperAdminRoute = req.path.startsWith('/api/superadmin');
+    const isStaticFile = !req.path.startsWith('/api/');
+    
+    if (globalKillSwitch && !isSuperAdminRoute && !isStaticFile) {
+        const header = req.headers['authorization'];
+        if (header && header.startsWith('Bearer ')) {
+            try {
+                // Importación dinámica o asíncrona si JWT no está listo, pero aquí ya lo está
+                const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
+                if (decoded.role === 'sysadmin') return next();
+            } catch (e) {}
+        }
+        return res.status(503).json({ 
+            error: 'SISTEMA TEMPORALMENTE SUSPENDIDO', 
+            message: 'El administrador global ha activado el modo de emergencia.',
+            killSwitch: true 
+        });
+    }
+    next();
+};
+
+app.use(killSwitchMiddleware);
+
 // 2. Servir Frontend (Vite)
 const distPath = path.resolve(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
@@ -145,8 +171,8 @@ const refreshGlobalSettings = async () => {
     }
 };
 
-// Refresh settings every 10 seconds automatically
-setInterval(refreshGlobalSettings, 10000);
+// Refresh settings every 5 seconds automatically (More responsive)
+setInterval(refreshGlobalSettings, 5000);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const validName = (n) => /^[a-zA-Z0-9_]+$/.test(n);
@@ -271,31 +297,6 @@ const slugify = (str) =>
         .replace(/[^a-z0-9]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '');
-
-// ─── Kill Switch Middleware ──────────────────────────────────────────────────────
-const killSwitchMiddleware = (req, res, next) => {
-    // Si el Kill Switch está activo, bloqueamos a todos EXCEPTO a los SuperAdmins
-    // Las rutas de login de superadmin y assets estáticos siempre deben permitirse
-    const isSuperAdminRoute = req.path.startsWith('/api/superadmin');
-    const isStaticFile = !req.path.startsWith('/api/');
-    
-    if (globalKillSwitch && !isSuperAdminRoute && !isStaticFile) {
-        // Intentar verificar si es un SA antes de bloquear
-        const header = req.headers['authorization'];
-        if (header && header.startsWith('Bearer ')) {
-            try {
-                const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
-                if (decoded.role === 'sysadmin') return next();
-            } catch (e) {}
-        }
-        return res.status(503).json({ 
-            error: 'SISTEMA TEMPORALMENTE SUSPENDIDO', 
-            message: 'El administrador global ha activado el modo de emergencia.',
-            killSwitch: true 
-        });
-    }
-    next();
-};
 
 app.use(killSwitchMiddleware);
 
