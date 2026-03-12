@@ -1,7 +1,8 @@
+```
 import React, { useState, useEffect } from 'react';
 import { 
     TrendingUp, TrendingDown, Activity, DollarSign, Wallet, 
-    PieChart, ArrowUpRight, ArrowDownRight, Zap, RefreshCw, Star, BarChart2
+    PieChart, ArrowUpRight, ArrowDownRight, Zap, RefreshCw, Star, BarChart2, Shield
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
