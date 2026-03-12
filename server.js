@@ -114,12 +114,13 @@ const pool = mysql.createPool({
 });
 
 const startServer = async () => {
+    console.log(`🔍 DATABASE_URL detectado: ${mysqlPublicUrl ? 'SÍ (' + mysqlPublicUrl.substring(0, 25) + '...)' : 'NO'}`);
     try {
         const conn = await pool.getConnection();
         console.log('✅ MySQL conectado exitosamente.');
         conn.release();
     } catch (err) {
-        console.error('⚠️ MySQL no disponible aún:', err.message);
+        console.error('⚠️ MySQL no disponible:', JSON.stringify({ code: err.code, errno: err.errno, message: err.message, fatal: err.fatal }));
     }
 };
 
