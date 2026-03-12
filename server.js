@@ -61,9 +61,10 @@ app.use(express.json({ limit: '50mb' }));
 // Se define aquí pero se usará antes de otras rutas
 const killSwitchMiddleware = (req, res, next) => {
     const isSuperAdminRoute = req.path.startsWith('/api/superadmin');
+    const isSettingsRoute = req.path === '/api/system/settings';
     const isStaticFile = !req.path.startsWith('/api/');
     
-    if (globalKillSwitch && !isSuperAdminRoute && !isStaticFile) {
+    if (globalKillSwitch && !isSuperAdminRoute && !isSettingsRoute && !isStaticFile) {
         const header = req.headers['authorization'];
         if (header && header.startsWith('Bearer ')) {
             try {

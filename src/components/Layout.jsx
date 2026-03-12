@@ -136,34 +136,9 @@ const Layout = () => {
         setShowResults(false);
     };
 
-    if (globalKillSwitch) {
-        return (
-            <div style={{ height: '100vh', width: '100vw', background: '#020617', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', gap: '2rem', textAlign: 'center', padding: '2rem' }}>
-                <div style={{ padding: '2rem', background: '#ef444422', borderRadius: '50%', animation: 'pulse 2s infinite' }}>
-                    <ShieldAlert size={80} color="#ef4444" />
-                </div>
-                <div>
-                    <h1 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '0.5rem' }}>SISTEMA SUSPENDIDO</h1>
-                    <p style={{ fontSize: '1.2rem', color: '#94a3b8', maxWidth: '600px' }}>
-                        El Superadministrador ha activado el <strong>Kill-Switch Global</strong> por razones de seguridad o mantenimiento crítico. 
-                        Todas las operaciones están pausadas temporalmente.
-                    </p>
-                </div>
-                <div style={{ padding: '1rem 2rem', border: '1px solid #1e293b', borderRadius: '12px', background: '#0f172a', fontSize: '0.9rem', color: '#38bdf8', fontFamily: 'monospace' }}>
-                    STATUS: LOCKED_BY_ROOT
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className={`app-container ${settings.preferencias.modoOscuro ? 'dark-theme' : ''}`}>
-            {broadcastMessage && (
-                <div style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6)', color: 'white', padding: '0.625rem', textAlign: 'center', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', position: 'relative', zIndex: 1000 }}>
-                    <ShieldAlert size={16} />
-                    ADVISORY: {broadcastMessage}
-                </div>
-            )}
             <Sidebar />
             <main className="main-content">
                 <header className="top-header">
