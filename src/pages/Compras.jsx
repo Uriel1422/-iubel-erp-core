@@ -22,6 +22,16 @@ const Compras = () => {
     const [tipoGasto, setTipoGasto] = useState('02'); // 02: Gastos por Trabajos/Servicios, 09: Compras e Inversiones
     const [condicion, setCondicion] = useState('Contado');
     const [fechaFactura, setFechaFactura] = useState(new Date().toISOString().split('T')[0]);
+    const [diasVencimiento, setDiasVencimiento] = useState('');
+
+    // Calcula la fecha de vencimiento automáticamente según los días ingresados
+    const fechaVencimientoCalc = (() => {
+        if (!diasVencimiento || condicion === 'Contado') return null;
+        const base = new Date(fechaFactura + 'T00:00:00');
+        base.setDate(base.getDate() + parseInt(diasVencimiento, 10));
+        return base;
+    })();
+    const diasRestantes = fechaVencimientoCalc ? Math.ceil((fechaVencimientoCalc - new Date()) / 86400000) : null;
 
     const [montoInput, setMontoInput] = useState('');
     const [itbisManual, setItbisManual] = useState('');
@@ -130,6 +140,8 @@ const Compras = () => {
             proveedorRnc,
             ncf,
             fechaFactura,
+            diasVencimiento: condicion === 'Credito' ? Number(diasVencimiento) || 0 : 0,
+            fechaVencimiento: fechaVencimientoCalc ? fechaVencimientoCalc.toISOString().split('T')[0] : null,
             tipoGasto,
             condicion,
             cuentaDestinoId,
@@ -163,6 +175,7 @@ const Compras = () => {
         setItbisRetenido(0);
         setPorcentajeIsr(0);
         setFacturaExenta(false);
+        setDiasVencimiento('');
     };
 
     const handleEdit = (compra) => {
@@ -391,11 +404,52 @@ const Compras = () => {
                         </div>
                         <div className="input-group">
                             <label className="input-label">Condición de Pago</label>
-                            <select className="input-field" value={condicion} onChange={e => setCondicion(e.target.value)}>
+                            <select className="input-field" value={condicion} onChange={e => { setCondicion(e.target.value); if (e.target.value === 'Contado') setDiasVencimiento(''); }}>
                                 <option value="Contado">Al Contado (Caja/Bancos)</option>
                                 <option value="Credito">A Crédito (Cuentas por Pagar Proveedores)</option>
                             </select>
                         </div>
+
+                        {condicion === 'Credito' && (
+                            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                                <label className="input-label" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                                    ⏱ Plazo de Vencimiento
+                                </label>
+                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '0 0 auto' }}>
+                                        <input
+                                            type="number" min="1" max="365" className="input-field"
+                                            value={diasVencimiento}
+                                            onChange={e => setDiasVencimiento(e.target.value)}
+                                            placeholder="Ej: 30"
+                                            style={{ width: '90px' }}
+                                        />
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>días</span>
+                                    </div>
+                                    {[15, 30, 45, 60, 90].map(d => (
+                                        <button key={d} type="button"
+                                            onClick={() => setDiasVencimiento(String(d))}
+                                            className="btn btn-secondary"
+                                            style={{ padding: '0.3rem 0.65rem', fontSize: '0.8rem', fontWeight: 700, background: diasVencimiento === String(d) ? 'var(--primary)' : undefined, color: diasVencimiento === String(d) ? '#fff' : undefined, border: '1px solid var(--border)' }}
+                                        >{d}d</button>
+                                    ))}
+                                    {fechaVencimientoCalc && (
+                                        <div style={{
+                                            marginLeft: 'auto', padding: '0.4rem 1rem',
+                                            borderRadius: 'var(--radius-sm)',
+                                            background: diasRestantes < 0 ? '#fee2e2' : diasRestantes < 10 ? '#fef3c7' : 'var(--primary-light)',
+                                            color: diasRestantes < 0 ? 'var(--danger)' : diasRestantes < 10 ? '#b45309' : 'var(--primary)',
+                                            fontWeight: 800, fontSize: '0.85rem',
+                                            display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                        }}>
+                                            <span>📅</span>
+                                            <span>Vence: {fechaVencimientoCalc.toLocaleDateString('es-DO', { day:'2-digit', month:'short', year:'numeric' })}</span>
+                                            <span style={{ opacity: 0.75, fontWeight: 600 }}>({diasRestantes >= 0 ? `en ${diasRestantes} días` : `hace ${Math.abs(diasRestantes)} días`})</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* New Field: Cuenta Credito */}
@@ -525,84 +579,143 @@ const Compras = () => {
                         </div>
                     </div>
 
-                    {/* Edición de Asiento Previa */}
-                    {mostrarAsientoDetalle && (
-                        <div style={{ marginTop: '2rem', background: '#fffbeb', padding: '1.5rem', borderRadius: '12px', border: '1px solid #fde68a' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: '#92400e', display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Previsualización de Asiento Contable (Ajuste Manual)</span>
-                                <button type="button" onClick={() => setMostrarAsientoDetalle(false)} style={{ fontSize: '0.75rem', background: 'none', border: 'none', color: '#b45309', cursor: 'pointer' }}>Usar Automático</button>
-                            </h3>
-                            <table style={{ width: '100%', fontSize: '0.9rem' }}>
-                                <thead>
-                                    <tr style={{ textAlign: 'left' }}>
-                                        <th>Cuenta</th>
-                                        <th style={{ textAlign: 'right' }}>Débito</th>
-                                        <th style={{ textAlign: 'right' }}>Crédito</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {lineasAsiento.map((linea, idx) => {
-                                        const c = cuentas.find(acc => acc.id === linea.cuentaId);
-                                        return (
-                                            <tr key={idx} style={{ borderTop: '1px solid #fef3c7' }}>
-                                                <td style={{ padding: '0.5rem 0' }}>
-                                                    <select 
-                                                        value={linea.cuentaId} 
-                                                        className="input-field-mini" 
-                                                        style={{ width: '100%', fontSize: '0.8rem' }}
-                                                        onChange={e => {
-                                                            const newLines = [...lineasAsiento];
-                                                            newLines[idx].cuentaId = e.target.value;
-                                                            newLines[idx].cuentaCodigo = e.target.value;
-                                                            setLineasAsiento(newLines);
-                                                        }}
-                                                    >
-                                                        {cuentas.filter(acc => acc.subtipo === 'Cuenta Detalle').map(acc => (
-                                                            <option key={acc.id} value={acc.id}>{acc.codigo} - {acc.nombre}</option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <input 
-                                                        type="number" 
-                                                        className="input-field-mini" 
-                                                        style={{ width: '100%', textAlign: 'right' }} 
-                                                        value={linea.debito} 
-                                                        onChange={e => {
-                                                            const newLines = [...lineasAsiento];
-                                                            newLines[idx].debito = Number(e.target.value) || 0;
-                                                            setLineasAsiento(newLines);
-                                                        }}
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <input 
-                                                        type="number" 
-                                                        className="input-field-mini" 
-                                                        style={{ width: '100%', textAlign: 'right' }} 
-                                                        value={linea.credito} 
-                                                        onChange={e => {
-                                                            const newLines = [...lineasAsiento];
-                                                            newLines[idx].credito = Number(e.target.value) || 0;
-                                                            setLineasAsiento(newLines);
-                                                        }}
-                                                    />
-                                                </td>
+                    {/* ===== PANEL DE ASIENTO CONTABLE (ERP PROFESIONAL) ===== */}
+                    {mostrarAsientoDetalle && (() => {
+                        const totalDebitos = lineasAsiento.reduce((a,b) => a + b.debito, 0);
+                        const totalCreditos = lineasAsiento.reduce((a,b) => a + b.credito, 0);
+                        const diferencia = totalDebitos - totalCreditos;
+                        const cuadrado = Math.abs(diferencia) < 0.005;
+                        const cuentasDetalle = cuentas.filter(acc => acc.subtipo === 'Cuenta Detalle');
+                        return (
+                            <div style={{ marginTop: '2rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+                                {/* Header */}
+                                <div style={{ background: 'linear-gradient(135deg, #1e293b, #334155)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>📒</div>
+                                        <div>
+                                            <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.5px' }}>ASIENTO CONTABLE</div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase' }}>Editable · Doble Partida</div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ padding: '0.3rem 0.9rem', borderRadius: '20px', background: cuadrado ? '#16a34a' : '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <span>{cuadrado ? '✓' : '!'}</span>
+                                            <span>{cuadrado ? 'CUADRADO' : `Diferencia: ${formatMoney(Math.abs(diferencia))}`}</span>
+                                        </div>
+                                        <button type="button" onClick={() => setMostrarAsientoDetalle(false)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>✕ Usar Auto</button>
+                                    </div>
+                                </div>
+
+                                {/* Table */}
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                                                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', width: '3rem' }}>#</th>
+                                                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Cuenta Contable</th>
+                                                <th style={{ padding: '0.65rem 1.5rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '1px', width: '170px' }}>DÉBITO (DR)</th>
+                                                <th style={{ padding: '0.65rem 1.5rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '1px', width: '170px' }}>CRÉDITO (CR)</th>
+                                                <th style={{ width: '2rem' }}></th>
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                                <tfoot>
-                                    <tr style={{ fontWeight: 800 }}>
-                                        <td style={{ textAlign: 'right', padding: '0.5rem' }}>TOTALES:</td>
-                                        <td style={{ textAlign: 'right' }}>{formatMoney(lineasAsiento.reduce((a,b)=>a+b.debito,0))}</td>
-                                        <td style={{ textAlign: 'right' }}>{formatMoney(lineasAsiento.reduce((a,b)=>a+b.credito,0))}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                            <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', fontStyle: 'italic', color: '#92400e' }}>* Puede cambiar las cuentas o los montos. Asegúrese de que el asiento esté cuadrado.</p>
-                        </div>
-                    )}
+                                        </thead>
+                                        <tbody>
+                                            {lineasAsiento.map((linea, idx) => {
+                                                const esDebito = linea.debito > 0;
+                                                const esCredito = linea.credito > 0;
+                                                return (
+                                                    <tr key={idx} style={{
+                                                        borderBottom: '1px solid #f1f5f9',
+                                                        background: idx % 2 === 0 ? '#ffffff' : '#fafafa',
+                                                        transition: 'background 0.15s'
+                                                    }}>
+                                                        <td style={{ padding: '0.6rem 1rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
+                                                        <td style={{ padding: '0.6rem 1rem' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <div style={{ width: '5px', height: '28px', borderRadius: '3px', background: esDebito ? '#2563eb' : '#16a34a', flexShrink: 0 }} />
+                                                                <select
+                                                                    value={linea.cuentaId}
+                                                                    className="input-field-mini"
+                                                                    style={{ width: '100%', fontSize: '0.82rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}
+                                                                    onChange={e => {
+                                                                        const newLines = [...lineasAsiento];
+                                                                        newLines[idx].cuentaId = e.target.value;
+                                                                        newLines[idx].cuentaCodigo = e.target.value;
+                                                                        setLineasAsiento(newLines);
+                                                                    }}
+                                                                >
+                                                                    {cuentasDetalle.map(acc => (
+                                                                        <option key={acc.id} value={acc.id}>{acc.codigo} — {acc.nombre}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                            {linea.nombre && <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginLeft: '1rem', marginTop: '2px' }}>{linea.nombre}</div>}
+                                                        </td>
+                                                        <td style={{ padding: '0.6rem 1.5rem', verticalAlign: 'middle' }}>
+                                                            <input
+                                                                type="number" step="0.01" min="0"
+                                                                value={linea.debito || ''}
+                                                                placeholder="0.00"
+                                                                onChange={e => { const l = [...lineasAsiento]; l[idx].debito = Number(e.target.value)||0; setLineasAsiento(l); }}
+                                                                style={{
+                                                                    width: '100%', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700,
+                                                                    fontSize: '0.95rem', color: '#2563eb',
+                                                                    border: linea.debito > 0 ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
+                                                                    borderRadius: '6px', padding: '0.4rem 0.6rem',
+                                                                    background: linea.debito > 0 ? '#eff6ff' : 'transparent', outline: 'none'
+                                                                }}
+                                                            />
+                                                        </td>
+                                                        <td style={{ padding: '0.6rem 1.5rem', verticalAlign: 'middle' }}>
+                                                            <input
+                                                                type="number" step="0.01" min="0"
+                                                                value={linea.credito || ''}
+                                                                placeholder="0.00"
+                                                                onChange={e => { const l = [...lineasAsiento]; l[idx].credito = Number(e.target.value)||0; setLineasAsiento(l); }}
+                                                                style={{
+                                                                    width: '100%', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700,
+                                                                    fontSize: '0.95rem', color: '#16a34a',
+                                                                    border: linea.credito > 0 ? '1.5px solid #16a34a' : '1px solid #e2e8f0',
+                                                                    borderRadius: '6px', padding: '0.4rem 0.6rem',
+                                                                    background: linea.credito > 0 ? '#f0fdf4' : 'transparent', outline: 'none'
+                                                                }}
+                                                            />
+                                                        </td>
+                                                        <td style={{ padding: '0.25rem', textAlign: 'center' }}>
+                                                            <button type="button" onClick={() => setLineasAsiento(lineasAsiento.filter((_,i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '0.2rem' }} title="Eliminar línea">×</button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style={{ background: '#f8fafc', borderTop: '2px solid #e2e8f0' }}>
+                                                <td colSpan="2" style={{ padding: '0.75rem 1rem', fontSize: '0.8rem', color: '#64748b' }}>
+                                                    <button type="button" onClick={() => setLineasAsiento([...lineasAsiento, { cuentaId: cuentas[0]?.id || '', debito: 0, credito: 0 }])} style={{ background: 'none', border: '1px dashed #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.75rem', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem' }}>+ Agregar línea</button>
+                                                </td>
+                                                <td style={{ padding: '0.75rem 1.5rem', textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total DR</div>
+                                                    <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '1rem', color: '#2563eb' }}>{formatMoney(totalDebitos)}</div>
+                                                </td>
+                                                <td style={{ padding: '0.75rem 1.5rem', textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total CR</div>
+                                                    <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '1rem', color: '#16a34a' }}>{formatMoney(totalCreditos)}</div>
+                                                </td>
+                                                <td />
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+
+                                {/* Footer */}
+                                <div style={{ background: cuadrado ? '#f0fdf4' : '#fef2f2', padding: '0.65rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderTop: `1px solid ${cuadrado ? '#bbf7d0' : '#fecaca'}` }}>
+                                    <span style={{ fontSize: '1rem' }}>{cuadrado ? '✅' : '⚠️'}</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: cuadrado ? '#15803d' : '#b91c1c' }}>
+                                        {cuadrado ? 'El asiento está cuadrado. Puede guardar con conciencia.' : `El asiento tiene una diferencia de ${formatMoney(Math.abs(diferencia))}. Ajuste los montos antes de guardar.`}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
                         {!mostrarAsientoDetalle && (
