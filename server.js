@@ -222,7 +222,7 @@ const logAudit = async (empresaId, usuarioId, accion, entidad, registroId, ip) =
 };
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const header = req.headers['authorization'];
     if (!header || !header.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Token requerido' });
@@ -595,6 +595,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     try {
         // Buscar empresa
+        const slug = slugify(empresaNombre);
         const [empresas] = await pool.execute(
             'SELECT * FROM empresas WHERE slug = ? LIMIT 1', [slug]
         );
