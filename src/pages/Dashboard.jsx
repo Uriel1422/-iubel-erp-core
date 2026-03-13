@@ -116,7 +116,7 @@ const Dashboard = () => {
                             <div style={{ flex: 1, fontWeight: 700, fontSize: '0.9rem' }}>
                                 Alerta de Comprobantes {a.tipo}: <span style={{ textDecoration: 'underline' }}>{a.msg}</span>. Por favor registre un nuevo rango en Gestión de NCF.
                             </div>
-                            <Link to="/ncf" style={{ fontSize: '0.8rem', fontWeight: 800, color: 'inherit', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            <Link to="/erp/ncf" style={{ fontSize: '0.8rem', fontWeight: 800, color: 'inherit', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                 Ir a Gestión →
                             </Link>
                         </div>
