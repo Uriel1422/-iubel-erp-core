@@ -10,15 +10,41 @@ import {
     Tooltip, CartesianGrid, BarChart, Bar, Cell
 } from 'recharts';
 
-const MOCK_TRADES = [];
-const MOCK_ORDER_BOOK_SELL = [];
-const MOCK_ORDER_BOOK_BUY = [];
+const MOCK_TRADES = [
+    { id: 'tr1', type: 'buy', price: 105.52, amount: 150, time: '13:30:12' },
+    { id: 'tr2', type: 'sell', price: 105.50, amount: 200, time: '13:28:45' },
+    { id: 'tr3', type: 'buy', price: 105.48, amount: 450, time: '13:25:10' },
+    { id: 'tr4', type: 'buy', price: 105.45, amount: 100, time: '13:22:33' },
+    { id: 'tr5', type: 'sell', price: 105.42, amount: 1200, time: '13:20:01' },
+];
+
+const MOCK_ORDER_BOOK_SELL = [
+    { price: 106.10, amount: 120, total: 2500 },
+    { price: 106.00, amount: 450, total: 2100 },
+    { price: 105.90, amount: 150, total: 1800 },
+    { price: 105.80, amount: 300, total: 1400 },
+    { price: 105.70, amount: 200, total: 900 },
+];
+
+const MOCK_ORDER_BOOK_BUY = [
+    { price: 105.40, amount: 400, total: 1500 },
+    { price: 105.30, amount: 800, total: 3200 },
+    { price: 105.20, amount: 150, total: 4500 },
+    { price: 105.10, amount: 1200, total: 7200 },
+    { price: 105.00, amount: 2500, total: 10000 },
+];
+
+const INITIAL_TOKENIZED_ASSETS = [
+    { symbol: 'IUB-REAL', name: 'Inmueble Sede Central', balance: 1000000, color: '#0ea5e9' },
+    { symbol: 'IUB-FLT', name: 'Flota Vehicular Logística', balance: 500000, color: '#8b5cf6' },
+    { symbol: 'IUB-INV', name: 'Inventario Estratégico RD', balance: 2500000, color: '#10b981' }
+];
 
 const Exchange = () => {
     const [price, setPrice] = useState(105.52);
     const [change, setChange] = useState(+2.45);
     const [activeTab, setActiveTab] = useState('trading'); // trading, tokens
-    const [tokenizedAssets, setTokenizedAssets] = useState([]);
+    const [tokenizedAssets, setTokenizedAssets] = useState(INITIAL_TOKENIZED_ASSETS);
 
     // Simular tickers de mercado
     useEffect(() => {
