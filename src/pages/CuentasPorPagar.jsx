@@ -9,16 +9,29 @@ import ConfirmModal from '../components/ConfirmModal';
 
 const fmt = (n) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(n || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-DO') : '—';
-const daysBetween = (d) => d ? Math.ceil(Math.abs(new Date() - new Date(d)) / 86400000) : 0;
+
+const calcVencimiento = (c) => {
+    const dueDate = c.fechaVencimiento ? new Date(c.fechaVencimiento) : new Date(c.fecha || c.fechaRegistro);
+    const today = new Date();
+    dueDate.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    return Math.ceil((today - dueDate) / 86400000); // positivo = vencido
+};
 
 const BUCKET_CONFIGS = [
-    { key: '0-30',  label: '0 - 30 días',  color: '#22c55e', bg: 'rgba(34,197,94,0.10)',   min: 0,  max: 30  },
-    { key: '31-60', label: '31 - 60 días', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  min: 31, max: 60  },
-    { key: '61-90', label: '61 - 90 días', color: '#f97316', bg: 'rgba(249,115,22,0.10)',  min: 61, max: 90  },
-    { key: '90+',   label: '+90 días',      color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   min: 91, max: 9999 },
+    { key: 'al-dia', label: 'Al día o Faltan', color: '#16a34a', bg: 'rgba(22,163,74,0.1)', min: -9999, max: 0 },
+    { key: '1-30',   label: '1 - 30 días v.',   color: '#eab308', bg: 'rgba(234,179,8,0.1)', min: 1, max: 30 },
+    { key: '31-60',  label: '31 - 60 días v.',  color: '#ea580c', bg: 'rgba(234,88,12,0.1)', min: 31, max: 60 },
+    { key: '61+',    label: '+61 días v.',      color: '#dc2626', bg: 'rgba(220,38,38,0.1)', min: 61, max: 9999 }
 ];
 
 const getBucket = (days) => BUCKET_CONFIGS.find(b => days >= b.min && days <= b.max) || BUCKET_CONFIGS[3];
+
+const getStatusBadge = (days) => {
+    if (days < 0) return { bg: 'rgba(22,163,74,0.1)', color: '#16a34a', text: `Vence en ${Math.abs(days)}d` };
+    if (days === 0) return { bg: 'rgba(234,179,8,0.1)', color: '#eab308', text: 'Vence HOY' };
+    return { bg: 'rgba(220,38,38,0.1)', color: '#dc2626', text: `Vencida ${days}d` };
+};
 
 // ─────────────────────────────────────────────────────────────────
 const CuentasPorPagar = () => {
@@ -46,7 +59,7 @@ const CuentasPorPagar = () => {
         const totals = {};
         BUCKET_CONFIGS.forEach(b => { totals[b.key] = { total: 0, count: 0 }; });
         pendientes.forEach(c => {
-            const days = daysBetween(c.fecha || c.fechaRegistro);
+            const days = calcVencimiento(c);
             const b = getBucket(days);
             totals[b.key].total += (c.total || 0);
             totals[b.key].count++;
@@ -54,7 +67,7 @@ const CuentasPorPagar = () => {
         return totals;
     }, [pendientes]);
 
-    const vencidas90 = bucketTotals['90+']?.total || 0;
+    const vencidas61 = bucketTotals['61+']?.total || 0;
 
     // ── Per-supplier grouping ─────────────────────────────────────
     const proveedorMap = useMemo(() => {
@@ -78,8 +91,8 @@ const CuentasPorPagar = () => {
             (c.ncf || '').toLowerCase().includes(busqueda.toLowerCase())
         );
         lista = [...lista].sort((a, b) => {
-            if (filtroOrden === 'dias_desc')  return daysBetween(b.fecha || b.fechaRegistro) - daysBetween(a.fecha || a.fechaRegistro);
-            if (filtroOrden === 'dias_asc')   return daysBetween(a.fecha || a.fechaRegistro) - daysBetween(b.fecha || b.fechaRegistro);
+            if (filtroOrden === 'dias_desc')  return calcVencimiento(b) - calcVencimiento(a);
+            if (filtroOrden === 'dias_asc')   return calcVencimiento(a) - calcVencimiento(b);
             if (filtroOrden === 'monto_desc') return (b.total || 0) - (a.total || 0);
             if (filtroOrden === 'monto_asc')  return (a.total || 0) - (b.total || 0);
             return 0;
@@ -136,7 +149,7 @@ const CuentasPorPagar = () => {
                 {[
                     { label: 'Total por Pagar', value: fmt(totalPendiente), icon: Wallet, color: '#dc2626', bg: 'rgba(220,38,38,0.1)', sub: `${pendientes.length} facturas pendientes` },
                     { label: 'Pagado este Período', value: fmt(totalPagado), icon: CheckCircle, color: '#16a34a', bg: 'rgba(34,197,94,0.1)', sub: `${pagadas.length} facturas pagadas` },
-                    { label: 'Vencidas +90 días', value: fmt(vencidas90), icon: AlertTriangle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)', sub: `${bucketTotals['90+']?.count || 0} documentos críticos` },
+                    { label: 'Vencidas Críticas (+60)', value: fmt(vencidas61), icon: AlertTriangle, color: '#ef4444', bg: 'rgba(239,68,68,0.1)', sub: `${bucketTotals['61+']?.count || 0} docs críticos` },
                     { label: 'Proveedores con Deuda', value: proveedorMap.filter(p => p.pendiente > 0).length, icon: Building2, color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', sub: `de ${proveedorMap.length} proveedores totales` },
                 ].map((kpi, i) => {
                     const Icon = kpi.icon;
@@ -154,6 +167,38 @@ const CuentasPorPagar = () => {
                     );
                 })}
             </div>
+
+            {/* ── Widget de Alertas Críticas ─────────────────── */}
+            {pendientes.some(c => calcVencimiento(c) > -7) && (
+                <div style={{ ...glassCard, padding: '1.25rem 1.5rem', background: 'linear-gradient(90deg, #fff1f2, #ffe4e6)', borderLeft: '4px solid #e11d48' }}>
+                    <div style={{ fontWeight: 800, color: '#be123c', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <AlertTriangle size={18} /> Vencimientos Próximos o Críticos
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
+                        {pendientes
+                            .map(c => ({ ...c, calcDays: calcVencimiento(c) }))
+                            .filter(c => c.calcDays > -7)
+                            .sort((a,b) => b.calcDays - a.calcDays)
+                            .slice(0, 5)
+                            .map(c => {
+                                const vBadge = getStatusBadge(c.calcDays);
+                                return (
+                                    <div key={c.id} style={{ background: 'rgba(255,255,255,0.7)', padding: '0.75rem 1rem', borderRadius: '10px', boxShadow: '0 2px 8px rgba(225,29,72,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{c.proveedorNombre || 'Proveedor Cta.'}</div>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Doc. {c.numeroInterno}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontWeight: 800, color: '#be123c', fontSize: '0.9rem' }}>{fmt(c.total)}</div>
+                                            <div style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: vBadge.bg, color: vBadge.color, fontWeight: 800, textTransform: 'uppercase', marginTop: '0.15rem', display: 'inline-block' }}>{vBadge.text}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        }
+                    </div>
+                </div>
+            )}
 
             {/* ── Aging Matrix ─────────────────────────────────── */}
             <div style={{ ...glassCard, padding: '1.5rem' }}>
@@ -220,11 +265,15 @@ const CuentasPorPagar = () => {
                                         </tr></thead>
                                         <tbody>
                                             {proveedor.compras.map(c => {
-                                                const days = daysBetween(c.fecha || c.fechaRegistro);
+                                                const days = calcVencimiento(c);
+                                                const vBadge = getStatusBadge(days);
                                                 return (
                                                     <tr key={c.id} style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
                                                         <td style={{ padding: '0.4rem 0.5rem', fontWeight: 600, color: '#dc2626' }}>{c.numeroInterno}</td>
-                                                        <td style={{ padding: '0.4rem 0.5rem' }}>{fmtDate(c.fecha || c.fechaRegistro)}</td>
+                                                        <td style={{ padding: '0.4rem 0.5rem' }}>
+                                                            <div>{fmtDate(c.fecha || c.fechaRegistro)}</div>
+                                                            {c.estado === 'Pendiente' && <div style={{ fontSize: '0.65rem', color: vBadge.color, fontWeight: 700, marginTop: '2px' }}>{vBadge.text}</div>}
+                                                        </td>
                                                         <td style={{ padding: '0.4rem 0.5rem', color: 'var(--text-muted)' }}>{c.ncf || '—'}</td>
                                                         <td style={{ padding: '0.4rem 0.5rem', textAlign: 'right', fontWeight: 600 }}>{fmt(c.total)}</td>
                                                         <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }}>
@@ -282,15 +331,15 @@ const CuentasPorPagar = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                         <thead>
                             <tr style={{ background: 'rgba(248,250,252,0.9)' }}>
-                                {['#', 'Proveedor', 'NCF', 'Fecha', 'Días', 'Subtotal', 'ITBIS', 'Total', 'Estado', 'Acción'].map(h => (
+                                {['#', 'Proveedor', 'NCF', 'Emisión', 'Vencimiento', 'Subtotal', 'ITBIS', 'Total', 'Estado', 'Acción'].map(h => (
                                     <th key={h} style={{ padding: '0.75rem 1rem', textAlign: ['Subtotal','ITBIS','Total'].includes(h) ? 'right' : 'left', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {listaFiltrada.map(c => {
-                                const days = daysBetween(c.fecha || c.fechaRegistro);
-                                const bucket = getBucket(days);
+                                const days = calcVencimiento(c);
+                                const vBadge = getStatusBadge(days);
                                 return (
                                     <tr key={c.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.15s' }}
                                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(220,38,38,0.02)'}
@@ -303,10 +352,14 @@ const CuentasPorPagar = () => {
                                         <td style={{ padding: '0.875rem 1rem', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{c.ncf || '—'}</td>
                                         <td style={{ padding: '0.875rem 1rem' }}>{fmtDate(c.fecha || c.fechaRegistro)}</td>
                                         <td style={{ padding: '0.875rem 1rem' }}>
-                                            {c.estado === 'Pendiente'
-                                                ? <span style={{ padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, background: bucket.bg, color: bucket.color }}>{days} días</span>
-                                                : <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>—</span>
-                                            }
+                                            {c.estado === 'Pendiente' ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{fmtDate(c.fechaVencimiento || c.fecha || c.fechaRegistro)}</span>
+                                                    <span style={{ alignSelf: 'flex-start', padding: '0.2rem 0.5rem', borderRadius: '20px', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', background: vBadge.bg, color: vBadge.color }}>{vBadge.text}</span>
+                                                </div>
+                                            ) : (
+                                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>—</span>
+                                            )}
                                         </td>
                                         <td style={{ padding: '0.875rem 1rem', textAlign: 'right', color: 'var(--text-muted)' }}>{fmt(c.subtotal)}</td>
                                         <td style={{ padding: '0.875rem 1rem', textAlign: 'right', color: 'var(--text-muted)' }}>{fmt(c.itbis)}</td>

@@ -36,6 +36,7 @@ import TransaccionesRecurrentes from './pages/TransaccionesRecurrentes';
 import EstadosCuenta from './pages/EstadosCuenta';
 import CierreFiscal from './pages/CierreFiscal';
 import CentrosCosto from './pages/CentrosCosto';
+import EstadosFinancierosNIIF from './pages/EstadosFinancierosNIIF';
 import IndicadoresFinancieros from './pages/IndicadoresFinancieros';
 import NCFManager from './pages/NCFManager';
 import TalentoHumano from './pages/TalentoHumano';
@@ -239,6 +240,7 @@ function App() {
                                                                             <Route path="estados-cuenta" element={<FeatureProtectedRoute featureId="facturacion"><EstadosCuenta /></FeatureProtectedRoute>} />
                                                                             <Route path="cierre" element={<FeatureProtectedRoute featureId="contabilidad"><CierreFiscal /></FeatureProtectedRoute>} />
                                                                             <Route path="centros-costo" element={<FeatureProtectedRoute featureId="contabilidad"><CentrosCosto /></FeatureProtectedRoute>} />
+                                                                            <Route path="niif" element={<FeatureProtectedRoute featureId="contabilidad"><EstadosFinancierosNIIF /></FeatureProtectedRoute>} />
                                                                             <Route path="indicadores" element={<FeatureProtectedRoute featureId="reportes"><IndicadoresFinancieros /></FeatureProtectedRoute>} />
                                                                             <Route path="ncf" element={<FeatureProtectedRoute featureId="fiscal"><NCFManager /></FeatureProtectedRoute>} />
                                                                             <Route path="talento-humano" element={<FeatureProtectedRoute featureId="personal"><TalentoHumano /></FeatureProtectedRoute>} />
