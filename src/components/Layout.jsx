@@ -141,7 +141,7 @@ const Layout = () => {
         <div className={`app-container ${settings.preferencias.modoOscuro ? 'dark-theme' : ''}`}>
             <Sidebar />
             <main className="main-content">
-                <header className="top-header">
+                <header className="top-header" style={{ zIndex: 9999, position: 'sticky', top: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                         <button 
                             className="btn btn-secondary" 
@@ -169,7 +169,7 @@ const Layout = () => {
                                 }}
                             />
                             {showResults && (
-                                <div className="dropdown-menu" style={{ width: '100%', top: '120%', maxHeight: '400px', overflowY: 'auto', zIndex: 9999 }}>
+                                <div className="dropdown-menu" style={{ width: '100%', top: '120%', maxHeight: '400px', overflowY: 'auto', zIndex: 100000 }}>
                                     {searchResults.length > 0 ? (
                                         searchResults.map((res, idx) => (
                                             <div
@@ -217,7 +217,7 @@ const Layout = () => {
                                 {unreadCount > 0 && <span className="notification-badge"><span>{unreadCount}</span></span>}
 
                                 {showNotifications && (
-                                    <div className="dropdown-menu" style={{ zIndex: 99999, border: '2px solid var(--primary)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', background: 'var(--bg-card)' }}>
+                                    <div className="dropdown-menu" style={{ zIndex: 100000, border: '2px solid var(--primary)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', background: 'var(--bg-card)', right: 0 }}>
                                         <div className="dropdown-header" style={{ borderBottom: '2px solid var(--border)', background: 'var(--primary-light)' }}>
                                             <span style={{ fontWeight: 800, color: 'var(--primary)' }}>Notificaciones (<span>{unreadCount}</span>)</span>
                                             <button style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 700, padding: '0.25rem 0.5rem', background: 'white', borderRadius: '6px', border: '1px solid var(--primary)' }} onClick={(e) => { e.stopPropagation(); clearAll(); }}><span>Limpiar todo</span></button>

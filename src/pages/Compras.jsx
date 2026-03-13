@@ -7,7 +7,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import ArticuloFormModal from '../components/ArticuloFormModal';
 
 const Compras = () => {
-    const { compras, registrarCompra, eliminarCompra } = useCompras();
+    const { compras, registrarCompra, eliminarCompra, actualizarCompra } = useCompras();
     const { cuentas } = useCuentas();
     const { contactos } = useContactos();
 
@@ -21,6 +21,18 @@ const Compras = () => {
     const [condicion, setCondicion] = useState('Contado');
     const [fechaFactura, setFechaFactura] = useState(new Date().toISOString().split('T')[0]);
 
+    const [montoInput, setMontoInput] = useState('');
+    const [itbisManual, setItbisManual] = useState('');
+    const [esItbisManual, setEsItbisManual] = useState(false);
+    const [incluirItbis, setIncluirItbis] = useState(true);
+    const [cuentaDestinoId, setCuentaDestinoId] = useState('');
+    const [lineasAsiento, setLineasAsiento] = useState([]);
+    const [mostrarAsientoDetalle, setMostrarAsientoDetalle] = useState(false);
+    const [compraExitosa, setCompraExitosa] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
+    const [showArticuloModal, setShowArticuloModal] = useState(false);
+
     const [cuentaCreditoId, setCuentaCreditoId] = useState('');
 
     const cuentasCredito = cuentas.filter(c =>
@@ -28,6 +40,18 @@ const Compras = () => {
         c.subtipo === 'Cuenta Detalle' &&
         (c.codigo.startsWith('1101') || c.codigo.startsWith('2101') || c.codigo.startsWith('2'))
     );
+
+    const cuentasGastoActivo = cuentas.filter(c =>
+        c.activa &&
+        c.subtipo === 'Cuenta Detalle' &&
+        (c.codigo.startsWith('6') || c.codigo.startsWith('1'))
+    );
+
+    const formatMoney = (amount) => {
+        return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(amount || 0);
+    };
+
+    const prevCompras = compras; // snapshot
 
     // Lógica Inversa: El usuario ingresa el Total. Extraemos el Subtotal y el ITBIS.
     const montoIngresado = Number(montoInput) || 0;
