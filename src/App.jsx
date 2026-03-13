@@ -59,6 +59,8 @@ import UsuariosRoles from './pages/UsuariosRoles';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SovereignVault from './pages/SovereignVault';
+import CreditIntelligence from './pages/CreditIntelligence';
+
 
 // Contexts
 import { AuthProvider } from './context/AuthContext';
@@ -265,6 +267,8 @@ function App() {
                                                                             <Route path="datanode" element={<FeatureProtectedRoute featureId="banking"><DataNode /></FeatureProtectedRoute>} />
                                                                             <Route path="exchange" element={<FeatureProtectedRoute featureId="banking"><Exchange /></FeatureProtectedRoute>} />
                                                             <Route path="sovereign-vault" element={<FeatureProtectedRoute featureId="sovereign"><SovereignVault /></FeatureProtectedRoute>} />
+                                                            <Route path="credit-intelligence" element={<FeatureProtectedRoute featureId="credit_intelligence"><CreditIntelligence /></FeatureProtectedRoute>} />
+
                                                                             <Route path="*" element={<Navigate to="/" replace />} />
                                                                           </Route>
 

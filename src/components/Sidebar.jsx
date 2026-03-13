@@ -91,6 +91,7 @@ const Sidebar = () => {
                 { path: 'tarjetas', icon: <CreditCard className="nav-icon" style={{ color: '#0ea5e9' }} />, label: <span>Card Issuing <span style={{ fontSize: '9px', background: '#0ea5e9', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>HOT</span></span>, display: true, featureId: 'banking' },
                 { path: 'datanode', icon: <Network className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Data Node <span style={{ fontSize: '9px', background: '#38bdf8', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>GOLD</span></span>, display: true, featureId: 'banking' },
                 { path: 'exchange', icon: <Repeat className="nav-icon" style={{ color: '#facc15' }} />, label: <span>Exchange & Tokens <span style={{ fontSize: '9px', background: '#facc15', color: 'black', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>NEW</span></span>, display: true, featureId: 'banking' },
+                { path: 'credit-intelligence', icon: <Brain className="nav-icon" style={{ color: '#8b5cf6' }} />, label: <span>Credit Intelligence <span style={{ fontSize: '9px', border: '1px solid #8b5cf6', color: '#8b5cf6', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>ELITE</span></span>, display: true, featureId: 'credit_intelligence' },
             ].filter(i => i.display && (i.featureId ? hasAccess(i.featureId) : true))
         },
         {

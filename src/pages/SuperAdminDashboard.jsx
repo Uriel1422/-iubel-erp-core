@@ -52,6 +52,7 @@ const SuperAdminDashboard = () => {
         { id: 'auditoria', label: 'Auditoría de Sistema', icon: <ShieldCheck size={16} /> },
         { id: 'socios', label: 'Gestión de Socios', icon: <Users size={16} /> },
         { id: 'reportes', label: 'Reportes Avanzados', icon: <TrendingUp size={16} /> },
+        { id: 'credit_intelligence', label: 'Credit Intelligence & Expense (Elite)', icon: <Zap size={16} /> },
     ];
 
     const fetchEmpresas = useCallback(async () => {
