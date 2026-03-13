@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { useCompras } from '../context/ComprasContext';
 import { useCuentas } from '../context/CuentasContext';
 import { useContactos } from '../context/ContactosContext';
-import { ShoppingBag, CheckCircle, Trash2, PackagePlus, Edit2 } from 'lucide-react';
+import { ShoppingBag, CheckCircle, Trash2, PackagePlus, Edit2, Plus, PenSquare } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import ArticuloFormModal from '../components/ArticuloFormModal';
+import ProveedorModal from '../components/ProveedorModal';
 
 const Compras = () => {
     const { compras, registrarCompra, eliminarCompra, actualizarCompra } = useCompras();
     const { cuentas } = useCuentas();
-    const { contactos } = useContactos();
+    const { contactos, agregarContacto, editarContacto } = useContactos();
 
     const proveedores = contactos.filter(c => c.tipo === 'Proveedor');
 
     // Estados Formulario de Compras (Modalidad Simplificada: Gasto Directo)
+    const [proveedorId, setProveedorId] = useState('');
     const [proveedorNombre, setProveedorNombre] = useState('');
     const [proveedorRnc, setProveedorRnc] = useState('');
     const [ncf, setNcf] = useState('');
@@ -25,6 +27,10 @@ const Compras = () => {
     const [itbisManual, setItbisManual] = useState('');
     const [esItbisManual, setEsItbisManual] = useState(false);
     const [incluirItbis, setIncluirItbis] = useState(true);
+    const [facturaExenta, setFacturaExenta] = useState(false);
+    const [itbisRetenido, setItbisRetenido] = useState(0);
+    const [porcentajeIsr, setPorcentajeIsr] = useState(0);
+
     const [cuentaDestinoId, setCuentaDestinoId] = useState('');
     const [lineasAsiento, setLineasAsiento] = useState([]);
     const [mostrarAsientoDetalle, setMostrarAsientoDetalle] = useState(false);
@@ -32,6 +38,8 @@ const Compras = () => {
     const [editingId, setEditingId] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
     const [showArticuloModal, setShowArticuloModal] = useState(false);
+    const [showProveedorModal, setShowProveedorModal] = useState(false);
+    const [proveedorEditData, setProveedorEditData] = useState(null);
 
     const [cuentaCreditoId, setCuentaCreditoId] = useState('');
 
@@ -59,21 +67,24 @@ const Compras = () => {
     let subtotalNum = 0;
     let itbisAdelantado = 0;
 
-    if (esItbisManual) {
-        // Si es manual, el comprobante físico dicta el ITBIS. El subtotal es la diferencia.
+    if (facturaExenta) {
+        subtotalNum = montoIngresado;
+        itbisAdelantado = 0;
+    } else if (esItbisManual) {
         itbisAdelantado = Number(itbisManual) || 0;
         subtotalNum = Math.max(0, montoIngresado - itbisAdelantado);
     } else if (incluirItbis) {
-        // Extracción inversa (Total = Subtotal + 18% -> Subtotal = Total / 1.18)
         subtotalNum = montoIngresado / 1.18;
         itbisAdelantado = montoIngresado - subtotalNum;
     } else {
-        // Exento
         subtotalNum = montoIngresado;
         itbisAdelantado = 0;
     }
 
     const totalGeneral = subtotalNum + itbisAdelantado;
+    const isrRetenidoNum = subtotalNum * (Number(porcentajeIsr) / 100);
+    const itbisRetenidoNum = Number(itbisRetenido) || 0;
+    const netoAPagar = totalGeneral - itbisRetenidoNum - isrRetenidoNum;
 
     const generarAsientoSugerido = () => {
         if (!cuentaDestinoId) {
@@ -82,12 +93,22 @@ const Compras = () => {
         }
         const cuentaPagoId = cuentaCreditoId || (condicion === 'Contado' ? '110101' : '210101');
         const sugerido = [
-            { cuentaId: cuentaPagoId, debito: 0, credito: totalGeneral, cuentaCodigo: cuentaPagoId },
             { cuentaId: cuentaDestinoId, debito: subtotalNum, credito: 0, cuentaCodigo: cuentaDestinoId }
         ];
+        
         if (itbisAdelantado > 0) {
             sugerido.push({ cuentaId: '110501', debito: itbisAdelantado, credito: 0, cuentaCodigo: '110501' });
         }
+        
+        sugerido.push({ cuentaId: cuentaPagoId, debito: 0, credito: netoAPagar, cuentaCodigo: cuentaPagoId });
+
+        if (itbisRetenidoNum > 0) {
+            sugerido.push({ cuentaId: '210401', debito: 0, credito: itbisRetenidoNum, cuentaCodigo: '210401', nombre: 'ITBIS Retenido por Pagar' });
+        }
+        if (isrRetenidoNum > 0) {
+            sugerido.push({ cuentaId: '210501', debito: 0, credito: isrRetenidoNum, cuentaCodigo: '210501', nombre: 'ISR Retenido por Pagar' });
+        }
+
         setLineasAsiento(sugerido);
         setMostrarAsientoDetalle(true);
     };
@@ -104,6 +125,7 @@ const Compras = () => {
         }
 
         const dataCompra = {
+            proveedorId,
             proveedorNombre: proveedorNombre || 'Proveedor Genérico',
             proveedorRnc,
             ncf,
@@ -114,7 +136,11 @@ const Compras = () => {
             cuentaCreditoId: cuentaCreditoId || (condicion === 'Contado' ? '110101' : '210101'),
             subtotal: subtotalNum,
             itbis: itbisAdelantado,
-            total: totalGeneral
+            itbisRetenido: itbisRetenidoNum,
+            isrRetenido: isrRetenidoNum,
+            total: totalGeneral,
+            netoAPagar,
+            facturaExenta
         };
 
         if (editingId) {
@@ -127,16 +153,21 @@ const Compras = () => {
         }
 
         // Reset simple
+        setProveedorId('');
         setProveedorNombre('');
         setProveedorRnc('');
         setNcf('');
         setMontoInput('');
         setCuentaDestinoId('');
         setCuentaCreditoId('');
+        setItbisRetenido(0);
+        setPorcentajeIsr(0);
+        setFacturaExenta(false);
     };
 
     const handleEdit = (compra) => {
         setEditingId(compra.id);
+        setProveedorId(compra.proveedorId || '');
         setProveedorNombre(compra.proveedorNombre);
         setProveedorRnc(compra.proveedorRnc || '');
         setNcf(compra.ncf || '');
@@ -148,24 +179,87 @@ const Compras = () => {
         // Al editar, cargamos el total como input porque esa es la nueva lógica
         setMontoInput(compra.total.toString());
         setIncluirItbis(compra.itbis > 0);
+        setFacturaExenta(compra.facturaExenta || false);
+        setItbisRetenido(compra.itbisRetenido || 0);
+        
+        let foundIsrPercent = 0;
+        if (compra.subtotal > 0 && compra.isrRetenido > 0) {
+            foundIsrPercent = Math.round((compra.isrRetenido / compra.subtotal) * 100);
+        }
+        setPorcentajeIsr(foundIsrPercent);
 
         // Scroll al formulario
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-    
-    // ... stays same until return
 
     const cancelEdit = () => {
         setEditingId(null);
+        setProveedorId('');
         setProveedorNombre('');
         setProveedorRnc('');
         setNcf('');
         setMontoInput('');
         setCuentaDestinoId('');
+        setItbisRetenido(0);
+        setPorcentajeIsr(0);
+        setFacturaExenta(false);
     };
 
     const handleDeleteCompra = (id) => {
         setConfirmDelete({ open: true, id });
+    };
+
+    const handleSaveProveedor = (data) => {
+        let savedContact = null;
+        if (proveedorEditData) {
+            editarContacto(proveedorEditData.id, data);
+            savedContact = { ...proveedorEditData, ...data };
+            alert("Proveedor actualizado con éxito.");
+        } else {
+            savedContact = agregarContacto({ ...data, tipo: 'Proveedor' });
+            alert("Proveedor registrado con éxito.");
+        }
+        
+        setProveedorId(savedContact.id);
+        setProveedorNombre(savedContact.nombre);
+        setProveedorRnc(savedContact.rnc || savedContact.cedula || '');
+        if (savedContact.cuentaDefectoId) {
+            setCuentaDestinoId(savedContact.cuentaDefectoId);
+        }
+        if (savedContact.tipoProveedor === 'Proveedor Informal') {
+            setPorcentajeIsr(10);
+        } else {
+            setPorcentajeIsr(0);
+        }
+        
+        setShowProveedorModal(false);
+        setProveedorEditData(null);
+    };
+
+    const handleSelectProveedor = (e) => {
+        const pId = e.target.value;
+        setProveedorId(pId);
+        if (pId) {
+            const p = proveedores.find(x => x.id === pId);
+            if (p) {
+                setProveedorNombre(p.nombre);
+                setProveedorRnc(p.rnc || p.cedula || '');
+                if (p.cuentaDefectoId) {
+                    setCuentaDestinoId(p.cuentaDefectoId);
+                }
+                // Si es proveedor informal (física), pre-configurar 10% ISR y 100% ITBIS retenido
+                if (p.tipoProveedor === 'Proveedor Informal') {
+                    setPorcentajeIsr(10);
+                    // ITBIS se hará en UI si es que facturan ITBIS
+                } else {
+                    setPorcentajeIsr(0);
+                }
+            }
+        } else {
+            setProveedorNombre('');
+            setProveedorRnc('');
+            setPorcentajeIsr(0);
+        }
     };
 
     const confirmDeleteAction = () => {
@@ -181,45 +275,50 @@ const Compras = () => {
             <div 
                 style={{ 
                     position: 'relative', 
-                    cursor: 'help',
+                    cursor: 'crosshair',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
                     minHeight: '40px',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                    width: '120px',
+                    perspective: '1000px'
                 }}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
                 <div style={{
-                    transform: isHovered ? 'translateY(-5px) scale(0.95)' : 'translateY(0)',
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                    transform: isHovered ? 'rotateX(90deg)' : 'rotateX(0)',
+                    transformOrigin: 'bottom',
                     opacity: isHovered ? 0 : 1,
-                    transition: '0.3s',
+                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                     fontSize: '0.9rem',
-                    fontWeight: 500
+                    fontWeight: 500,
+                    backfaceVisibility: 'hidden'
                 }}>
                     {new Date(fechaRegistro).toLocaleDateString()}
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '-2px' }}>Emisión</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '-2px' }}>Emisión Creada</div>
                 </div>
                 
                 <div style={{
                     position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    transform: isHovered ? 'translateY(0)' : 'translateY(5px)',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                    transform: isHovered ? 'rotateX(0)' : 'rotateX(-90deg)',
+                    transformOrigin: 'top',
                     opacity: isHovered ? 1 : 0,
-                    transition: '0.3s',
-                    color: 'var(--primary)',
-                    fontWeight: 700,
-                    fontSize: '0.9rem'
+                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    color: '#0ea5e9',
+                    fontFamily: 'monospace',
+                    textShadow: '0 0 8px rgba(14, 165, 233, 0.4)',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    backfaceVisibility: 'hidden'
                 }}>
-                    {new Date(fechaFactura).toLocaleDateString()}
-                    <div style={{ fontSize: '0.65rem', color: 'var(--primary)', opacity: 0.7, marginTop: '-2px' }}>Comprobante</div>
+                    {fechaFactura ? new Date(fechaFactura).toLocaleDateString() : 'N/A'}
+                    <div style={{ fontSize: '0.65rem', color: '#0ea5e9', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '-2px' }}>F. Comprobante</div>
                 </div>
             </div>
         );
@@ -234,18 +333,44 @@ const Compras = () => {
             {/* Header stays same */}
             {/* Form */}
             <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                {editingId && (
+                    <div style={{ background: 'var(--accent-light)', color: 'var(--accent)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong>Modificando Factura de Compra</strong>
+                        <button type="button" onClick={cancelEdit} className="btn" style={{ background: 'transparent', border: '1px solid var(--accent)', color: 'var(--accent)' }}>Cancelar y Limpiar</button>
+                    </div>
+                )}
                 <form onSubmit={handleRegistrar}>
-                    {/* ... initial form parts ... */}
+                    
+                    {/* SELECTOR DE PROVEEDORES INTELIGENTE */}
+                    <div style={{ background: 'var(--background)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
+                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                <label className="input-label" style={{ fontWeight: 700, color: 'var(--primary)' }}>Buscar Proveedor Existente (Opcional)</label>
+                                <select className="input-field" value={proveedorId} onChange={handleSelectProveedor}>
+                                    <option value="">-- Seleccione un proveedor o ingrese datos manualmente debajo --</option>
+                                    {proveedores.map(p => (
+                                        <option key={p.id} value={p.id}>{p.nombre} (RNC: {p.rnc || p.cedula || 'N/A'})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button type="button" className="btn btn-secondary" onClick={() => { setProveedorEditData(proveedorId ? proveedores.find(x=>x.id===proveedorId) : null); setShowProveedorModal(true); }} style={{ height: '42px', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                {proveedorId ? <><PenSquare size={16}/> Editar</> : <><Plus size={16}/> Nuevo Proveedor</>}
+                            </button>
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                <label className="input-label">RNC o Cédula <span style={{color:'red'}}>*</span></label>
+                                <input type="text" className="input-field" value={proveedorRnc} onChange={e => setProveedorRnc(e.target.value)} placeholder="Ej: 130123456" required />
+                            </div>
+                            <div className="input-group" style={{ marginBottom: 0 }}>
+                                <label className="input-label">Nombre del Proveedor <span style={{color:'red'}}>*</span></label>
+                                <input type="text" className="input-field" value={proveedorNombre} onChange={e => setProveedorNombre(e.target.value)} placeholder="Ej: Distribuidora Nacional" required />
+                            </div>
+                        </div>
+                    </div>
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                        {/* ... RNC, Nombre, NCF, Fecha, Tipo ... */}
-                        <div className="input-group">
-                            <label className="input-label">RNC o Cédula (Proveedor)</label>
-                            <input type="text" className="input-field" value={proveedorRnc} onChange={e => setProveedorRnc(e.target.value)} placeholder="Ej: 130123456" required />
-                        </div>
-                        <div className="input-group">
-                            <label className="input-label">Nombre del Proveedor</label>
-                            <input type="text" className="input-field" value={proveedorNombre} onChange={e => setProveedorNombre(e.target.value)} placeholder="Ej: Distribuidora Nacional" required />
-                        </div>
 
                         <div className="input-group">
                             <label className="input-label">NCF Recibido</label>
@@ -306,42 +431,97 @@ const Compras = () => {
                     {/* ... ITBIS toggles, Totals, Asiento Edit, Buttons ... */}
 
                     <div style={{ background: 'var(--background)', padding: '1rem', borderRadius: 'var(--radius-md)', marginTop: '1.5rem', border: '1px solid var(--border)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <input type="checkbox" id="itbis_auto" checked={incluirItbis} disabled={esItbisManual} onChange={e => setIncluirItbis(e.target.checked)} style={{ width: '18px', height: '18px' }} />
-                                <label htmlFor="itbis_auto" style={{ fontWeight: 500, fontSize: '0.9rem' }}>Incluir ITBIS (18%) automático</label>
-                            </div>
-                            
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderLeft: '1px solid var(--border)', paddingLeft: '2rem' }}>
-                                <input type="checkbox" id="itbis_manual_toggle" checked={esItbisManual} onChange={e => setEsItbisManual(e.target.checked)} style={{ width: '18px', height: '18px' }} />
-                                <label htmlFor="itbis_manual_toggle" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>Ingresar ITBIS Manualmente</label>
-                            </div>
-                        </div>
-
-                        {esItbisManual && (
-                            <div className="input-group" style={{ marginTop: '1rem', maxWidth: '300px' }}>
-                                <label className="input-label">Monto ITBIS Exacto</label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '0.75rem', top: '0.5rem', color: 'var(--text-muted)' }}>$</span>
-                                    <input type="number" step="0.01" className="input-field" value={itbisManual} onChange={e => setItbisManual(e.target.value)} style={{ paddingLeft: '1.5rem' }} placeholder="0.00" />
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) minmax(200px, 1fr) minmax(200px, 1fr)', gap: '1.5rem', alignItems: 'flex-start' }}>
+                            {/* ITBIS Config */}
+                            <div>
+                                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Configuración de ITBIS</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <input type="checkbox" id="itbis_exento" checked={facturaExenta} onChange={e => { setFacturaExenta(e.target.checked); if (e.target.checked) { setIncluirItbis(false); setEsItbisManual(false); setItbisManual(''); setItbisRetenido(0); } }} style={{ width: '16px', height: '16px' }} />
+                                        <label htmlFor="itbis_exento" style={{ fontWeight: 700, fontSize: '0.9rem', color: facturaExenta ? 'var(--danger)' : 'var(--text)' }}>Factura Exenta o No Transparente</label>
+                                    </div>
+                                    {!facturaExenta && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <input type="checkbox" id="itbis_auto" checked={incluirItbis} disabled={esItbisManual} onChange={e => setIncluirItbis(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                                            <label htmlFor="itbis_auto" style={{ fontWeight: 500, fontSize: '0.9rem' }}>Incluir 18% automático</label>
+                                        </div>
+                                    )}
+                                    {!facturaExenta && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <input type="checkbox" id="itbis_manual_toggle" checked={esItbisManual} onChange={e => { setEsItbisManual(e.target.checked); if(e.target.checked) setIncluirItbis(false); }} style={{ width: '16px', height: '16px' }} />
+                                            <label htmlFor="itbis_manual_toggle" style={{ fontWeight: 500, fontSize: '0.9rem' }}>ITBIS Manual (Monto exacto)</label>
+                                        </div>
+                                    )}
+                                    {esItbisManual && !facturaExenta && (
+                                        <div className="input-group" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                                            <div style={{ position: 'relative' }}>
+                                                <span style={{ position: 'absolute', left: '0.5rem', top: '0.4rem', color: 'var(--text-muted)' }}>$</span>
+                                                <input type="number" step="0.01" className="input-field-mini" value={itbisManual} onChange={e => setItbisManual(e.target.value)} style={{ paddingLeft: '1.5rem', width: '100%' }} placeholder="0.00" />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        )}
+
+                            {/* Retenciones ISR */}
+                            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '1.5rem' }}>
+                                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Retención Autom. (ISR)</h4>
+                                <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <select className="input-field-mini" value={porcentajeIsr} onChange={e => setPorcentajeIsr(e.target.value)} style={{ width: '100%', fontSize: '0.85rem' }}>
+                                        <option value="0">Sin retención de ISR (0%)</option>
+                                        <option value="2">2% - Honorarios Profesionales</option>
+                                        <option value="10">10% - Físicas / Alquileres</option>
+                                        <option value="1">1% - Otros (Intereses)</option>
+                                    </select>
+                                    {isrRetenidoNum > 0 && (
+                                        <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: 700, color: 'var(--danger)' }}>
+                                            Retenido: -{formatMoney(isrRetenidoNum)}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Retenciones ITBIS */}
+                            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '1.5rem' }}>
+                                 <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Retención de ITBIS</h4>
+                                 <div className="input-group" style={{ marginBottom: 0 }}>
+                                    <label className="input-label" style={{ fontSize: '0.75rem' }}>Monto Retenido Exacto</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '0.5rem', top: '0.4rem', color: 'var(--text-muted)' }}>$</span>
+                                        <input type="number" step="0.01" className="input-field-mini" disabled={facturaExenta} value={itbisRetenido} onChange={e => setItbisRetenido(e.target.value)} style={{ paddingLeft: '1.5rem', width: '100%' }} placeholder="0.00" />
+                                    </div>
+                                </div>
+                                {!facturaExenta && itbisAdelantado > 0 && (
+                                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                                        <button type="button" onClick={() => setItbisRetenido((itbisAdelantado * 0.30).toFixed(2))} className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>Sugerir 30%</button>
+                                        <button type="button" onClick={() => setItbisRetenido((itbisAdelantado * 1).toFixed(2))} className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>Sugerir 100%</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Resumen Totales */}
-                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '3rem', padding: '1.5rem', borderTop: '2px dashed var(--border)', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '2rem', padding: '1.5rem', borderTop: '2px dashed var(--border)', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)' }}>
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Monto Gravado/Exento</div>
                             <div style={{ fontWeight: 600 }}>{formatMoney(subtotalNum)}</div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>ITBIS Adelantado</div>
-                            <div style={{ fontWeight: 600 }}>{formatMoney(itbisAdelantado)}</div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 700 }}>Total Factura</div>
-                            <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1.25rem' }}>{formatMoney(totalGeneral)}</div>
+                        {!facturaExenta && (
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>ITBIS Adelantado</div>
+                                <div style={{ fontWeight: 600 }}>{formatMoney(itbisAdelantado)}</div>
+                            </div>
+                        )}
+                        {(isrRetenidoNum > 0 || itbisRetenidoNum > 0) && (
+                             <div style={{ textAlign: 'right', paddingLeft: '1rem', borderLeft: '1px solid var(--border)' }}>
+                                 <div style={{ color: 'var(--danger)', fontSize: '0.875rem' }}>Retenciones (ISR/ITBIS)</div>
+                                 <div style={{ fontWeight: 700, color: 'var(--danger)' }}>-{formatMoney(isrRetenidoNum + itbisRetenidoNum)}</div>
+                             </div>
+                        )}
+                        <div style={{ textAlign: 'right', paddingLeft: '1rem', borderLeft: '2px solid var(--border)' }}>
+                            <div style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 700 }}>NETO A PAGAR/CXC</div>
+                            <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.25rem' }}>{formatMoney(netoAPagar)}</div>
                         </div>
                     </div>
 
@@ -457,7 +637,7 @@ const Compras = () => {
                             {[...compras].reverse().slice(0, 10).map((c) => (
                                 <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                     <td style={{ padding: '1rem', fontWeight: 500, color: 'var(--primary)' }}>{c.numeroInterno}</td>
-                                    <td style={{ padding: '1rem' }}>{new Date(c.fechaRegistro).toLocaleDateString()}</td>
+                                    <td style={{ padding: '1rem' }}><DateHover fechaRegistro={c.fechaRegistro} fechaFactura={c.fechaFactura} /></td>
                                     <td style={{ padding: '1rem' }}>{c.proveedorNombre}</td>
                                     <td style={{ padding: '1rem' }}>{c.ncf}</td>
                                     <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>{formatMoney(c.total)}</td>
@@ -505,6 +685,12 @@ const Compras = () => {
             <ArticuloFormModal
                 isOpen={showArticuloModal}
                 onClose={() => setShowArticuloModal(false)}
+            />
+            <ProveedorModal 
+                isOpen={showProveedorModal} 
+                onClose={() => setShowProveedorModal(false)}
+                onSave={handleSaveProveedor}
+                proveedorEdit={proveedorEditData}
             />
         </div>
     );
