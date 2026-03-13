@@ -57,23 +57,20 @@ export const AuthProvider = ({ children }) => {
         const plan = (empresa.plan || 'basico').toLowerCase().trim();
         const features = empresa.features || {};
 
-        // Debugging (Remove in production)
-        // console.log(`Feature check [${featureId}] for plan [${plan}]`);
-
         // 0. Sovereign Global Access (VIP Upgrade)
         if (featureId === 'sovereign') return true;
 
-        // 1. Explicit Feature Toggle (Add-on)
-        if (features[featureId] === true) return true;
+        // 1. PRIORIDAD ABSOLUTA: Explicit Feature Toggle (SuperAdmin Control)
+        // Verificamos si la propiedad existe explícitamente para permitir desactivaciones (false)
+        if (features[featureId] !== undefined) {
+            return !!features[featureId];
+        }
 
-        // 2. Plan Inheritance
-        if (planFeatures.avanzado === 'all' && (plan === 'avanzado' || plan === 'avanzado')) return true;
-        if (plan === 'avanzado') return true;
+        // 2. FALLBACK: Plan Inheritance
+        if (planFeatures.avanzado === 'all' && plan === 'avanzado') return true;
 
         const allowed = planFeatures[plan] || [];
-        const access = allowed.includes(featureId);
-
-        return access;
+        return allowed.includes(featureId);
     };
 
     useEffect(() => {
