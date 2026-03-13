@@ -452,32 +452,68 @@ const Compras = () => {
                         )}
                     </div>
 
-                    {/* New Field: Cuenta Credito */}
-                    <div style={{ background: 'var(--accent-light)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', border: '1px solid var(--accent)' }}>
-                        <label className="input-label" style={{ color: 'var(--accent)', fontWeight: 700 }}>CUENTA DE PAGO / ORIGEN (CRÉDITO)</label>
-                        <select className="input-field" value={cuentaCreditoId} onChange={e => setCuentaCreditoId(e.target.value)} required>
-                            <option value="">-- ¿Desde dónde sale el dinero / deuda? --</option>
-                            {cuentasCredito.map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nombre}</option>)}
-                        </select>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--accent)', marginTop: '0.4rem' }}>* {condicion === 'Contado' ? 'Se recomienda una cuenta de Caja o Banco (1101...)' : 'Se recomienda una cuenta de Pasivo/CXP (2101...)'}</p>
-                    </div>
+                    {/* ── CUENTAS CONTABLES: DÉBITO & CRÉDITO (diseño unificado igual) ── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
 
-                    {/* Classification and amounts */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-                        <div className="input-group">
-                            <label className="input-label">Cuenta Destino (Débito)</label>
-                            <select className="input-field" value={cuentaDestinoId} onChange={e => setCuentaDestinoId(e.target.value)} required>
-                                <option value="">-- Seleccione a qué cuenta de Gasto/Activo pertenece --</option>
-                                {cuentasGastoActivo.map(c => <option key={c.id} value={c.id}>{c.codigo} - {c.nombre}</option>)}
-                            </select>
+                        {/* ── DÉBITO ── */}
+                        <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <div style={{ background: 'linear-gradient(90deg,#eff6ff,#dbeafe)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #bfdbfe' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '1px' }}>Cuenta Destino — Débito (DR)</span>
+                            </div>
+                            <div style={{ padding: '0.75rem 1rem' }}>
+                                <select
+                                    className="input-field"
+                                    value={cuentaDestinoId}
+                                    onChange={e => setCuentaDestinoId(e.target.value)}
+                                    required
+                                    style={{ border: '1.5px solid #bfdbfe', borderRadius: '8px', background: '#f8faff' }}
+                                >
+                                    <option value="">-- Gasto · Activo · Costo --</option>
+                                    {cuentasGastoActivo.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
+                                </select>
+                                <p style={{ fontSize: '0.72rem', color: '#3b82f6', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <span>ℹ</span> La cuenta que recibirá el cargo del gasto/compra
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="input-group">
-                            <label className="input-label">Monto Total Facturado (ITBIS incluido)</label>
-                            <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '0.75rem', top: '0.5rem', color: 'var(--text-muted)' }}>$</span>
-                                <input required type="number" step="0.01" min="0" className="input-field" value={montoInput} onChange={e => setMontoInput(e.target.value)} style={{ paddingLeft: '1.5rem', width: '100%' }} />
+                        {/* ── CRÉDITO ── */}
+                        <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <div style={{ background: 'linear-gradient(90deg,#f0fdf4,#dcfce7)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #bbf7d0' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a', flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '1px' }}>Cuenta Origen — Crédito (CR)</span>
                             </div>
+                            <div style={{ padding: '0.75rem 1rem' }}>
+                                <select
+                                    className="input-field"
+                                    value={cuentaCreditoId}
+                                    onChange={e => setCuentaCreditoId(e.target.value)}
+                                    required
+                                    style={{ border: '1.5px solid #bbf7d0', borderRadius: '8px', background: '#f8fff9' }}
+                                >
+                                    <option value="">-- Caja · Banco · CxP Proveedor --</option>
+                                    {cuentasCredito.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
+                                </select>
+                                <p style={{ fontSize: '0.72rem', color: '#16a34a', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <span>ℹ</span> {condicion === 'Contado' ? 'Caja o Banco — el dinero sale de aquí' : 'CxP Proveedor — se registra como deuda'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── MONTO ── */}
+                    <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+                        <label className="input-label" style={{ fontWeight: 700 }}>Monto Total Facturado <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(ITBIS incluido si aplica)</span></label>
+                        <div style={{ position: 'relative', maxWidth: '280px' }}>
+                            <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700, fontSize: '1rem' }}>DOP $</span>
+                            <input
+                                required type="number" step="0.01" min="0"
+                                className="input-field"
+                                value={montoInput}
+                                onChange={e => setMontoInput(e.target.value)}
+                                style={{ paddingLeft: '3.5rem', fontWeight: 700, fontSize: '1.1rem' }}
+                            />
                         </div>
                     </div>
 
