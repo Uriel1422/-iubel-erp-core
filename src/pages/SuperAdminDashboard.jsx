@@ -10,7 +10,7 @@ import {
     BookOpen, Package, FileText, ShoppingCart, 
     Calculator, PieChart, Landmark, ClipboardList,
     Briefcase, Calendar, Clock, Target, FilePlus,
-    GitMerge, FileX, RefreshCw, UserSquare, Banknote, BarChart2, TrendingUp, CreditCard, Scale, Wallet,
+    GitMerge, FileX, UserSquare, Banknote, BarChart2, CreditCard, Scale, Wallet,
     Brain, FolderOpen, Layers, UserCheck, Network, Repeat,
     Sparkles, Star, Cpu
 } from 'lucide-react';
