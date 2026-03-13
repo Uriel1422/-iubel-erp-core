@@ -2,8 +2,59 @@ import React, { useState } from 'react';
 import { CreditCard, Lock, Shield, Settings, Eye, EyeOff, Snowflake, Play, Copy, Check, Filter, Search, ArrowUpRight, ArrowDownRight, RefreshCw, Smartphone, Globe, ShieldCheck, Activity } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const MOCK_CARDS = [];
-const MOCK_TRANSACTIONS = [];
+const MOCK_CARDS = [
+    {
+        id: 'c1',
+        type: 'Corporate Black',
+        last4: '4194',
+        brand: 'ib-black',
+        cardholder: 'Uriel Jiménez',
+        exp: '12/28',
+        cvv: '849',
+        balance: 145000,
+        limit: 500000,
+        status: 'active',
+        color: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        textColor: '#f8fafc'
+    },
+    {
+        id: 'c2',
+        type: 'Marketing Expenses',
+        last4: '8821',
+        brand: 'visa',
+        cardholder: 'Marketing Dept',
+        exp: '05/26',
+        cvv: '122',
+        balance: 42000,
+        limit: 100000,
+        status: 'frozen',
+        color: 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)',
+        textColor: '#ffffff'
+    },
+    {
+        id: 'c3',
+        type: 'Travel & T&E',
+        last4: '3005',
+        brand: 'mastercard',
+        cardholder: 'Uriel Jiménez',
+        exp: '09/27',
+        cvv: '951',
+        balance: 0,
+        limit: 150000,
+        status: 'active',
+        color: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+        textColor: '#0f172a'
+    }
+];
+
+const MOCK_TRANSACTIONS = [
+    { id: 't1', cardId: 'c1', date: '13 Mar 2026', time: '10:45 AM', merchant: 'AWS Web Services', category: 'Software', amount: -45000, status: 'completed' },
+    { id: 't2', cardId: 'c1', date: '12 Mar 2026', time: '02:15 PM', merchant: 'Apple Store SD', category: 'Equipos', amount: -85000, status: 'completed' },
+    { id: 't3', cardId: 'c1', date: '11 Mar 2026', time: '09:00 AM', merchant: 'Trivago Holdings', category: 'Travel', amount: -65000, status: 'declined', note: 'Límite diario excedido' },
+    { id: 't4', cardId: 'c1', date: '10 Mar 2026', time: '08:30 PM', merchant: 'Uber Trip', category: 'Transporte', amount: -1500, status: 'completed' },
+    { id: 't5', cardId: 'c2', date: '12 Mar 2026', time: '11:20 AM', merchant: 'Meta Platforms Inc.', category: 'Marketing', amount: -25000, status: 'completed' },
+    { id: 't6', cardId: 'c2', date: '10 Mar 2026', time: '10:00 AM', merchant: 'Google Ads', category: 'Marketing', amount: -17000, status: 'completed' },
+];
 
 const formatMoney = (val) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(Number(val));
 
