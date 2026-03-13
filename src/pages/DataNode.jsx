@@ -11,31 +11,10 @@ import {
 } from 'recharts';
 
 // Datos simulados para el Mapa de Nodos (Grafo)
-const MOCK_NODES = [
-    { id: 'n1', label: 'SOCIO: 0042', type: 'persona', x: 250, y: 150, risk: 'low' },
-    { id: 'n2', label: 'SOCIO: 0199', type: 'persona', x: 450, y: 120, risk: 'low' },
-    { id: 'n3', label: 'SOCIO: 0984', type: 'persona', x: 280, y: 320, risk: 'high' },
-    { id: 'n4', label: 'SOCIO: 1102', type: 'persona', x: 500, y: 280, risk: 'medium' },
-    { id: 'c1', label: 'CUENTA: 4291', type: 'cuenta_bancaria', x: 350, y: 200, risk: 'medium' },
-    { id: 'ip1', label: 'IP: 192.168.x', type: 'ip_address', x: 400, y: 250, risk: 'high' },
-    { id: 't1', label: 'TEL: 809-555', type: 'telefono', x: 600, y: 180, risk: 'low' },
-    { id: 'co1', label: 'EMPRESA: AUB', type: 'empresa', x: 150, y: 250, risk: 'low' }
-];
+const MOCK_NODES = [];
+const MOCK_EDGES = [];
+const MOCK_ANOMALIES = [];
 
-const MOCK_EDGES = [
-    { from: 'n1', to: 'c1' }, { from: 'n2', to: 'c1' }, 
-    { from: 'n3', to: 'ip1' }, { from: 'n4', to: 'ip1' },
-    { from: 'c1', to: 'ip1' }, { from: 'n2', to: 't1' },
-    { from: 'n4', to: 't1' }, { from: 'n1', to: 'co1' },
-    { from: 'n3', to: 'co1' }
-];
-
-const MOCK_ANOMALIES = [
-    { id: 'a1', title: 'Conexión IP Compartida', desc: 'Varios socios no relacionados accesan desde la misma IP pública.', score: 94, severity: 'critical' },
-    { id: 'a2', title: 'Cuenta Receptora Múltiple', desc: 'Depósitos hacia un mismo IBAN desde diferentes perfiles de bajo riesgo.', score: 72, severity: 'high' },
-    { id: 'a3', title: 'Patrón de Retiro Constante', desc: 'Retiros fraccionados justo por debajo del límite de reporte ($9,900).', score: 85, severity: 'critical' },
-    { id: 'a4', title: 'Relación Telefónica Oculta', desc: 'Socios que no declararon relación comparten el mismo teléfono.', score: 45, severity: 'medium' }
-];
 
 const DataNode = () => {
     const [activeNode, setActiveNode] = useState(null);

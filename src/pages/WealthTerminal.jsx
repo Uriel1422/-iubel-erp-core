@@ -11,14 +11,8 @@ import { NavLink } from 'react-router-dom';
 import LiquidityOrchestrator from '../components/LiquidityOrchestrator';
 
 // Definición de Activos Falsos
-const ASSETS = [
-    { symbol: 'BTC', name: 'Bitcoin', price: 64230.50, change: 2.34, type: 'crypto', color: '#f7931a' },
-    { symbol: 'ETH', name: 'Ethereum', price: 3450.20, change: -1.20, type: 'crypto', color: '#627eea' },
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 175.40, change: 0.85, type: 'stock', color: '#ffffff' },
-    { symbol: 'TSLA', name: 'Tesla Inc.', price: 180.20, change: -3.50, type: 'stock', color: '#e82127' },
-    { symbol: 'USDT', name: 'Tether USD', price: 1.00, change: 0.01, type: 'stable', color: '#26a17b' },
-    { symbol: 'DOP/USD', name: 'Peso Dom.', price: 58.90, change: 0.15, type: 'forex', color: '#002D62' }
-];
+const ASSETS = [];
+
 
 // Datos históricos simulados para el gráfico principal
 const generateChartData = () => {

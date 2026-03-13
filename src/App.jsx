@@ -209,65 +209,66 @@ function App() {
                                                                           <Route path="/" element={<Portal />} />
                                                                           <Route path="/erp" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                                                                             <Route index element={<Dashboard />} />
-                                                                            <Route path="contactos" element={<FeatureProtectedRoute featureId="contactos"><Contactos /></FeatureProtectedRoute>} />
-                                                                            <Route path="socios" element={<FeatureProtectedRoute featureId="banking"><Socios /></FeatureProtectedRoute>} />
-                                                                            <Route path="caja" element={<FeatureProtectedRoute featureId="caja"><Caja /></FeatureProtectedRoute>} />
-                                                                            <Route path="pagos-caja" element={<FeatureProtectedRoute featureId="caja"><PagosEnCaja /></FeatureProtectedRoute>} />
-                                                                            <Route path="boveda" element={<FeatureProtectedRoute featureId="caja"><Boveda /></FeatureProtectedRoute>} />
-                                                                            <Route path="banking-hub" element={<FeatureProtectedRoute featureId="banking"><BankingHub /></FeatureProtectedRoute>} />
-                                                                            <Route path="prestamos" element={<FeatureProtectedRoute featureId="prestamos"><Prestamos /></FeatureProtectedRoute>} />
-                                                                            <Route path="cotizaciones" element={<FeatureProtectedRoute featureId="facturacion"><Cotizaciones /></FeatureProtectedRoute>} />
-                                                                            <Route path="cuentas" element={<FeatureProtectedRoute featureId="contabilidad"><Cuentas /></FeatureProtectedRoute>} />
-                                                                            <Route path="bancos" element={<FeatureProtectedRoute featureId="banking"><Bancos /></FeatureProtectedRoute>} />
-                                                                            <Route path="inventario" element={<FeatureProtectedRoute featureId="inventario"><Inventario /></FeatureProtectedRoute>} />
-                                                                            <Route path="facturas" element={<FeatureProtectedRoute featureId="facturacion"><Facturacion /></FeatureProtectedRoute>} />
-                                                                            <Route path="compras" element={<FeatureProtectedRoute featureId="compras"><Compras /></FeatureProtectedRoute>} />
-                                                                            <Route path="ingresos" element={<FeatureProtectedRoute featureId="banking"><Tesoreria tipo="ingreso" /></FeatureProtectedRoute>} />
-                                                                            <Route path="egresos" element={<FeatureProtectedRoute featureId="banking"><Tesoreria tipo="egreso" /></FeatureProtectedRoute>} />
-                                                                            <Route path="diario" element={<FeatureProtectedRoute featureId="contabilidad"><DiarioGeneral /></FeatureProtectedRoute>} />
-                                                                            <Route path="reportes" element={<FeatureProtectedRoute featureId="reportes"><Reportes /></FeatureProtectedRoute>} />
-                                                                            <Route path="fiscal" element={<FeatureProtectedRoute featureId="fiscal"><ReportesFiscales /></FeatureProtectedRoute>} />
-                                                                            <Route path="activos" element={<FeatureProtectedRoute featureId="activos"><FixedAssets /></FeatureProtectedRoute>} />
-                                                                            <Route path="nomina" element={<FeatureProtectedRoute featureId="personal"><Nomina /></FeatureProtectedRoute>} />
+                                                                            <Route path="contactos" element={<FeatureProtectedRoute featureId="core_contactos"><Contactos /></FeatureProtectedRoute>} />
+                                                                            <Route path="socios" element={<FeatureProtectedRoute featureId="core_socios"><Socios /></FeatureProtectedRoute>} />
+                                                                            <Route path="caja" element={<FeatureProtectedRoute featureId="core_caja"><Caja /></FeatureProtectedRoute>} />
+                                                                            <Route path="pagos-caja" element={<FeatureProtectedRoute featureId="core_caja"><PagosEnCaja /></FeatureProtectedRoute>} />
+                                                                            <Route path="boveda" element={<FeatureProtectedRoute featureId="core_caja"><Boveda /></FeatureProtectedRoute>} />
+                                                                            <Route path="banking-hub" element={<FeatureProtectedRoute featureId="core_banca"><BankingHub /></FeatureProtectedRoute>} />
+                                                                            <Route path="prestamos" element={<FeatureProtectedRoute featureId="core_prestamos"><Prestamos /></FeatureProtectedRoute>} />
+                                                                            <Route path="cotizaciones" element={<FeatureProtectedRoute featureId="core_facturacion"><Cotizaciones /></FeatureProtectedRoute>} />
+                                                                            <Route path="cuentas" element={<FeatureProtectedRoute featureId="core_contabilidad"><Cuentas /></FeatureProtectedRoute>} />
+                                                                            <Route path="bancos" element={<FeatureProtectedRoute featureId="core_banca"><Bancos /></FeatureProtectedRoute>} />
+                                                                            <Route path="inventario" element={<FeatureProtectedRoute featureId="core_inventario"><Inventario /></FeatureProtectedRoute>} />
+                                                                            <Route path="facturas" element={<FeatureProtectedRoute featureId="core_facturacion"><Facturacion /></FeatureProtectedRoute>} />
+                                                                            <Route path="compras" element={<FeatureProtectedRoute featureId="core_compras"><Compras /></FeatureProtectedRoute>} />
+                                                                            <Route path="ingresos" element={<FeatureProtectedRoute featureId="core_banca"><Tesoreria tipo="ingreso" /></FeatureProtectedRoute>} />
+                                                                            <Route path="egresos" element={<FeatureProtectedRoute featureId="core_banca"><Tesoreria tipo="egreso" /></FeatureProtectedRoute>} />
+
+                                                                            <Route path="diario" element={<FeatureProtectedRoute featureId="core_contabilidad"><DiarioGeneral /></FeatureProtectedRoute>} />
+                                                                            <Route path="reportes" element={<FeatureProtectedRoute featureId="enterprise_reportes"><Reportes /></FeatureProtectedRoute>} />
+                                                                            <Route path="fiscal" element={<FeatureProtectedRoute featureId="core_fiscal"><ReportesFiscales /></FeatureProtectedRoute>} />
+                                                                            <Route path="activos" element={<FeatureProtectedRoute featureId="enterprise_activos"><FixedAssets /></FeatureProtectedRoute>} />
+                                                                            <Route path="nomina" element={<FeatureProtectedRoute featureId="enterprise_rrhh"><Nomina /></FeatureProtectedRoute>} />
                                                                             <Route path="config" element={<Settings />} />
                                                                             <Route path="ayuda" element={<Help />} />
-                                                                            <Route path="mayor" element={<FeatureProtectedRoute featureId="contabilidad"><MayorGeneral /></FeatureProtectedRoute>} />
-                                                                            <Route path="aging" element={<FeatureProtectedRoute featureId="contabilidad"><AgingReports /></FeatureProtectedRoute>} />
-                                                                            <Route path="presupuestos" element={<FeatureProtectedRoute featureId="reportes"><Presupuestos /></FeatureProtectedRoute>} />
-                                                                            <Route path="efectivo" element={<FeatureProtectedRoute featureId="reportes"><FlujoEfectivo /></FeatureProtectedRoute>} />
-                                                                            <Route path="ordenes" element={<FeatureProtectedRoute featureId="compras"><OrdenesCompra /></FeatureProtectedRoute>} />
-                                                                            <Route path="conciliacion" element={<FeatureProtectedRoute featureId="banking"><ConciliacionBancaria /></FeatureProtectedRoute>} />
-                                                                            <Route path="notas" element={<FeatureProtectedRoute featureId="facturacion"><NotasCreditoDebito /></FeatureProtectedRoute>} />
-                                                                            <Route path="recurrentes" element={<FeatureProtectedRoute featureId="contabilidad"><TransaccionesRecurrentes /></FeatureProtectedRoute>} />
-                                                                            <Route path="estados-cuenta" element={<FeatureProtectedRoute featureId="facturacion"><EstadosCuenta /></FeatureProtectedRoute>} />
-                                                                            <Route path="cierre" element={<FeatureProtectedRoute featureId="contabilidad"><CierreFiscal /></FeatureProtectedRoute>} />
-                                                                            <Route path="centros-costo" element={<FeatureProtectedRoute featureId="contabilidad"><CentrosCosto /></FeatureProtectedRoute>} />
-                                                                            <Route path="niif" element={<FeatureProtectedRoute featureId="contabilidad"><EstadosFinancierosNIIF /></FeatureProtectedRoute>} />
-                                                                            <Route path="indicadores" element={<FeatureProtectedRoute featureId="reportes"><IndicadoresFinancieros /></FeatureProtectedRoute>} />
-                                                                            <Route path="ncf" element={<FeatureProtectedRoute featureId="fiscal"><NCFManager /></FeatureProtectedRoute>} />
-                                                                            <Route path="talento-humano" element={<FeatureProtectedRoute featureId="personal"><TalentoHumano /></FeatureProtectedRoute>} />
-                                                                            <Route path="balance-social" element={<FeatureProtectedRoute featureId="personal"><BalanceSocial /></FeatureProtectedRoute>} />
-                                                                            <Route path="control-interno" element={<FeatureProtectedRoute featureId="auditoria"><ControlInterno /></FeatureProtectedRoute>} />
-                                                                            <Route path="parametros-core" element={<FeatureProtectedRoute featureId="contabilidad"><ParametrosCore /></FeatureProtectedRoute>} />
-                                                                            <Route path="segmentacion" element={<FeatureProtectedRoute featureId="personal"><Segmentacion /></FeatureProtectedRoute>} />
-                                                                            <Route path="cobros" element={<FeatureProtectedRoute featureId="personal"><CobrosYDeducciones /></FeatureProtectedRoute>} />
-                                                                            <Route path="juridico" element={<FeatureProtectedRoute featureId="auditoria"><Juridico /></FeatureProtectedRoute>} />
-                                                                            <Route path="ahorros" element={<FeatureProtectedRoute featureId="ahorros"><Ahorros /></FeatureProtectedRoute>} />
-                                                                            <Route path="procesos" element={<FeatureProtectedRoute featureId="contabilidad"><Procesos /></FeatureProtectedRoute>} />
-                                                                            <Route path="auditoria" element={<FeatureProtectedRoute featureId="auditoria"><Auditoria /></FeatureProtectedRoute>} />
-                                                                            <Route path="analytics" element={<FeatureProtectedRoute featureId="reportes"><BiAnalytics /></FeatureProtectedRoute>} />
-                                                                            <Route path="documentos" element={<FeatureProtectedRoute featureId="auditoria"><GestionDocumental /></FeatureProtectedRoute>} />
-                                                                            <Route path="proyectos" element={<FeatureProtectedRoute featureId="reportes"><ProyectosTareas /></FeatureProtectedRoute>} />
-                                                                            <Route path="seguridad" element={<FeatureProtectedRoute featureId="auditoria"><UsuariosRoles /></FeatureProtectedRoute>} />
-                                                                            <Route path="cxc" element={<FeatureProtectedRoute featureId="facturacion"><CuentasPorCobrar /></FeatureProtectedRoute>} />
-                                                                            <Route path="cxp" element={<FeatureProtectedRoute featureId="compras"><CuentasPorPagar /></FeatureProtectedRoute>} />
-                                                                            <Route path="wealth" element={<FeatureProtectedRoute featureId="banking"><WealthTerminal /></FeatureProtectedRoute>} />
-                                                                            <Route path="copilot" element={<FeatureProtectedRoute featureId="dashboard"><Copilot /></FeatureProtectedRoute>} />
-                                                                            <Route path="tarjetas" element={<FeatureProtectedRoute featureId="banking"><Tarjetas /></FeatureProtectedRoute>} />
-                                                                            <Route path="datanode" element={<FeatureProtectedRoute featureId="banking"><DataNode /></FeatureProtectedRoute>} />
-                                                                            <Route path="exchange" element={<FeatureProtectedRoute featureId="banking"><Exchange /></FeatureProtectedRoute>} />
-                                                            <Route path="sovereign-vault" element={<FeatureProtectedRoute featureId="sovereign"><SovereignVault /></FeatureProtectedRoute>} />
-                                                            <Route path="credit-intelligence" element={<FeatureProtectedRoute featureId="credit_intelligence"><CreditIntelligence /></FeatureProtectedRoute>} />
+                                                                            <Route path="mayor" element={<FeatureProtectedRoute featureId="core_contabilidad"><MayorGeneral /></FeatureProtectedRoute>} />
+                                                                            <Route path="aging" element={<FeatureProtectedRoute featureId="core_contabilidad"><AgingReports /></FeatureProtectedRoute>} />
+                                                                            <Route path="presupuestos" element={<FeatureProtectedRoute featureId="enterprise_reportes"><Presupuestos /></FeatureProtectedRoute>} />
+                                                                            <Route path="efectivo" element={<FeatureProtectedRoute featureId="enterprise_reportes"><FlujoEfectivo /></FeatureProtectedRoute>} />
+                                                                            <Route path="ordenes" element={<FeatureProtectedRoute featureId="core_compras"><OrdenesCompra /></FeatureProtectedRoute>} />
+                                                                            <Route path="conciliacion" element={<FeatureProtectedRoute featureId="core_banca"><ConciliacionBancaria /></FeatureProtectedRoute>} />
+                                                                            <Route path="notas" element={<FeatureProtectedRoute featureId="core_facturacion"><NotasCreditoDebito /></FeatureProtectedRoute>} />
+                                                                            <Route path="recurrentes" element={<FeatureProtectedRoute featureId="core_contabilidad"><TransaccionesRecurrentes /></FeatureProtectedRoute>} />
+                                                                            <Route path="estados-cuenta" element={<FeatureProtectedRoute featureId="core_facturacion"><EstadosCuenta /></FeatureProtectedRoute>} />
+                                                                            <Route path="cierre" element={<FeatureProtectedRoute featureId="core_contabilidad"><CierreFiscal /></FeatureProtectedRoute>} />
+                                                                            <Route path="centros-costo" element={<FeatureProtectedRoute featureId="core_contabilidad"><CentrosCosto /></FeatureProtectedRoute>} />
+                                                                            <Route path="niif" element={<FeatureProtectedRoute featureId="core_contabilidad"><EstadosFinancierosNIIF /></FeatureProtectedRoute>} />
+                                                                            <Route path="indicadores" element={<FeatureProtectedRoute featureId="enterprise_reportes"><IndicadoresFinancieros /></FeatureProtectedRoute>} />
+                                                                            <Route path="ncf" element={<FeatureProtectedRoute featureId="core_fiscal"><NCFManager /></FeatureProtectedRoute>} />
+                                                                            <Route path="talento-humano" element={<FeatureProtectedRoute featureId="enterprise_rrhh"><TalentoHumano /></FeatureProtectedRoute>} />
+                                                                            <Route path="balance-social" element={<FeatureProtectedRoute featureId="enterprise_rrhh"><BalanceSocial /></FeatureProtectedRoute>} />
+                                                                            <Route path="control-interno" element={<FeatureProtectedRoute featureId="enterprise_auditoria"><ControlInterno /></FeatureProtectedRoute>} />
+                                                                            <Route path="parametros-core" element={<FeatureProtectedRoute featureId="core_contabilidad"><ParametrosCore /></FeatureProtectedRoute>} />
+                                                                            <Route path="segmentacion" element={<FeatureProtectedRoute featureId="enterprise_rrhh"><Segmentacion /></FeatureProtectedRoute>} />
+                                                                            <Route path="cobros" element={<FeatureProtectedRoute featureId="enterprise_rrhh"><CobrosYDeducciones /></FeatureProtectedRoute>} />
+                                                                            <Route path="juridico" element={<FeatureProtectedRoute featureId="enterprise_auditoria"><Juridico /></FeatureProtectedRoute>} />
+                                                                            <Route path="ahorros" element={<FeatureProtectedRoute featureId="core_banca"><Ahorros /></FeatureProtectedRoute>} />
+                                                                            <Route path="procesos" element={<FeatureProtectedRoute featureId="core_contabilidad"><Procesos /></FeatureProtectedRoute>} />
+                                                                            <Route path="auditoria" element={<FeatureProtectedRoute featureId="enterprise_auditoria"><Auditoria /></FeatureProtectedRoute>} />
+                                                                            <Route path="analytics" element={<FeatureProtectedRoute featureId="enterprise_reportes"><BiAnalytics /></FeatureProtectedRoute>} />
+                                                                            <Route path="documentos" element={<FeatureProtectedRoute featureId="enterprise_auditoria"><GestionDocumental /></FeatureProtectedRoute>} />
+                                                                            <Route path="proyectos" element={<FeatureProtectedRoute featureId="enterprise_reportes"><ProyectosTareas /></FeatureProtectedRoute>} />
+                                                                            <Route path="seguridad" element={<FeatureProtectedRoute featureId="enterprise_auditoria"><UsuariosRoles /></FeatureProtectedRoute>} />
+                                                                            <Route path="cxc" element={<FeatureProtectedRoute featureId="core_facturacion"><CuentasPorCobrar /></FeatureProtectedRoute>} />
+                                                                            <Route path="cxp" element={<FeatureProtectedRoute featureId="core_compras"><CuentasPorPagar /></FeatureProtectedRoute>} />
+                                                                            <Route path="wealth" element={<FeatureProtectedRoute featureId="fintech_wealth"><WealthTerminal /></FeatureProtectedRoute>} />
+                                                                            <Route path="copilot" element={<FeatureProtectedRoute featureId="ai_copilot"><Copilot /></FeatureProtectedRoute>} />
+                                                                            <Route path="tarjetas" element={<FeatureProtectedRoute featureId="fintech_cards"><Tarjetas /></FeatureProtectedRoute>} />
+                                                                            <Route path="datanode" element={<FeatureProtectedRoute featureId="fintech_datanode"><DataNode /></FeatureProtectedRoute>} />
+                                                                            <Route path="exchange" element={<FeatureProtectedRoute featureId="fintech_exchange"><Exchange /></FeatureProtectedRoute>} />
+                                                            <Route path="sovereign-vault" element={<FeatureProtectedRoute featureId="fintech_sovereign"><SovereignVault /></FeatureProtectedRoute>} />
+                                                            <Route path="credit-intelligence" element={<FeatureProtectedRoute featureId="fintech_credit"><CreditIntelligence /></FeatureProtectedRoute>} />
 
                                                                             <Route path="*" element={<Navigate to="/" replace />} />
                                                                           </Route>

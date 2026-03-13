@@ -6,13 +6,19 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 const planFeatures = {
-    basico: ['dashboard', 'contactos', 'facturacion', 'sovereign'],
+    basico: [
+        'dashboard', 'core_facturacion', 'core_caja', 'core_socios', 
+        'core_contactos', 'enterprise_reportes', 'fintech_sovereign'
+    ],
     intermedio: [
-        'dashboard', 'contactos', 'facturacion', 'inventario',
-        'banking', 'caja', 'compras', 'contabilidad', 'sovereign'
+        'dashboard', 'core_facturacion', 'core_caja', 'core_socios', 
+        'core_contactos', 'enterprise_reportes', 'fintech_sovereign',
+        'core_prestamos', 'core_contabilidad', 'core_fiscal', 
+        'core_inventario', 'core_compras', 'core_banca'
     ],
     avanzado: 'all'
 };
+
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);

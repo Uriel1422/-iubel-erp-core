@@ -23,102 +23,110 @@ const Sidebar = () => {
             display: true,
             items: [
                 { path: '/erp', icon: <LayoutDashboard className="nav-icon" />, label: 'Panel', exact: true, display: true, featureId: 'dashboard' },
-                { path: 'banking-hub', icon: <Activity className="nav-icon" />, label: 'Banking Hub', display: hasRole(['admin', 'contador']), featureId: 'banking' },
-                { path: 'caja', icon: <Banknote className="nav-icon" />, label: 'Caja y Bóveda', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'caja' },
-                { path: 'prestamos', icon: <CreditCard className="nav-icon" />, label: 'Préstamos', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'prestamos' },
-                { path: 'socios', icon: <UserSquare className="nav-icon" />, label: 'Gestión de Socios', display: true, featureId: 'banking' },
-                { path: 'contactos', icon: <Users className="nav-icon" />, label: 'Clientes / Prov.', display: true, featureId: 'contactos' },
-                { path: 'cuentas', icon: <BookOpen className="nav-icon" />, label: 'Catálogo Cuentas', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'contabilidad' },
-                { path: 'inventario', icon: <Package className="nav-icon" />, label: 'Inventario', display: hasRole(['admin', 'contador', 'auxiliar', 'auditor']), featureId: 'inventario' },
+                { path: 'banking-hub', icon: <Activity className="nav-icon" />, label: 'Banking Hub', display: hasRole(['admin', 'contador']), featureId: 'core_banca' },
+                { path: 'caja', icon: <Banknote className="nav-icon" />, label: 'Caja y Bóveda', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'core_caja' },
+                { path: 'prestamos', icon: <CreditCard className="nav-icon" />, label: 'Préstamos', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'core_prestamos' },
+                { path: 'socios', icon: <UserSquare className="nav-icon" />, label: 'Gestión de Socios', display: true, featureId: 'core_socios' },
+                { path: 'contactos', icon: <Users className="nav-icon" />, label: 'Clientes / Prov.', display: true, featureId: 'core_contactos' },
+                { path: 'cuentas', icon: <BookOpen className="nav-icon" />, label: 'Catálogo Cuentas', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'core_contabilidad' },
+                { path: 'inventario', icon: <Package className="nav-icon" />, label: 'Inventario', display: hasRole(['admin', 'contador', 'auxiliar', 'auditor']), featureId: 'core_inventario' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {
             label: 'Ventas y Compras',
             display: true,
             items: [
-                { path: 'documentos', icon: <FolderOpen className="nav-icon" />, label: 'Gestión Documental', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'auditoria' },
-                { path: 'proyectos', icon: <Layers className="nav-icon" />, label: 'Proyectos & Tareas', display: hasRole(['admin', 'contador']), featureId: 'reportes' },
-                { path: 'cotizaciones', icon: <ClipboardList className="nav-icon" />, label: 'Cotizaciones', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'facturacion' },
-                { path: 'facturas', icon: <FileText className="nav-icon" />, label: 'Facturación', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'facturacion' },
-                { path: 'cxc', icon: <CreditCard className="nav-icon" />, label: '💳 C. por Cobrar', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'facturacion' },
-                { path: 'cxp', icon: <Wallet className="nav-icon" />, label: '💸 C. por Pagar', display: hasRole(['admin', 'contador', 'auxiliar']), featureId: 'compras' },
-                { path: 'notas', icon: <FileX className="nav-icon" />, label: 'Notas Cred./Déb.', display: hasRole(['admin', 'contador']), featureId: 'facturacion' },
-                { path: 'ordenes', icon: <FilePlus className="nav-icon" />, label: 'Órdenes de Compra', display: hasRole(['admin', 'contador', 'auxiliar']), featureId: 'compras' },
-                { path: 'compras', icon: <ShoppingCart className="nav-icon" />, label: 'Compras', display: hasRole(['admin', 'contador', 'auxiliar']), featureId: 'compras' },
-                { path: 'estados-cuenta', icon: <UserSquare className="nav-icon" />, label: 'Estados de Cuenta', display: true, featureId: 'facturacion' },
+                { path: 'documentos', icon: <FolderOpen className="nav-icon" />, label: 'Gestión Documental', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'enterprise_auditoria' },
+                { path: 'proyectos', icon: <Layers className="nav-icon" />, label: 'Proyectos & Tareas', display: hasRole(['admin', 'contador']), featureId: 'enterprise_reportes' },
+                { path: 'cotizaciones', icon: <ClipboardList className="nav-icon" />, label: 'Cotizaciones', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'core_facturacion' },
+                { path: 'facturas', icon: <FileText className="nav-icon" />, label: 'Facturación', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'core_facturacion' },
+                { path: 'cxc', icon: <CreditCard className="nav-icon" />, label: '💳 C. por Cobrar', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'core_facturacion' },
+                { path: 'cxp', icon: <Wallet className="nav-icon" />, label: '💸 C. por Pagar', display: hasRole(['admin', 'contador', 'auxiliar']), featureId: 'core_compras' },
+                { path: 'notas', icon: <FileX className="nav-icon" />, label: 'Notas Cred./Déb.', display: hasRole(['admin', 'contador']), featureId: 'core_facturacion' },
+                { path: 'ordenes', icon: <FilePlus className="nav-icon" />, label: 'Órdenes de Compra', display: hasRole(['admin', 'contador', 'auxiliar']), featureId: 'core_compras' },
+                { path: 'compras', icon: <ShoppingCart className="nav-icon" />, label: 'Compras', display: hasRole(['admin', 'contador', 'auxiliar']), featureId: 'core_compras' },
+                { path: 'estados-cuenta', icon: <UserSquare className="nav-icon" />, label: 'Estados de Cuenta', display: true, featureId: 'core_facturacion' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {
             label: 'Contabilidad',
             display: hasAccess('contabilidad'),
             items: [
-                { path: 'bancos', icon: <Landmark className="nav-icon" />, label: 'Bancos', display: true, featureId: 'banking' },
-                { path: 'conciliacion', icon: <GitMerge className="nav-icon" />, label: 'Conciliación Bancaria', display: hasRole(['admin', 'contador']), featureId: 'banking' },
-                { path: 'diario', icon: <Calculator className="nav-icon" />, label: 'Entradas de Diario', display: hasRole(['admin', 'contador']), featureId: 'contabilidad' },
-                { path: 'recurrentes', icon: <RefreshCw className="nav-icon" />, label: 'Recurrentes', display: true, featureId: 'contabilidad' },
-                { path: 'mayor', icon: <Calendar className="nav-icon" />, label: 'Mayor General', display: true, featureId: 'contabilidad' },
-                { path: 'aging', icon: <Clock className="nav-icon" />, label: 'Antigüedad CxC/CxP', display: true, featureId: 'contabilidad' },
+                { path: 'bancos', icon: <Landmark className="nav-icon" />, label: 'Bancos', display: true, featureId: 'core_banca' },
+                { path: 'conciliacion', icon: <GitMerge className="nav-icon" />, label: 'Conciliación Bancaria', display: hasRole(['admin', 'contador']), featureId: 'core_banca' },
+                { path: 'diario', icon: <Calculator className="nav-icon" />, label: 'Entradas de Diario', display: hasRole(['admin', 'contador']), featureId: 'core_contabilidad' },
+                { path: 'recurrentes', icon: <RefreshCw className="nav-icon" />, label: 'Recurrentes', display: true, featureId: 'core_contabilidad' },
+                { path: 'mayor', icon: <Calendar className="nav-icon" />, label: 'Mayor General', display: true, featureId: 'core_contabilidad' },
+                { path: 'aging', icon: <Clock className="nav-icon" />, label: 'Antigüedad CxC/CxP', display: true, featureId: 'core_contabilidad' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {
             label: 'Reportes y Análisis',
             display: hasAccess('reportes'),
             items: [
-                { path: 'reportes', icon: <PieChart className="nav-icon" />, label: 'Dashboard Reportes', display: true, featureId: 'reportes' },
-                { path: 'niif', icon: <Landmark className="nav-icon" style={{color: '#f59e0b'}} />, label: <span>Estados NIIF <span style={{ fontSize: '9px', background: '#f59e0b', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>PRO</span></span>, display: true, featureId: 'reportes' },
-                { path: 'efectivo', icon: <Activity className="nav-icon" />, label: 'Flujo de Efectivo', display: true, featureId: 'reportes' },
-                { path: 'presupuestos', icon: <Target className="nav-icon" />, label: 'Presupuestos', display: true, featureId: 'reportes' },
-                { path: 'centros-costo', icon: <BarChart2 className="nav-icon" />, label: 'Centros de Costo', display: true, featureId: 'contabilidad' },
-                { path: 'indicadores', icon: <TrendingUp className="nav-icon" />, label: 'Indicadores (KPIs)', display: true, featureId: 'reportes' },
-                { path: 'fiscal', icon: <ShieldCheck className="nav-icon" />, label: 'Impuestos (DGII)', display: true, featureId: 'fiscal' },
-                { path: 'analytics', icon: <Brain className="nav-icon" />, label: '🧠 Analytics & BI', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'reportes' },
+                { path: 'reportes', icon: <PieChart className="nav-icon" />, label: 'Dashboard Reportes', display: true, featureId: 'enterprise_reportes' },
+                { path: 'niif', icon: <Landmark className="nav-icon" style={{color: '#f59e0b'}} />, label: <span>Estados NIIF <span style={{ fontSize: '9px', background: '#f59e0b', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>PRO</span></span>, display: true, featureId: 'enterprise_reportes' },
+                { path: 'efectivo', icon: <Activity className="nav-icon" />, label: 'Flujo de Efectivo', display: true, featureId: 'enterprise_reportes' },
+                { path: 'presupuestos', icon: <Target className="nav-icon" />, label: 'Presupuestos', display: true, featureId: 'enterprise_reportes' },
+                { path: 'centros-costo', icon: <BarChart2 className="nav-icon" />, label: 'Centros de Costo', display: true, featureId: 'core_contabilidad' },
+                { path: 'indicadores', icon: <TrendingUp className="nav-icon" />, label: 'Indicadores (KPIs)', display: true, featureId: 'enterprise_reportes' },
+                { path: 'fiscal', icon: <ShieldCheck className="nav-icon" />, label: 'Impuestos (DGII)', display: true, featureId: 'core_fiscal' },
+                { path: 'analytics', icon: <Brain className="nav-icon" />, label: '🧠 Analytics & BI', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'enterprise_reportes' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {
             label: 'Inteligencia IA',
             display: true,
             items: [
-                { path: 'copilot', icon: <Brain className="nav-icon" style={{ color: '#8b5cf6' }} />, label: <span>🧠 Iubel Copilot <span style={{ fontSize: '9px', background: '#8b5cf6', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>AI</span></span>, display: true, featureId: 'dashboard' },
-                { path: 'analytics', icon: <PieChart className="nav-icon" style={{ color: '#10b981' }} />, label: 'Analytics & BI', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'reportes' },
+                { path: 'copilot', icon: <Brain className="nav-icon" style={{ color: '#8b5cf6' }} />, label: <span>🧠 Iubel Copilot <span style={{ fontSize: '9px', background: '#8b5cf6', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>AI</span></span>, display: true, featureId: 'ai_copilot' },
+                { path: 'analytics', icon: <PieChart className="nav-icon" style={{ color: '#10b981' }} />, label: 'Analytics & BI', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'enterprise_reportes' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {
             label: 'FinTech Enterprise',
             display: true,
             items: [
-                { path: 'sovereign-vault', icon: <ShieldCheck className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Sovereign Vault <span style={{ fontSize: '9px', border: '1px solid #38bdf8', color: '#38bdf8', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>VIP</span></span>, display: true },
-                { path: 'wealth', icon: <TrendingUp className="nav-icon" style={{ color: '#10b981' }} />, label: 'Wealth Terminal', display: true, featureId: 'banking' },
-                { path: 'tarjetas', icon: <CreditCard className="nav-icon" style={{ color: '#0ea5e9' }} />, label: <span>Card Issuing <span style={{ fontSize: '9px', background: '#0ea5e9', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>HOT</span></span>, display: true, featureId: 'banking' },
-                { path: 'datanode', icon: <Network className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Data Node <span style={{ fontSize: '9px', background: '#38bdf8', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>GOLD</span></span>, display: true, featureId: 'banking' },
-                { path: 'exchange', icon: <Repeat className="nav-icon" style={{ color: '#facc15' }} />, label: <span>Exchange & Tokens <span style={{ fontSize: '9px', background: '#facc15', color: 'black', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>NEW</span></span>, display: true, featureId: 'banking' },
-                { path: 'credit-intelligence', icon: <Brain className="nav-icon" style={{ color: '#8b5cf6' }} />, label: <span>Credit Intelligence <span style={{ fontSize: '9px', border: '1px solid #8b5cf6', color: '#8b5cf6', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>ELITE</span></span>, display: true, featureId: 'credit_intelligence' },
+                { path: 'sovereign-vault', icon: <ShieldCheck className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Sovereign Vault <span style={{ fontSize: '9px', border: '1px solid #38bdf8', color: '#38bdf8', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>VIP</span></span>, display: true, featureId: 'fintech_sovereign' },
+                { path: 'wealth', icon: <TrendingUp className="nav-icon" style={{ color: '#10b981' }} />, label: 'Wealth Terminal', display: true, featureId: 'fintech_wealth' },
+                { path: 'tarjetas', icon: <CreditCard className="nav-icon" style={{ color: '#0ea5e9' }} />, label: <span>Card Issuing <span style={{ fontSize: '9px', background: '#0ea5e9', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>HOT</span></span>, display: true, featureId: 'fintech_cards' },
+                { path: 'datanode', icon: <Network className="nav-icon" style={{ color: '#38bdf8' }} />, label: <span>Data Node <span style={{ fontSize: '9px', background: '#38bdf8', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>GOLD</span></span>, display: true, featureId: 'fintech_datanode' },
+                { path: 'exchange', icon: <Repeat className="nav-icon" style={{ color: '#facc15' }} />, label: <span>Exchange & Tokens <span style={{ fontSize: '9px', background: '#facc15', color: 'black', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>NEW</span></span>, display: true, featureId: 'fintech_exchange' },
+                { path: 'credit-intelligence', icon: <Brain className="nav-icon" style={{ color: '#8b5cf6' }} />, label: <span>Credit Intelligence <span style={{ fontSize: '9px', border: '1px solid #8b5cf6', color: '#8b5cf6', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>ELITE</span></span>, display: true, featureId: 'fintech_credit' },
+
             ].filter(i => i.display && (i.featureId ? hasAccess(i.featureId) : true))
         },
         {
             label: 'Talento y RRHH',
             display: hasAccess('personal'),
             items: [
-                { path: 'talento-humano', icon: <Briefcase className="nav-icon" />, label: 'Talento Humano', display: true, featureId: 'personal' },
-                { path: 'nomina', icon: <DollarSign className="nav-icon" />, label: 'Nómina (RD)', display: true, featureId: 'personal' },
-                { path: 'ahorros', icon: <Wallet className="nav-icon" />, label: 'Ahorros y Captaciones', display: true, featureId: 'ahorros' },
-                { path: 'procesos', icon: <RefreshCw className="nav-icon" />, label: 'Procesos y Cierres', display: true, featureId: 'contabilidad' },
-                { path: 'cobros', icon: <RefreshCw className="nav-icon" />, label: 'Cobros y Deducciones', display: true, featureId: 'personal' },
-                { path: 'segmentacion', icon: <Users className="nav-icon" />, label: 'Segmentación Socios', display: true, featureId: 'personal' },
-                { path: 'balance-social', icon: <TrendingUp className="nav-icon" />, label: 'Balance Social', display: true, featureId: 'personal' },
+                { path: 'talento-humano', icon: <Briefcase className="nav-icon" />, label: 'Talento Humano', display: true, featureId: 'enterprise_rrhh' },
+                { path: 'nomina', icon: <DollarSign className="nav-icon" />, label: 'Nómina (RD)', display: true, featureId: 'enterprise_rrhh' },
+                { path: 'ahorros', icon: <Wallet className="nav-icon" />, label: 'Ahorros y Captaciones', display: true, featureId: 'core_banca' },
+                { path: 'procesos', icon: <RefreshCw className="nav-icon" />, label: 'Procesos y Cierres', display: true, featureId: 'core_contabilidad' },
+                { path: 'cobros', icon: <RefreshCw className="nav-icon" />, label: 'Cobros y Deducciones', display: true, featureId: 'enterprise_rrhh' },
+                { path: 'segmentacion', icon: <Users className="nav-icon" />, label: 'Segmentación Socios', display: true, featureId: 'enterprise_rrhh' },
+                { path: 'balance-social', icon: <TrendingUp className="nav-icon" />, label: 'Balance Social', display: true, featureId: 'enterprise_rrhh' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {
             label: 'Empresa y Cumplim.',
             display: hasAccess('contabilidad') || hasRole(['admin', 'auditor']),
             items: [
-                { path: 'parametros-core', icon: <Server className="nav-icon" />, label: 'Parámetros del Core', display: true, featureId: 'contabilidad' },
-                { path: 'activos', icon: <HardDrive className="nav-icon" />, label: 'Activos Fijos', display: true, featureId: 'activos' },
-                { path: 'control-interno', icon: <ShieldCheck className="nav-icon" />, label: 'Control Interno', display: true, featureId: 'auditoria' },
-                { path: 'juridico', icon: <Scale className="nav-icon" />, label: 'Gestión Jurídica', display: true, featureId: 'auditoria' },
-                { path: 'ncf', icon: <FileText className="nav-icon" />, label: 'Comprobantes NCF', display: hasRole(['admin', 'contador']), featureId: 'fiscal' },
-                { path: 'cierre', icon: <Lock className="nav-icon" />, label: 'Cierre Fiscal', display: hasRole(['admin', 'contador']), featureId: 'contabilidad' },
-                { path: 'auditoria', icon: <ShieldCheck className="nav-icon" />, label: 'Registro Auditoría', display: hasRole(['admin', 'auditor']), featureId: 'auditoria' },
-                { path: 'seguridad', icon: <UserCheck className="nav-icon" />, label: '👥 Usuarios y Roles', display: hasRole(['admin']), featureId: 'auditoria' },
+                { path: 'parametros-core', icon: <Server className="nav-icon" />, label: 'Parámetros del Core', display: true, featureId: 'core_contabilidad' },
+                { path: 'activos', icon: <HardDrive className="nav-icon" />, label: 'Activos Fijos', display: true, featureId: 'enterprise_activos' },
+                { path: 'control-interno', icon: <ShieldCheck className="nav-icon" />, label: 'Control Interno', display: true, featureId: 'enterprise_auditoria' },
+                { path: 'juridico', icon: <Scale className="nav-icon" />, label: 'Gestión Jurídica', display: true, featureId: 'enterprise_auditoria' },
+                { path: 'ncf', icon: <FileText className="nav-icon" />, label: 'Comprobantes NCF', display: hasRole(['admin', 'contador']), featureId: 'core_fiscal' },
+                { path: 'cierre', icon: <Lock className="nav-icon" />, label: 'Cierre Fiscal', display: hasRole(['admin', 'contador']), featureId: 'core_contabilidad' },
+                { path: 'auditoria', icon: <ShieldCheck className="nav-icon" />, label: 'Registro Auditoría', display: hasRole(['admin', 'auditor']), featureId: 'enterprise_auditoria' },
+                { path: 'seguridad', icon: <UserCheck className="nav-icon" />, label: '👥 Usuarios y Roles', display: hasRole(['admin']), featureId: 'enterprise_auditoria' },
+
             ].filter(i => i.display && hasAccess(i.featureId))
         },
         {

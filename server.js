@@ -229,12 +229,25 @@ const authMiddleware = (req, res, next) => {
     }
     try {
         const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
+        
+        // Verificación de suspensión (SaaS Admin Control)
+        if (decoded.role !== 'sysadmin') {
+            const [empresas] = await pool.execute('SELECT activa FROM empresas WHERE id = ?', [decoded.empresaId]);
+            if (empresas.length > 0 && !empresas[0].activa) {
+                return res.status(403).json({ 
+                    error: 'INSTITUCIÓN SUSPENDIDA', 
+                    message: 'El acceso a esta empresa ha sido restringido por el administrador global de Iubel.' 
+                });
+            }
+        }
+
         req.auth = decoded; // { userId, empresaId, empresaSlug, role, nombre, empresa }
         req.tablePrefix = decoded.empresaSlug + '_';
         next();
     } catch {
         return res.status(401).json({ error: 'Token inválido o expirado' });
     }
+
 };
 
 // ─── ENDPOINTS SALTO CUÁNTICO 🚀 ──────────────────────────────────────────────
@@ -581,16 +594,23 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     try {
-        const slug = slugify(empresaNombre);
-
         // Buscar empresa
         const [empresas] = await pool.execute(
-            'SELECT * FROM empresas WHERE slug = ? AND activa = 1 LIMIT 1', [slug]
+            'SELECT * FROM empresas WHERE slug = ? LIMIT 1', [slug]
         );
         if (empresas.length === 0) {
-            return res.status(401).json({ error: 'Empresa no encontrada o inactiva' });
+            return res.status(401).json({ error: 'Empresa no encontrada' });
         }
         const empresa = empresas[0];
+
+        if (!empresa.activa) {
+            return res.status(403).json({ 
+                error: 'INSTITUCIÓN SUSPENDIDA',
+                message: 'El acceso ha sido restringido por Iubel Cloud Administration.' 
+            });
+        }
+
+
 
         // Buscar usuario dentro de esa empresa
         const [usuarios] = await pool.execute(

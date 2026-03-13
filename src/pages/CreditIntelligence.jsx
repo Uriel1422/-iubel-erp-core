@@ -3,8 +3,9 @@ import {
     CreditCard, PieChart, TrendingUp, DollarSign, Users, 
     Calendar, AlertCircle, Plus, Filter, Download, 
     ChevronRight, ArrowUpRight, ArrowDownRight, Activity,
-    ShieldCheck, Wallet, ShoppingBag, Receipt, MapPin
+    ShieldCheck, Wallet, ShoppingBag, Receipt, MapPin, Trash2
 } from 'lucide-react';
+
 import { 
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
     Tooltip, CartesianGrid, PieChart as RePie, Pie, Cell, 
@@ -14,14 +15,8 @@ import {
 const formatMoney = (val) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(val);
 
 const CreditIntelligence = () => {
-    const [expenses, setExpenses] = useState([
-        { id: 1, date: '2026-03-12', merchant: 'Supermercado Nacional', amount: 8500.00, category: 'Alimentos', type: 'owner', person: 'Yo' },
-        { id: 2, date: '2026-03-11', merchant: 'Apple Store', amount: 15000.00, category: 'Tecnología', type: 'third', person: 'Juan Pérez' },
-        { id: 3, date: '2026-03-10', merchant: 'Restaurante SBG', amount: 4200.00, category: 'Entretenimiento', type: 'owner', person: 'Yo' },
-        { id: 4, date: '2026-03-09', merchant: 'Estación Texaco', amount: 3500.00, category: 'Transporte', type: 'third', person: 'Maria Sosa' },
-        { id: 5, date: '2026-03-08', merchant: 'Clinica Abreu', amount: 12000.00, category: 'Salud', type: 'owner', person: 'Yo' },
-        { id: 6, date: '2026-03-05', merchant: 'Amazon.com', amount: 7200.00, category: 'Shopping', type: 'third', person: 'Juan Pérez' },
-    ]);
+    const [expenses, setExpenses] = useState([]);
+
 
     const [limit, setLimit] = useState(500000);
     const [isAdding, setIsAdding] = useState(false);
@@ -67,6 +62,13 @@ const CreditIntelligence = () => {
         setIsAdding(false);
         setNewExpense({ merchant: '', amount: '', category: 'Alimentos', type: 'owner', person: 'Yo' });
     };
+
+    const handleDeleteExpense = (id) => {
+        if (window.confirm('¿Estás seguro de que deseas eliminar este registro de gasto?')) {
+            setExpenses(expenses.filter(exp => exp.id !== id));
+        }
+    };
+
 
     return (
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '2rem' }}>
@@ -159,6 +161,8 @@ const CreditIntelligence = () => {
                                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>Categoría</th>
                                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>Asignado a</th>
                                     <th style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', textAlign: 'right' }}>Monto</th>
+                                    <th style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', textAlign: 'center' }}>Acciones</th>
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -187,6 +191,16 @@ const CreditIntelligence = () => {
                                         <td style={{ padding: '1rem 1.5rem', textAlign: 'right', fontWeight: 800, color: exp.type === 'third' ? '#10b981' : 'var(--text-main)' }}>
                                             {formatMoney(exp.amount)}
                                         </td>
+                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                                            <button 
+                                                onClick={() => handleDeleteExpense(exp.id)}
+                                                style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', borderRadius: '4px', transition: '0.2s' }}
+                                                className="delete-btn"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
+
                                     </tr>
                                 ))}
                             </tbody>

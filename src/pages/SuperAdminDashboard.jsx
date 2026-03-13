@@ -6,7 +6,13 @@ import {
     Building2, CheckCircle2, XCircle, ShieldCheck,
     Search, TrendingUp, RefreshCw, Download, Filter,
     Users, DollarSign, Terminal, Globe, Server, AlertTriangle,
-    Lock, MessageSquare, Zap, HardDrive, ShieldAlert
+    Lock, MessageSquare, Zap, HardDrive, ShieldAlert,
+    BookOpen, Package, FileText, ShoppingCart, 
+    Calculator, PieChart, Landmark, ClipboardList,
+    Briefcase, Calendar, Clock, Target, FilePlus,
+    GitMerge, FileX, RefreshCw, UserSquare, Banknote, BarChart2, TrendingUp, CreditCard, Scale, Wallet,
+    Brain, FolderOpen, Layers, UserCheck, Network, Repeat,
+    Sparkles, Star, Cpu
 } from 'lucide-react';
 import { 
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -40,20 +46,56 @@ const SuperAdminDashboard = () => {
         { id: 2, type: 'Anomalous Entry', ip: '10.0.0.12', location: 'Santo Domingo, DO', severity: 'medium', time: 'Hace 15m' }
     ]);
 
-    const ALL_FEATURES = [
-        { id: 'banking', label: 'Banca y Conciliación', icon: <Activity size={16} /> },
-        { id: 'caja', label: 'Caja y Bóveda', icon: <ShieldCheck size={16} /> },
-        { id: 'prestamos', label: 'Módulo de Préstamos', icon: <TrendingUp size={16} /> },
-        { id: 'inventario', label: 'Inventario y Almacén', icon: <ShieldCheck size={16} /> },
-        { id: 'facturacion', label: 'Facturación / Cotizaciones', icon: <ShieldCheck size={16} /> },
-        { id: 'contabilidad', label: 'Contabilidad Avanzada', icon: <ShieldCheck size={16} /> },
-        { id: 'personal', label: 'Nómina y RRHH', icon: <Users size={16} /> },
-        { id: 'fiscal', label: 'Fiscal y Comprobantes', icon: <ShieldCheck size={16} /> },
-        { id: 'auditoria', label: 'Auditoría de Sistema', icon: <ShieldCheck size={16} /> },
-        { id: 'socios', label: 'Gestión de Socios', icon: <Users size={16} /> },
-        { id: 'reportes', label: 'Reportes Avanzados', icon: <TrendingUp size={16} /> },
-        { id: 'credit_intelligence', label: 'Credit Intelligence & Expense (Elite)', icon: <Zap size={16} /> },
+    const FEATURE_CATEGORIES = [
+        {
+            name: 'Core Operations',
+            color: '#3b82f6',
+            features: [
+                { id: 'core_facturacion', label: 'Facturación / Cotizaciones', icon: <FileText size={16} /> },
+                { id: 'core_caja', label: 'Caja y Bóveda', icon: <Banknote size={16} /> },
+                { id: 'core_banca', label: 'Bancos y Conciliación', icon: <Landmark size={16} /> },
+                { id: 'core_prestamos', label: 'Módulo de Préstamos', icon: <CreditCard size={16} /> },
+                { id: 'core_socios', label: 'Gestión de Socios', icon: <UserSquare size={16} /> },
+                { id: 'core_contactos', label: 'Clientes / Proveedores', icon: <Users size={16} /> },
+                { id: 'core_contabilidad', label: 'Contabilidad & Diario', icon: <Calculator size={16} /> },
+                { id: 'core_inventario', label: 'Inventario & Stock', icon: <Package size={16} /> },
+                { id: 'core_compras', label: 'Gestión de Compras', icon: <ShoppingCart size={16} /> },
+                { id: 'core_fiscal', label: 'Impuestos (DGII)', icon: <ShieldCheck size={16} /> },
+            ]
+        },
+        {
+            name: 'Enterprise Power',
+            color: '#8b5cf6',
+            features: [
+                { id: 'enterprise_reportes', label: 'Analytics & BI', icon: <PieChart size={16} /> },
+                { id: 'enterprise_rrhh', label: 'Nómina & Talento', icon: <Briefcase size={16} /> },
+                { id: 'enterprise_auditoria', label: 'Auditoría & Seguridad', icon: <ShieldAlert size={16} /> },
+                { id: 'enterprise_activos', label: 'Activos Fijos', icon: <HardDrive size={16} /> },
+            ]
+        },
+        {
+            name: 'FinTech Elite (VIP)',
+            color: '#0ea5e9',
+            features: [
+                { id: 'fintech_cards', label: 'Card Issuing (Mastercard)', icon: <CreditCard size={16} /> },
+                { id: 'fintech_exchange', label: 'Exchange & Tokens', icon: <Repeat size={16} /> },
+                { id: 'fintech_wealth', label: 'Wealth Management', icon: <TrendingUp size={16} /> },
+                { id: 'fintech_datanode', label: 'Data Node Oracle', icon: <Network size={16} /> },
+                { id: 'fintech_credit', label: 'Credit Intelligence', icon: <Brain size={16} /> },
+                { id: 'fintech_sovereign', label: 'Sovereign Vault', icon: <Lock size={16} /> },
+            ]
+        },
+        {
+            name: 'AI Intelligence',
+            color: '#ec4899',
+            features: [
+                { id: 'ai_copilot', label: 'Iubel Copilot AI', icon: <Sparkles size={16} /> },
+            ]
+        }
     ];
+
+    const ALL_FEATURES = FEATURE_CATEGORIES.flatMap(c => c.features);
+
 
     const fetchEmpresas = useCallback(async () => {
         try {
@@ -664,28 +706,70 @@ const SuperAdminDashboard = () => {
 
                 {/* Modal Módulos */}
                 {selectingFeatures && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
-                        <div style={{ width: '520px', background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 40px 80px rgba(0,0,0,0.35)', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}>
+                        <div style={{ width: '680px', background: 'white', borderRadius: '24px', padding: '2rem', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
                                     Módulos Activos: <span style={{ color: '#6366f1' }}>{selectingFeatures.nombre}</span>
                                 </h3>
                                 <p style={{ margin: '0.4rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>Activa funciones independientemente del plan contratado.</p>
                             </div>
-                            <div style={{ display: 'grid', gap: '0.5rem', overflowY: 'auto', paddingRight: '0.25rem', flex: 1 }}>
-                                {ALL_FEATURES.map(feat => {
-                                    const active = !!(selectingFeatures.features?.[feat.id]);
-                                    return (
-                                        <div key={feat.id} onClick={() => toggleFeature(selectingFeatures.id, feat.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1rem', borderRadius: '10px', border: `1px solid ${active ? '#6366f1' : '#e2e8f0'}`, cursor: 'pointer', background: active ? 'linear-gradient(135deg,#f5f3ff,#eff6ff)' : '#fafafa', transition: 'all 0.15s' }}>
-                                            <div style={{ color: active ? '#6366f1' : '#94a3b8' }}>{feat.icon}</div>
-                                            <div style={{ flex: 1, fontWeight: 600, color: active ? '#1e1b4b' : '#475569', fontSize: '0.875rem' }}>{feat.label}</div>
-                                            <div style={{ width: 22, height: 22, borderRadius: '6px', border: `2px solid ${active ? '#6366f1' : '#cbd5e1'}`, background: active ? '#6366f1' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                {active && <div style={{ width: 5, height: 9, borderRight: '2px solid white', borderBottom: '2px solid white', transform: 'rotate(45deg) translate(-1px,-1px)' }} />}
-                                            </div>
+                            <div style={{ overflowY: 'auto', paddingRight: '0.5rem', flex: 1 }}>
+                                {FEATURE_CATEGORIES.map(cat => (
+                                    <div key={cat.name} style={{ marginBottom: '1.5rem' }}>
+                                        <div style={{ 
+                                            fontSize: '0.65rem', 
+                                            fontWeight: 900, 
+                                            color: cat.color, 
+                                            textTransform: 'uppercase', 
+                                            letterSpacing: '0.1em',
+                                            marginBottom: '0.75rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem'
+                                        }}>
+                                            <span>{cat.name}</span>
+                                            <div style={{ flex: 1, height: '1px', background: `${cat.color}33` }} />
                                         </div>
-                                    );
-                                })}
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                            {cat.features.map(feat => {
+                                                const active = !!(selectingFeatures.features?.[feat.id]);
+                                                return (
+                                                    <div 
+                                                        key={feat.id} 
+                                                        onClick={() => toggleFeature(selectingFeatures.id, feat.id)} 
+                                                        style={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '0.6rem', 
+                                                            padding: '0.6rem 0.8rem', 
+                                                            borderRadius: '8px', 
+                                                            border: `1px solid ${active ? cat.color : '#e2e8f0'}`, 
+                                                            cursor: 'pointer', 
+                                                            background: active ? `${cat.color}08` : '#fafafa', 
+                                                            transition: 'all 0.15s' 
+                                                        }}
+                                                    >
+                                                        <div style={{ color: active ? cat.color : '#94a3b8' }}>{feat.icon}</div>
+                                                        <div style={{ flex: 1, fontWeight: 600, color: active ? '#1e1b4b' : '#64748b', fontSize: '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{feat.label}</div>
+                                                        <div style={{ 
+                                                            width: 16, height: 16, 
+                                                            borderRadius: '4px', 
+                                                            border: `2px solid ${active ? cat.color : '#cbd5e1'}`, 
+                                                            background: active ? cat.color : 'transparent', 
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
+                                                        }}>
+                                                            {active && <div style={{ width: 4, height: 7, borderRight: '2px solid white', borderBottom: '2px solid white', transform: 'rotate(45deg) translate(-1px,-1px)' }} />}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+
                             <div style={{ marginTop: '1.5rem' }}>
                                 <button onClick={() => setSelectingFeatures(null)} style={{ width: '100%', padding: '0.875rem', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontSize: '0.95rem', fontFamily: 'inherit' }}>
                                     Guardar y Cerrar
