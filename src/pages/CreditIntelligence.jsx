@@ -3,7 +3,8 @@ import {
     CreditCard, PieChart, TrendingUp, DollarSign, Users, 
     Calendar, AlertCircle, Plus, Filter, Download, 
     ChevronRight, ArrowUpRight, ArrowDownRight, Activity,
-    ShieldCheck, Wallet, ShoppingBag, Receipt, MapPin, Trash2
+    ShieldCheck, Wallet, ShoppingBag, Receipt, MapPin, Trash2,
+    Settings, Landmark
 } from 'lucide-react';
 
 import { 
@@ -15,11 +16,24 @@ import {
 const formatMoney = (val) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(val);
 
 const CreditIntelligence = () => {
-    const [expenses, setExpenses] = useState([]);
+    const [expenses, setExpenses] = useState(() => {
+        const saved = localStorage.getItem('iubel_credit_expenses');
+        return saved ? JSON.parse(saved) : [];
+    });
 
+    const [cardConfig, setCardConfig] = useState(() => {
+        const saved = localStorage.getItem('iubel_credit_config');
+        return saved ? JSON.parse(saved) : {
+            name: 'Visa Infinite',
+            bank: 'Banreservas',
+            limit: 500000,
+            currency: 'DOP'
+        };
+    });
 
-    const [limit, setLimit] = useState(500000);
     const [isAdding, setIsAdding] = useState(false);
+    const [isConfiguring, setIsConfiguring] = useState(false);
+    
     const [newExpense, setNewExpense] = useState({
         merchant: '',
         amount: '',
@@ -28,7 +42,18 @@ const CreditIntelligence = () => {
         person: 'Yo'
     });
 
+    const [tempConfig, setTempConfig] = useState(cardConfig);
+
+    useEffect(() => {
+        localStorage.setItem('iubel_credit_expenses', JSON.stringify(expenses));
+    }, [expenses]);
+
+    useEffect(() => {
+        localStorage.setItem('iubel_credit_config', JSON.stringify(cardConfig));
+    }, [cardConfig]);
+
     // Cálculos
+    const limit = cardConfig.limit;
     const totalSpent = expenses.reduce((acc, exp) => acc + exp.amount, 0);
     const ownerSpent = expenses.filter(e => e.type === 'owner').reduce((acc, exp) => acc + exp.amount, 0);
     const thirdSpent = expenses.filter(e => e.type === 'third').reduce((acc, exp) => acc + exp.amount, 0);
@@ -82,6 +107,9 @@ const CreditIntelligence = () => {
                     <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>Análisis táctico de gastos y salud crediticia • Acceso Restringido</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn btn-secondary" onClick={() => { setTempConfig(cardConfig); setIsConfiguring(true); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Settings size={18} /> Configurar Tarjeta
+                    </button>
                     <button className="btn btn-primary" onClick={() => setIsAdding(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem' }}>
                         <Plus size={18} /> Registrar Gasto
                     </button>
@@ -113,7 +141,9 @@ const CreditIntelligence = () => {
                 <div className="card glass layout-card" style={{ padding: '1.5rem' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Límite Disponible</div>
                     <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-main)' }}>{formatMoney(limit - totalSpent)}</div>
-                    <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-muted)' }}>Límite Total: {formatMoney(limit)}</div>
+                    <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {cardConfig.bank} • {cardConfig.name}
+                    </div>
                 </div>
 
                 <div className="card glass layout-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white' }}>
@@ -336,9 +366,77 @@ const CreditIntelligence = () => {
                 </div>
             )}
 
+            {/* Modal: Configurar Tarjeta */}
+            {isConfiguring && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+                    <div className="card" style={{ width: '450px', padding: '2rem', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', boxShadow: '0 40px 80px rgba(0,0,0,0.4)' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <CreditCard size={24} color="var(--primary)" /> Configuración de Tarjeta
+                        </h2>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>NOMBRE DE LA TARJETA</label>
+                                <input 
+                                    type="text" value={tempConfig.name} 
+                                    onChange={e => setTempConfig({...tempConfig, name: e.target.value})}
+                                    placeholder="Ej: Visa Infinite Elite"
+                                    style={{ width: '100%', padding: '0.875rem', borderRadius: '10px', background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)', outline: 'none' }} 
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>ENTIDAD BANCARIA</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Landmark size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
+                                    <input 
+                                        type="text" value={tempConfig.bank} 
+                                        onChange={e => setTempConfig({...tempConfig, bank: e.target.value})}
+                                        placeholder="Ej: Banreservas / Popular"
+                                        style={{ width: '100%', padding: '0.875rem', borderRadius: '10px', background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)', outline: 'none' }} 
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>LÍMITE DE CRÉDITO</label>
+                                    <input 
+                                        type="number" value={tempConfig.limit} 
+                                        onChange={e => setTempConfig({...tempConfig, limit: parseFloat(e.target.value) || 0})}
+                                        style={{ width: '100%', padding: '0.875rem', borderRadius: '10px', background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)', outline: 'none' }} 
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>MONEDA</label>
+                                    <select 
+                                        value={tempConfig.currency} 
+                                        onChange={e => setTempConfig({...tempConfig, currency: e.target.value})}
+                                        style={{ width: '100%', padding: '0.875rem', borderRadius: '10px', background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)', outline: 'none' }}
+                                    >
+                                        <option value="DOP">DOP</option>
+                                        <option value="USD">USD</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button onClick={() => setIsConfiguring(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancelar</button>
+                                <button onClick={() => { setCardConfig(tempConfig); setIsConfiguring(false); }} className="btn btn-primary" style={{ flex: 1 }}>Guardar Cambios</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 .hover-row:hover { background: rgba(99,102,241,0.03); }
                 .text-primary { color: var(--primary); }
+                .btn { cursor: pointer; border: 1px solid transparent; transition: 0.2s; border-radius: 8px; font-weight: 700; font-family: inherit; }
+                .btn-primary { background: var(--primary); color: white; }
+                .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+                .btn-secondary { background: var(--background); border-color: var(--border); color: var(--text-main); }
+                .btn-secondary:hover { background: var(--border); }
             `}</style>
 
         </div>
