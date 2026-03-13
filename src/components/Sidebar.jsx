@@ -7,7 +7,7 @@ import {
     HardDrive, Briefcase, Calendar, Clock, Target, Activity, FilePlus,
     GitMerge, FileX, RefreshCw, UserSquare, Banknote, Lock, BarChart2, TrendingUp, CreditCard, DollarSign, Scale, Wallet, Server,
     Brain, FolderOpen, Layers, UserCheck, Network, Repeat,
-    Sparkles, Star, Cpu, ShieldCheck
+    Sparkles, Star, Cpu
 } from 'lucide-react';
 
 const Sidebar = () => {

@@ -10,7 +10,16 @@ const nivelColor = (nivel) => {
 };
 
 const estadoColor = (estado) => {
-    const map = { 'Pendiente': '#f59e0b', 'En Proceso': '#2563eb', 'Resuelto': '#10b981', 'Completada': '#10b981', 'Planificada': '#8b5cf6', 'En Proceso': '#f59e0b', 'Monitoreado': '#10b981', 'En Mitigación': '#2563eb', 'Crítico': '#dc2626' };
+    const map = { 
+        'Pendiente': '#f59e0b', 
+        'En Proceso': '#2563eb', 
+        'Resuelto': '#10b981', 
+        'Completada': '#10b981', 
+        'Planificada': '#8b5cf6', 
+        'Monitoreado': '#10b981', 
+        'En Mitigación': '#2563eb', 
+        'Crítico': '#dc2626' 
+    };
     return map[estado] || '#64748b';
 };
 
