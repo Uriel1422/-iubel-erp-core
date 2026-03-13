@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS empresas (
   telefono    VARCHAR(30),
   email       VARCHAR(255),
   periodo_fiscal INT DEFAULT (YEAR(CURRENT_DATE())),
-  plan        ENUM('basico','intermedio','avanzado') DEFAULT 'basico',
+  plan        ENUM('pyme','corporate','cooperativa','fintech') DEFAULT 'pyme',
   features       JSON NULL,
   activa      TINYINT(1)   DEFAULT 1,
   created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP

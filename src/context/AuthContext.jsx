@@ -6,17 +6,29 @@ const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 const planFeatures = {
-    basico: [
-        'dashboard', 'core_facturacion', 'core_caja', 'core_socios', 
-        'core_contactos', 'enterprise_reportes', 'fintech_sovereign'
+    // 🏪 Iubel Pyme: Negocios Locales / Startups
+    pyme: [
+        'dashboard', 'core_facturacion', 'core_caja', 'core_contactos', 
+        'core_inventario', 'enterprise_reportes'
     ],
-    intermedio: [
-        'dashboard', 'core_facturacion', 'core_caja', 'core_socios', 
-        'core_contactos', 'enterprise_reportes', 'fintech_sovereign',
-        'core_prestamos', 'core_contabilidad', 'core_fiscal', 
-        'core_inventario', 'core_compras', 'core_banca'
+    // 🏢 Iubel Corporate: Grandes Industrias / Corporaciones
+    corporate: [
+        'dashboard', 'core_facturacion', 'core_caja', 'core_contactos', 
+        'core_inventario', 'core_compras', 'core_contabilidad', 
+        'core_banca', 'core_fiscal', 'enterprise_reportes', 
+        'enterprise_rrhh', 'enterprise_activos', 'enterprise_auditoria', 
+        'ai_copilot'
     ],
-    avanzado: 'all'
+    // 🤝 Iubel Cooperativa: Entidades de Ahorro y Crédito
+    cooperativa: [
+        'dashboard', 'core_facturacion', 'core_caja', 'core_contactos', 
+        'core_inventario', 'core_compras', 'core_contabilidad', 
+        'core_banca', 'core_fiscal', 'core_prestamos', 'core_socios',
+        'enterprise_reportes', 'enterprise_rrhh', 'enterprise_activos', 
+        'enterprise_auditoria', 'ai_copilot', 'fintech_sovereign'
+    ],
+    // 🏦 Iubel Bank & Fintech (VIP): Entidades Financieras Elite
+    fintech: 'all'
 };
 
 
@@ -54,22 +66,22 @@ export const AuthProvider = ({ children }) => {
         if (!featureId) return true;
         if (!empresa) return false;
 
-        const plan = (empresa.plan || 'basico').toLowerCase().trim();
+        const plan = (empresa.plan || 'pyme').toLowerCase().trim();
         const features = empresa.features || {};
 
         // 0. Sovereign Global Access (VIP Upgrade)
         if (featureId === 'sovereign') return true;
 
         // 1. PRIORIDAD ABSOLUTA: Explicit Feature Toggle (SuperAdmin Control)
-        // Verificamos si la propiedad existe explícitamente para permitir desactivaciones (false)
         if (features[featureId] !== undefined) {
             return !!features[featureId];
         }
 
         // 2. FALLBACK: Plan Inheritance
-        if (planFeatures.avanzado === 'all' && plan === 'avanzado') return true;
+        if (planFeatures.fintech === 'all' && plan === 'fintech') return true;
+        if (plan === 'fintech') return true;
 
-        const allowed = planFeatures[plan] || [];
+        const allowed = planFeatures[plan] || planFeatures.pyme || [];
         return allowed.includes(featureId);
     };
 

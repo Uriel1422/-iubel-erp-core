@@ -184,7 +184,10 @@ const SuperAdminDashboard = () => {
     const filtradas = empresas.filter(e =>
         e.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || (e.rnc || '').includes(searchTerm));
     const activasCount = empresas.filter(e => e.activa).length;
-    const mrr = empresas.reduce((acc, e) => acc + (e.plan === 'avanzado' ? 15000 : e.plan === 'intermedio' ? 8500 : 3500), 0);
+    const mrr = empresas.reduce((acc, e) => {
+        const prices = { pyme: 3500, corporate: 8500, cooperativa: 12500, fintech: 25000 };
+        return acc + (prices[e.plan] || 3500);
+    }, 0);
 
     const filteredLogs = auditLogs.filter(l =>
         auditFilter === '' ||
@@ -331,9 +334,10 @@ const SuperAdminDashboard = () => {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                         <select value={emp.plan} onChange={e => handleUpdateEmpresa(emp.id, e.target.value, emp.activa, emp.features)}
                                                             style={{ padding: '0.35rem 0.625rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.8rem', background: 'white', fontWeight: 600, outline: 'none' }}>
-                                                            <option value="basico">Básico</option>
-                                                            <option value="intermedio">Intermedio</option>
-                                                            <option value="avanzado">Avanzado</option>
+                                                            <option value="pyme">Iubel Pyme 🏪</option>
+                                                            <option value="corporate">Iubel Corporate 🏢</option>
+                                                            <option value="cooperativa">Iubel Cooperativa 🤝</option>
+                                                            <option value="fintech">Iubel Bank/Fintech 🏦</option>
                                                         </select>
                                                         <button onClick={() => setSelectingFeatures(emp)} style={{ padding: '0.35rem 0.625rem', borderRadius: '6px', border: '1px solid #6366f1', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', background: '#f5f3ff', color: '#6366f1', fontFamily: 'inherit' }}>
                                                             Módulos
