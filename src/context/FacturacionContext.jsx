@@ -31,6 +31,9 @@ export const FacturacionProvider = ({ children }) => {
 
     useEffect(() => {
         if (hasLoaded) {
+            // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía (evita purgas por fallos de red)
+            // Solo se permite si el usuario explícitamente borra todo (futuro)
+            if (facturas.length === 0) return; 
             api.save('facturas', facturas);
         }
     }, [facturas, hasLoaded]);

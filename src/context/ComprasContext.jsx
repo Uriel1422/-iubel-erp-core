@@ -32,13 +32,15 @@ export const ComprasProvider = ({ children }) => {
 
     useEffect(() => {
         if (hasLoaded) {
-            api.save('compras', compras);
+            // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía (evita purgas)
+            if (compras.length > 0) api.save('compras', compras);
         }
     }, [compras, hasLoaded]);
 
     useEffect(() => {
         if (hasLoaded) {
-            api.save('ordenes', ordenes);
+            // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía (evita purgas)
+            if (ordenes.length > 0) api.save('ordenes', ordenes);
         }
     }, [ordenes, hasLoaded]);
 

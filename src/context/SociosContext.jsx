@@ -22,6 +22,7 @@ export const SociosProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
+        // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía (evita purgas por fallos de red)
         if (socios.length > 0) {
             api.save('socios', socios);
         }

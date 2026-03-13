@@ -29,6 +29,7 @@ export const AhorrosProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
+        // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía (evita purgas por fallos de red)
         if (cuentas.length > 0) api.save('cuentas_ahorro', cuentas);
         if (movimientos.length > 0) api.save('movimientos_ahorro', movimientos);
     }, [cuentas, movimientos]);

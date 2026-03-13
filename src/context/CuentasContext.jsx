@@ -91,6 +91,8 @@ export const CuentasProvider = ({ children }) => {
     // Sincronizar con servidor al cambiar
     useEffect(() => {
         if (hasLoaded) {
+            // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía
+            if (cuentas.length === 0) return;
             api.save('cuentas', cuentas);
         }
     }, [cuentas, hasLoaded]);

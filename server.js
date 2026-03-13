@@ -1051,16 +1051,18 @@ app.post('/api/:entity', authMiddleware, async (req, res) => {
 
         if (Array.isArray(body)) {
             await ensureTable(tableName);
-            await pool.execute(`DELETE FROM \`${tableName}\``);
-            for (let item of body) {
-                const id = String(item.id || `${Date.now()}_${Math.random()}`);
-                // 🛡️ Immutable Ledger: Firma de integridad criptográfica
-                const securedItem = ImmutableLedger.signTransaction(item, null); 
-                await upsertRow(tableName, id, securedItem);
+            // 🛡️ PROTECCIÓN NUCLEAR: Solo permitimos borrar y re-insertar si la lista NO está vacía.
+            // Esto evita que un fallo de carga en el frontend resulte en un borrado total.
+            if (body.length > 0) {
+                await pool.execute(`DELETE FROM \`${tableName}\``);
+                for (let item of body) {
+                    const id = String(item.id || `${Date.now()}_${Math.random()}`);
+                    const securedItem = ImmutableLedger.signTransaction(item, null); 
+                    await upsertRow(tableName, id, securedItem);
+                }
             }
         } else {
             const id = String(body.id || Date.now().toString());
-            // 🛡️ Immutable Ledger: Firma de integridad criptográfica
             const securedItem = ImmutableLedger.signTransaction(body, null);
             await upsertRow(tableName, id, securedItem);
         }
