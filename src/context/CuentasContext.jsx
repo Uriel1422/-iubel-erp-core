@@ -137,9 +137,7 @@ export const CuentasProvider = ({ children }) => {
     const buildTree = (cuentasFlat) => {
         // Sort by code first
         cuentasFlat.sort((a, b) => {
-            const numA = parseFloat(a.codigo.replace(/\D/g, '')) || 0;
-            const numB = parseFloat(b.codigo.replace(/\D/g, '')) || 0;
-            return numA - numB || a.codigo.localeCompare(b.codigo);
+            return a.codigo.localeCompare(b.codigo, undefined, { numeric: true, sensitivity: 'base' });
         });
 
         let map = {}, node, roots = [], i;

@@ -61,8 +61,10 @@ export const SettingsProvider = ({ children }) => {
 
     const toggleDarkMode = () => {
         setSettings(prev => {
-            const updated = { ...prev, preferencias: { ...prev.preferencias, modoOscuro: !prev.preferencias.modoOscuro } };
+            const isDark = !prev.preferencias.modoOscuro;
+            const updated = { ...prev, preferencias: { ...prev.preferencias, modoOscuro: isDark } };
             api.save('settings', updated);
+            localStorage.setItem('iubel_prefer_dark', isDark ? 'true' : 'false');
             return updated;
         });
     };

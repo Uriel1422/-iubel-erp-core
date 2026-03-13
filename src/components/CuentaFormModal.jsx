@@ -58,7 +58,9 @@ const CuentaFormModal = ({ isOpen, onClose, cuentaToEdit }) => {
     };
 
     // Only allow selecting parent accounts (not level 4 details)
-    const posiblesPadres = cuentas.filter(c => c.nivel < 4);
+    const posiblesPadres = [...cuentas]
+        .filter(c => c.nivel < 4)
+        .sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
 
     return (
         <div style={{
