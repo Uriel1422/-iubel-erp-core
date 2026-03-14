@@ -145,9 +145,18 @@ const startServer = async () => {
     try {
         const conn = await pool.getConnection();
         console.log('✅ MySQL conectado exitosamente.');
+        
+        // 👷 Verificación Dinámica de Esquema (para evitar errores en despliegue)
+        const [columns] = await conn.query("SHOW COLUMNS FROM empresas LIKE 'setup_completed'");
+        if (columns.length === 0) {
+            console.log('👷 Ajustando esquema: Añadiendo columna setup_completed a empresas...');
+            await conn.query("ALTER TABLE empresas ADD COLUMN setup_completed TINYINT(1) DEFAULT 0 AFTER activa");
+            console.log('✅ Esquema actualizado.');
+        }
+        
         conn.release();
     } catch (err) {
-        console.error('⚠️ MySQL no disponible:', JSON.stringify({ code: err.code, errno: err.errno, message: err.message, fatal: err.fatal }));
+        console.error('⚠️ Error en inicio de servidor/esquema:', JSON.stringify({ code: err.code, errno: err.errno, message: err.message, fatal: err.fatal }));
     }
 };
 
@@ -249,6 +258,22 @@ const authMiddleware = async (req, res, next) => {
     }
 
 };
+
+// ─── Setup & Onboarding ───────────────────────────────────────────────────────
+app.post('/api/auth/setup-complete', authMiddleware, async (req, res) => {
+    try {
+        const { rnc, nombreComercial, sector } = req.body;
+        await pool.execute(
+            'UPDATE empresas SET setup_completed = 1, rnc = ?, nombre = ? WHERE id = ?',
+            [rnc, nombreComercial, req.auth.empresaId]
+        );
+        res.json({ ok: true, message: 'Configuración inicial completada.' });
+    } catch (err) {
+        console.error('Error in setup-complete:', err);
+        res.status(500).json({ error: 'Error al guardar la configuración.' });
+    }
+});
+
 
 // ─── ENDPOINTS SALTO CUÁNTICO 🚀 ──────────────────────────────────────────────
 
@@ -577,7 +602,7 @@ app.post('/api/auth/register', async (req, res) => {
         res.status(201).json({
             token,
             user: { id: userId, nombre: adminNombre, email: adminEmail, role: 'admin' },
-            empresa: { id: empresaId, nombre: empresa, slug, rnc }
+            empresa: { id: empresaId, nombre: empresa, slug, rnc, setup_completed: 0 }
         });
     } catch (err) {
         console.error('Register error:', err);
@@ -642,7 +667,8 @@ app.post('/api/auth/login', async (req, res) => {
             empresa: empresa.nombre,
             periodoFiscal: empresa.periodo_fiscal,
             plan: empresa.plan,
-            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {})
+            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {}),
+            setup_completed: empresa.setup_completed
         }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
         await logAudit(empresa.id, usuario.id, 'LOGIN', null, null, req.ip);
@@ -657,7 +683,8 @@ app.post('/api/auth/login', async (req, res) => {
                 rnc: empresa.rnc,
                 periodoFiscal: empresa.periodo_fiscal,
                 plan: empresa.plan,
-                features: empresa.features
+                features: empresa.features,
+                setup_completed: empresa.setup_completed
             }
         });
     } catch (err) {
@@ -685,7 +712,8 @@ app.get('/api/auth/me', async (req, res) => {
             rnc: empresa.rnc,
             periodoFiscal: empresa.periodo_fiscal,
             plan: String(empresa.plan || 'basico').toLowerCase(),
-            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {})
+            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {}),
+            setup_completed: empresa.setup_completed
         };
         console.log('DEBUG ME EMPRESA:', JSON.stringify(empresa_to_send));
         res.json({

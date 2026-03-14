@@ -60,6 +60,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SovereignVault from './pages/SovereignVault';
 import CreditIntelligence from './pages/CreditIntelligence';
+import BillingManagement from './pages/BillingManagement';
 
 
 // Contexts
@@ -267,6 +268,7 @@ function App() {
                                                                             <Route path="tarjetas" element={<FeatureProtectedRoute featureId="fintech_cards"><Tarjetas /></FeatureProtectedRoute>} />
                                                                             <Route path="datanode" element={<FeatureProtectedRoute featureId="fintech_datanode"><DataNode /></FeatureProtectedRoute>} />
                                                                             <Route path="exchange" element={<FeatureProtectedRoute featureId="fintech_exchange"><Exchange /></FeatureProtectedRoute>} />
+                                                                            <Route path="billing" element={<BillingManagement />} />
                                                             <Route path="sovereign-vault" element={<FeatureProtectedRoute featureId="fintech_sovereign"><SovereignVault /></FeatureProtectedRoute>} />
                                                             <Route path="credit-intelligence" element={<FeatureProtectedRoute featureId="fintech_credit"><CreditIntelligence /></FeatureProtectedRoute>} />
 
