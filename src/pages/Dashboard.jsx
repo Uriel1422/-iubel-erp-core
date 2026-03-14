@@ -3,8 +3,6 @@ import { useContabilidad } from '../context/ContabilidadContext';
 import { useCuentas } from '../context/CuentasContext';
 import AsistenteFinanciero from '../components/AsistenteFinanciero';
 import FiscalWidget from '../components/FiscalWidget';
-import SetupWizard from '../components/SetupWizard';
-import { api } from '../utils/api';
 import {
     TrendingUp,
     TrendingDown,
@@ -48,17 +46,6 @@ const Dashboard = () => {
     React.useEffect(() => {
         refreshAuth();
     }, []);
-
-    const handleSetupComplete = async (config) => {
-        try {
-            const resp = await api.post('/auth/setup-complete', config);
-            if (resp.ok || resp.success || !resp.error) {
-                await refreshAuth();
-            }
-        } catch (err) {
-            console.error('Error completing setup:', err);
-        }
-    };
 
     // Cálculo de KPIs
     const calcularSaldo = (codigoBase, soloMesActual = false) => {
@@ -120,7 +107,6 @@ const Dashboard = () => {
 
     return (
         <div className="animate-up">
-            {empresa && !empresa.setup_completed && <SetupWizard onComplete={handleSetupComplete} />}
             {/* 🚩 NCF ALERTS BANNER */}
             {alertas && alertas.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>

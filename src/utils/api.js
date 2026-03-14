@@ -38,22 +38,6 @@ export const api = {
             return { success: false };
         }
     },
-    post: async (path, data) => {
-        try {
-            const isExternal = path.startsWith('http');
-            const url = isExternal ? path : `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify(data)
-            });
-            const json = await resp.json();
-            return { ok: resp.ok, status: resp.status, ...json };
-        } catch (e) {
-            console.error(`Error POST ${path}:`, e);
-            return { ok: false, error: e.message };
-        }
-    },
     update: async (entity, id, data) => {
         try {
             const resp = await fetch(`${BASE_URL}/${entity}/${id}`, {

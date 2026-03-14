@@ -19,34 +19,6 @@ const Portal = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handlePlanSelect = async (planId) => {
-        if (!isAuthenticated) {
-            navigate(`/register?plan=${planId}`);
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/billing/create-checkout', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ planId })
-            });
-            const data = await res.json();
-            if (data.success) {
-                // Redirigir a la pasarela segura
-                window.location.href = data.url;
-            } else {
-                alert(data.error || 'Error al conectar con la pasarela');
-            }
-        } catch (e) {
-            console.error('Checkout error:', e);
-            alert('Error de red al procesar el pago');
-        }
-    };
-
     const features = [
         {
             title: "Iubel Copilot AI",
@@ -170,78 +142,6 @@ const Portal = () => {
                                 <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6 }}>{feat.desc}</p>
                             </div>
                         ))}
-                    </div>
-
-                    {/* 📊 Pricing Section */}
-                    <div id="pricing" style={{ marginBottom: '10rem', padding: '4rem 0' }}>
-                        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-                            <div style={{ color: '#6366f1', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '1rem' }}>PLANES Y SUSCRIPCIONES</div>
-                            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, letterSpacing: '-0.02em' }}>Inversión en <span style={{ color: '#6366f1' }}>Excelencia</span></h2>
-                            <p style={{ color: '#64748b', marginTop: '1rem', fontSize: '1.1rem' }}>Selecciona el motor que impulsará el crecimiento de tu organización.</p>
-                        </div>
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'stretch' }}>
-                            {/* Básico */}
-                            <div style={{ padding: '3rem', borderRadius: '32px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', transition: '0.3s' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>Básico</div>
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '2rem' }}>
-                                    <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>$4,500</span>
-                                    <span style={{ color: '#64748b' }}>/mes</span>
-                                </div>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-                                    {[ 
-                                        'Hasta 3 Usuarios', 'Contabilidad Básica', 'Facturación DGII', 'Soporte Estándar'
-                                    ].map((item, i) => (
-                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: '#94a3b8' }}>
-                                            <ShieldCheck size={16} style={{ color: '#6366f1' }} />
-                                            {item}
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={() => handlePlanSelect('basico')} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>Empezar con Básico</button>
-                            </div>
-
-                            {/* Intermedio (Popular) */}
-                            <div style={{ padding: '3.5rem 3rem', borderRadius: '32px', background: 'rgba(99,102,241,0.05)', border: '2px solid #6366f1', display: 'flex', flexDirection: 'column', position: 'relative', transform: 'scale(1.05)', boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.25)' }}>
-                                <div style={{ position: 'absolute', top: '-15px', left: '50%', transform: 'translateX(-50%)', background: '#6366f1', color: 'white', padding: '6px 16px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.5px' }}>MÁS POPULAR</div>
-                                <div style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.5rem' }}>Intermedio</div>
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '2rem' }}>
-                                    <span style={{ fontSize: '3rem', fontWeight: 900 }}>$12,500</span>
-                                    <span style={{ color: '#64748b' }}>/mes</span>
-                                </div>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-                                    {[ 
-                                        'Hasta 15 Usuarios', 'Módulo de Nómina & TSS', 'FinTech Dashboards', 'Soporte Prioritario', 'Iubel Copilot AI (GTP)'
-                                    ].map((item, i) => (
-                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.95rem', color: '#f1f5f9' }}>
-                                            <ShieldCheck size={18} style={{ color: '#6366f1' }} />
-                                            {item}
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={() => handlePlanSelect('intermedio')} style={{ padding: '1.1rem', borderRadius: '14px', background: '#6366f1', color: 'white', border: 'none', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(99,102,241,0.3)', transition: '0.3s' }}>Empezar con Intermedio</button>
-                            </div>
-
-                            {/* Avanzado (Enterprise) */}
-                            <div style={{ padding: '3rem', borderRadius: '32px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', transition: '0.3s' }}>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>Avanzado</div>
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '2rem' }}>
-                                    <span style={{ fontSize: '2.5rem', fontWeight: 900 }}>$25,000</span>
-                                    <span style={{ color: '#64748b' }}>/mes</span>
-                                </div>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-                                    {[ 
-                                        'Usuarios Ilimitados', 'Acceso FinTech Elite Total', 'Iubel Copilot Ilimitado', 'DataNode & Exchange', 'API & Soporte 24/7'
-                                    ].map((item, i) => (
-                                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.9rem', color: '#94a3b8' }}>
-                                            <ShieldCheck size={16} style={{ color: '#6366f1' }} />
-                                            {item}
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={() => handlePlanSelect('avanzado')} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>Empezar con Avanzado</button>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Trust Section */}

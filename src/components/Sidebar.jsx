@@ -133,7 +133,6 @@ const Sidebar = () => {
             label: 'Sistema y Sesión',
             display: true,
             items: [
-                { path: 'billing', icon: <CreditCard className="nav-icon" />, label: 'Mi Suscripción', display: true },
                 { 
                     path: '#logout', 
                     icon: <LogOut className="nav-icon" style={{ color: '#fca5a5' }} />, 

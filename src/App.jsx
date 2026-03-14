@@ -60,7 +60,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SovereignVault from './pages/SovereignVault';
 import CreditIntelligence from './pages/CreditIntelligence';
-import BillingManagement from './pages/BillingManagement';
 
 
 // Contexts
@@ -106,9 +105,6 @@ import GestionDocumental from './pages/GestionDocumental';
 import ProyectosTareas from './pages/ProyectosTareas';
 import SecuritySovereign from './pages/SecuritySovereign';
 import Portal from './pages/Portal';
-import TermsOfService from './pages/legal/TermsOfService';
-import PrivacyPolicy from './pages/legal/PrivacyPolicy';
-import CheckoutSimulator from './pages/CheckoutSimulator';
 
 const GlobalUIWrapper = ({ children }) => {
   const { globalKillSwitch, broadcastMessage, token: saToken } = useSuperAdmin();
@@ -210,9 +206,6 @@ function App() {
                                                                         <Routes>
                                                                           <Route path="/login" element={<LoginPage />} />
                                                                           <Route path="/register" element={<RegisterPage />} />
-                                                                          <Route path="/terminos" element={<TermsOfService />} />
-                                                                          <Route path="/privacidad" element={<PrivacyPolicy />} />
-                                                                          <Route path="/checkout-simulator" element={<CheckoutSimulator />} />
                                                                           <Route path="/" element={<Portal />} />
                                                                           <Route path="/erp" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                                                                             <Route index element={<Dashboard />} />
@@ -274,7 +267,6 @@ function App() {
                                                                             <Route path="tarjetas" element={<FeatureProtectedRoute featureId="fintech_cards"><Tarjetas /></FeatureProtectedRoute>} />
                                                                             <Route path="datanode" element={<FeatureProtectedRoute featureId="fintech_datanode"><DataNode /></FeatureProtectedRoute>} />
                                                                             <Route path="exchange" element={<FeatureProtectedRoute featureId="fintech_exchange"><Exchange /></FeatureProtectedRoute>} />
-                                                                            <Route path="billing" element={<BillingManagement />} />
                                                             <Route path="sovereign-vault" element={<FeatureProtectedRoute featureId="fintech_sovereign"><SovereignVault /></FeatureProtectedRoute>} />
                                                             <Route path="credit-intelligence" element={<FeatureProtectedRoute featureId="fintech_credit"><CreditIntelligence /></FeatureProtectedRoute>} />
 

@@ -145,25 +145,9 @@ const startServer = async () => {
     try {
         const conn = await pool.getConnection();
         console.log('✅ MySQL conectado exitosamente.');
-        
-        // 👷 Verificación Dinámica de Esquema (para evitar errores en despliegue)
-        const [columns] = await conn.query("SHOW COLUMNS FROM empresas LIKE 'setup_completed'");
-        if (columns.length === 0) {
-            console.log('👷 Ajustando esquema: Añadiendo columna setup_completed a empresas...');
-            await conn.query("ALTER TABLE empresas ADD COLUMN setup_completed TINYINT(1) DEFAULT 0 AFTER activa");
-        }
-
-        const [billingCols] = await conn.query("SHOW COLUMNS FROM empresas LIKE 'stripe_customer_id'");
-        if (billingCols.length === 0) {
-            console.log('👷 Ajustando esquema: Añadiendo columnas financieras a empresas...');
-            await conn.query("ALTER TABLE empresas ADD COLUMN stripe_customer_id VARCHAR(255) AFTER email");
-            await conn.query("ALTER TABLE empresas ADD COLUMN subscription_status VARCHAR(50) DEFAULT 'unpaid' AFTER plan");
-            console.log('✅ Columnas financieras añadidas.');
-        }
-        
         conn.release();
     } catch (err) {
-        console.error('⚠️ Error en inicio de servidor/esquema:', JSON.stringify({ code: err.code, errno: err.errno, message: err.message, fatal: err.fatal }));
+        console.error('⚠️ MySQL no disponible:', JSON.stringify({ code: err.code, errno: err.errno, message: err.message, fatal: err.fatal }));
     }
 };
 
@@ -265,22 +249,6 @@ const authMiddleware = async (req, res, next) => {
     }
 
 };
-
-// ─── Setup & Onboarding ───────────────────────────────────────────────────────
-app.post('/api/auth/setup-complete', authMiddleware, async (req, res) => {
-    try {
-        const { rnc, nombreComercial, sector } = req.body;
-        await pool.execute(
-            'UPDATE empresas SET setup_completed = 1, rnc = ?, nombre = ? WHERE id = ?',
-            [rnc, nombreComercial, req.auth.empresaId]
-        );
-        res.json({ ok: true, message: 'Configuración inicial completada.' });
-    } catch (err) {
-        console.error('Error in setup-complete:', err);
-        res.status(500).json({ error: 'Error al guardar la configuración.' });
-    }
-});
-
 
 // ─── ENDPOINTS SALTO CUÁNTICO 🚀 ──────────────────────────────────────────────
 
@@ -486,35 +454,6 @@ app.post('/api/superadmin/system/deep-clean', superadminMiddleware, async (req, 
     }
 });
 
-app.get('/api/superadmin/finances', superadminMiddleware, async (req, res) => {
-    try {
-        const [emp] = await pool.execute('SELECT plan, active FROM empresas');
-        const [trx] = await pool.execute('SELECT COUNT(*) as count FROM transacciones_core');
-        
-        // Simulación de ingresos basada en planes
-        const revenueMap = { 'basico': 50, 'premium': 150, 'enterprise': 500 };
-        let totalRevenue = 0;
-        let planCounts = { basico: 0, premium: 0, enterprise: 0 };
-
-        emp.forEach(e => {
-            const plan = (e.plan || 'basico').toLowerCase();
-            totalRevenue += revenueMap[plan] || 0;
-            if (planCounts[plan] !== undefined) planCounts[plan]++;
-        });
-
-        res.json({
-            totalRevenue,
-            clientCount: emp.length,
-            planStats: planCounts,
-            transactionVolume: trx[0].count,
-            status: 'Operational',
-            stripeConnected: true
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 app.get('/api/superadmin/empresas', superadminMiddleware, async (req, res) => {
     try {
         const [rows] = await pool.execute('SELECT id, nombre, slug, rnc, email, telefono, periodo_fiscal, plan, features, activa, created_at FROM empresas ORDER BY created_at DESC');
@@ -638,7 +577,7 @@ app.post('/api/auth/register', async (req, res) => {
         res.status(201).json({
             token,
             user: { id: userId, nombre: adminNombre, email: adminEmail, role: 'admin' },
-            empresa: { id: empresaId, nombre: empresa, slug, rnc, setup_completed: 0 }
+            empresa: { id: empresaId, nombre: empresa, slug, rnc }
         });
     } catch (err) {
         console.error('Register error:', err);
@@ -703,8 +642,7 @@ app.post('/api/auth/login', async (req, res) => {
             empresa: empresa.nombre,
             periodoFiscal: empresa.periodo_fiscal,
             plan: empresa.plan,
-            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {}),
-            setup_completed: empresa.setup_completed
+            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {})
         }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
         await logAudit(empresa.id, usuario.id, 'LOGIN', null, null, req.ip);
@@ -719,8 +657,7 @@ app.post('/api/auth/login', async (req, res) => {
                 rnc: empresa.rnc,
                 periodoFiscal: empresa.periodo_fiscal,
                 plan: empresa.plan,
-                features: empresa.features,
-                setup_completed: empresa.setup_completed
+                features: empresa.features
             }
         });
     } catch (err) {
@@ -748,8 +685,7 @@ app.get('/api/auth/me', async (req, res) => {
             rnc: empresa.rnc,
             periodoFiscal: empresa.periodo_fiscal,
             plan: String(empresa.plan || 'basico').toLowerCase(),
-            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {}),
-            setup_completed: empresa.setup_completed
+            features: typeof empresa.features === 'string' ? JSON.parse(empresa.features) : (empresa.features || {})
         };
         console.log('DEBUG ME EMPRESA:', JSON.stringify(empresa_to_send));
         res.json({
@@ -1089,50 +1025,6 @@ app.get('/api/fiscal/export-607', authMiddleware, async (req, res) => {
     } catch (e) {
         console.error('607 Export Error:', e);
         res.status(500).send('Error generating 607 file');
-    }
-});
-
-// ─── BILLING & MONETIZATION (Iubel Pay) ─────────────────────────────────────
-
-// POST /api/billing/create-checkout
-app.post('/api/billing/create-checkout', authMiddleware, async (req, res) => {
-    const { planId } = req.body;
-    try {
-        // En un escenario real, aquí llamaríamos a stripe.checkout.sessions.create
-        // Por ahora, simulamos la creación de una sesión.
-        const checkoutUrl = `/checkout-simulator?plan=${planId}&token=${req.headers.authorization}`;
-        
-        await logAudit(req.auth.empresaId, req.auth.userId, 'BILLING_INTENT', 'empresas', planId, req.ip);
-        
-        res.json({ 
-            success: true, 
-            url: checkoutUrl,
-            message: 'Iniciando pasarela de pago segura (Stripe Protected)' 
-        });
-    } catch (e) {
-        res.status(500).json({ error: 'Error al iniciar pasarela de pagos' });
-    }
-});
-
-// POST /api/billing/simulate-success (Para pruebas sin Webhook real)
-app.post('/api/billing/simulate-success', authMiddleware, async (req, res) => {
-    if (req.auth.role !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
-    const { plan } = req.body;
-    
-    try {
-        await pool.execute(
-            'UPDATE empresas SET plan = ?, subscription_status = "active", activa = 1 WHERE id = ?',
-            [plan, req.auth.empresaId]
-        );
-        
-        await logAudit(req.auth.empresaId, req.auth.userId, 'PLAN_UPGRADE', 'empresas', plan, req.ip);
-        
-        res.json({ 
-            success: true, 
-            message: `¡Felicidades! Tu plan ha sido actualizado a ${plan.toUpperCase()} exitosamente.` 
-        });
-    } catch (e) {
-        res.status(500).json({ error: 'Error al procesar la suscripción' });
     }
 });
 

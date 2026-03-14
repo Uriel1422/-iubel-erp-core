@@ -45,7 +45,6 @@ const SuperAdminDashboard = () => {
         { id: 1, type: 'Brute Force', ip: '192.168.1.45', location: 'Kiev, UA', severity: 'high', time: 'Hace 2m' },
         { id: 2, type: 'Anomalous Entry', ip: '10.0.0.12', location: 'Santo Domingo, DO', severity: 'medium', time: 'Hace 15m' }
     ]);
-    const [financeData, setFinanceData] = useState(null);
 
     const FEATURE_CATEGORIES = [
         {
@@ -132,17 +131,7 @@ const SuperAdminDashboard = () => {
 
     useEffect(() => {
         if (activeTab === 'auditoria') fetchAuditLogs();
-        if (activeTab === 'finance') fetchFinanceData();
     }, [activeTab, fetchAuditLogs]);
-
-    const fetchFinanceData = async () => {
-        try {
-            const res = await fetch('/api/superadmin/finances', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) setFinanceData(await res.json());
-        } catch (err) { console.error(err); }
-    };
 
     const handleUpdateEmpresa = async (id, plan, activa, features) => {
         try {
@@ -240,7 +229,6 @@ const SuperAdminDashboard = () => {
                 <nav style={{ padding: '1.25rem 1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     {[
                         { tab: 'tenants', icon: <Building2 size={18} />, label: 'Inquilinos (Tenants)' },
-                        { tab: 'finance', icon: <DollarSign size={18} />, label: 'Hub Financiero (Pay)' },
                         { tab: 'sentinel', icon: <ShieldAlert size={18} />, label: 'Iubel Sentinel' },
                         { tab: 'terminal', icon: <Terminal size={18} />, label: 'Consola de Comando' },
                         { tab: 'bi', icon: <Globe size={18} />, label: 'BI SaaS Global' },
@@ -385,86 +373,6 @@ const SuperAdminDashboard = () => {
                             </div>
                         </div>
                     </>
-                )}
-
-                {/* ─── TAB: FINANCE HUB ─── */}
-                {activeTab === 'finance' && (
-                    <div className="animate-fade-in">
-                        <header style={{ marginBottom: '2rem' }}>
-                            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <DollarSign size={32} color="#10b981" /> Hub Financiero (Pay)
-                            </h1>
-                            <p style={{ color: '#64748b' }}>Monitoreo de ingresos, suscripciones y configuración de pasarelas de pago.</p>
-                        </header>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                            <div className="card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Balance Total Recaudado</div>
-                                <div style={{ fontSize: '2rem', fontWeight: 900, color: '#0f172a' }}>
-                                    {new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(financeData?.totalRevenue || 0)}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700, marginTop: '0.5rem' }}>↑ +12.5% vs mes anterior</div>
-                            </div>
-                            <div className="card" style={{ padding: '1.5rem', borderLeft: '4px solid #6366f1' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Estado de Conexión Stripe</div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: financeData?.stripeConnected ? '#10b981' : '#ef4444', fontWeight: 800 }}>
-                                    <div style={{ width: 10, height: 10, background: financeData?.stripeConnected ? '#10b981' : '#ef4444', borderRadius: '50%' }} />
-                                    {financeData?.stripeConnected ? 'OPERACIONAL / CONECTADO' : 'DESCONECTADO'}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>ID: acct_iubel_global_01</div>
-                            </div>
-                            <div className="card" style={{ padding: '1.5rem', borderLeft: '4px solid #8b5cf6' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Volumen de Transacciones</div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0f172a' }}>{financeData?.transactionVolume || 0}</div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>Operaciones procesadas hoy</div>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-                            <div className="card" style={{ padding: '1.5rem' }}>
-                                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: 700 }}>Distribución de Ingresos por Plan</h3>
-                                <div style={{ height: '300px' }}>
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={[
-                                            { name: 'Básico', val: financeData?.planStats?.basico || 0, color: '#94a3b8' },
-                                            { name: 'Premium', val: financeData?.planStats?.premium || 0, color: '#6366f1' },
-                                            { name: 'Enterprise', val: financeData?.planStats?.enterprise || 0, color: '#8b5cf6' }
-                                        ]}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis dataKey="name" fontSize={12} />
-                                            <YAxis fontSize={12} />
-                                            <Tooltip />
-                                            <Bar dataKey="val" radius={[8, 8, 0, 0]}>
-                                                { [0,1,2].map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={['#94a3b8', '#6366f1', '#8b5cf6'][index]} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            <div className="card" style={{ padding: '1.5rem' }}>
-                                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: 700 }}>Configuración de Pago</h3>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <div>
-                                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Stripe Public Key</label>
-                                        <input type="password" value="pk_test_********************" readOnly style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.8rem' }} />
-                                    </div>
-                                    <div>
-                                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Stripe Secret Key</label>
-                                        <input type="password" value="sk_test_********************" readOnly style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.8rem' }} />
-                                    </div>
-                                    <button style={{ width: '100%', padding: '0.75rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', marginTop: '1rem' }}>
-                                        ACTUALIZAR CREDENCIALES
-                                    </button>
-                                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #bbf7d0', fontSize: '0.75rem', color: '#166534' }}>
-                                        <strong>ℹ️ Seguridad PCI:</strong> Las claves están cifradas en reposo y nunca se muestran en texto plano.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 )}
 
                 {/* ─── TAB: SENTINEL ─── */}

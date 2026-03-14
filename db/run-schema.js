@@ -45,7 +45,6 @@ CREATE TABLE IF NOT EXISTS empresas (
   plan        VARCHAR(20) DEFAULT 'basico',
   features    JSON NULL,
   activa      TINYINT(1)   DEFAULT 1,
-  setup_completed TINYINT(1) DEFAULT 0,
   created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
