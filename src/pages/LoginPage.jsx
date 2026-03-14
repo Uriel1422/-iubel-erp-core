@@ -30,8 +30,8 @@ const LoginPage = () => {
                 setPendingAuth(data.token);
                 setView('2fa');
             } else {
-                localStorage.setItem('iubel_token', data.token);
-                window.location.href = '/erp';
+                // Ya no necesitamos setItem aquí porque AuthContext.login ya lo hizo y actualizó el estado
+                navigate('/erp');
             }
         } catch (err) {
             setError(err.message);
@@ -58,7 +58,7 @@ const LoginPage = () => {
             }
             // Success
             localStorage.setItem('iubel_token', pendingAuth);
-            window.location.href = '/erp';
+            navigate('/erp');
         }, 1200);
     };
 

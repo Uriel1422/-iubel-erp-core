@@ -11,9 +11,28 @@ import {
 } from 'recharts';
 
 // Datos simulados para el Mapa de Nodos (Grafo)
-const MOCK_NODES = [];
-const MOCK_EDGES = [];
-const MOCK_ANOMALIES = [];
+const MOCK_NODES = [
+    { id: 1, label: 'Corp-HQ', x: 400, y: 100, type: 'central', risk: 'low' },
+    { id: 2, label: 'Node-XA4', x: 200, y: 200, type: 'gateway', risk: 'low' },
+    { id: 3, label: 'Node-ZB9', x: 600, y: 200, type: 'gateway', risk: 'medium' },
+    { id: 4, label: 'Ext-Bank-1', x: 100, y: 300, type: 'endpoint', risk: 'low' },
+    { id: 5, label: 'Ext-Crypto-Edge', x: 300, y: 300, type: 'endpoint', risk: 'high' },
+    { id: 6, label: 'Vent-Alpha', x: 500, y: 300, type: 'endpoint', risk: 'low' },
+    { id: 7, label: 'Vent-Gamma', x: 700, y: 300, type: 'endpoint', risk: 'medium' }
+];
+
+const MOCK_EDGES = [
+    { from: 1, to: 2 }, { from: 1, to: 3 },
+    { from: 2, to: 4 }, { from: 2, to: 5 },
+    { from: 3, to: 6 }, { from: 3, to: 7 },
+    { from: 5, to: 4 }
+];
+
+const MOCK_ANOMALIES = [
+    { id: 'a1', title: 'Intento de Infiltración', desc: 'Múltiples accesos desde IP no reconocida en Asia.', severity: 'critical', score: 92 },
+    { id: 'a2', title: 'Desvío de Fondos', desc: 'Transferencia inusual hacia wallet fría no registrada.', severity: 'high', score: 78 },
+    { id: 'a3', title: 'Ping de Escaneo', desc: 'Escaneo de puertos detectado en el nodo ZB9.', severity: 'medium', score: 45 }
+];
 
 
 const DataNode = () => {
@@ -91,9 +110,9 @@ const DataNode = () => {
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.7rem' }}>
-                    <div style={{ color: '#94a3b8' }}>NODES: <span style={{ color: '#fff' }}>0</span></div>
-                    <div style={{ color: '#94a3b8' }}>LINKS: <span style={{ color: '#fff' }}>0</span></div>
-                    <div style={{ color: '#94a3b8' }}>ANOMALIES: <span style={{ color: '#10b981' }}>0</span></div>
+                    <div style={{ color: '#94a3b8' }}>NODES: <span style={{ color: '#fff' }}>{MOCK_NODES.length}</span></div>
+                    <div style={{ color: '#94a3b8' }}>LINKS: <span style={{ color: '#fff' }}>{MOCK_EDGES.length}</span></div>
+                    <div style={{ color: '#94a3b8' }}>ANOMALIES: <span style={{ color: '#ef4444' }}>{MOCK_ANOMALIES.length}</span></div>
                 </div>
             </div>
 

@@ -10,10 +10,33 @@ import {
     Tooltip, CartesianGrid, BarChart, Bar, Cell
 } from 'recharts';
 
-const MOCK_TRADES = [];
-const MOCK_ORDER_BOOK_SELL = [];
-const MOCK_ORDER_BOOK_BUY = [];
-const INITIAL_TOKENIZED_ASSETS = [];
+const MOCK_TRADES = [
+    { id: 1, price: 105.52, amount: 15.5, time: '14:02:11', type: 'buy' },
+    { id: 2, price: 105.48, amount: 8.2, time: '14:01:45', type: 'sell' },
+    { id: 3, price: 105.55, amount: 100.0, time: '13:59:12', type: 'buy' },
+    { id: 4, price: 105.40, amount: 25.0, time: '13:58:30', type: 'sell' },
+    { id: 5, price: 105.50, amount: 50.0, time: '13:57:05', type: 'buy' }
+];
+
+const MOCK_ORDER_BOOK_SELL = [
+    { price: 105.90, amount: 1200, total: 2800 },
+    { price: 105.75, amount: 800, total: 1600 },
+    { price: 105.65, amount: 500, total: 800 },
+    { price: 105.55, amount: 300, total: 300 }
+];
+
+const MOCK_ORDER_BOOK_BUY = [
+    { price: 105.45, amount: 150, total: 150 },
+    { price: 105.35, amount: 450, total: 600 },
+    { price: 105.20, amount: 1200, total: 1800 },
+    { price: 105.00, amount: 4500, total: 6300 }
+];
+
+const INITIAL_TOKENIZED_ASSETS = [
+    { id: 't1', name: 'Edificio Iubel HQ', symbol: 'IUB-HQ', balance: 500000, value: 5000000, color: '#6366f1' },
+    { id: 't2', name: 'Flota Transporte Alpha', symbol: 'IUB-TRN', balance: 120000, value: 1200000, color: '#10b981' },
+    { id: 't3', name: 'Contrato Trigo 2024', symbol: 'IUB-AGRO', balance: 45000, value: 450000, color: '#f59e0b' }
+];
 
 
 const Exchange = () => {

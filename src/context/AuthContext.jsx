@@ -170,6 +170,14 @@ export const AuthProvider = ({ children }) => {
         if (!result.ok) {
             throw new Error(result.data.error || 'Error de autenticación');
         }
+        
+        // ACTUALIZACIÓN INMEDIATA DEL ESTADO (ELITE SYNC)
+        const { token: newToken, user: newUser, empresa: newEmpresa } = result.data;
+        localStorage.setItem('iubel_token', newToken);
+        setToken(newToken);
+        setUser(newUser);
+        setEmpresa(newEmpresa);
+        
         return result.data;
     };
 

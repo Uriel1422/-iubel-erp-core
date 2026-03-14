@@ -10,8 +10,15 @@ import {
 import { NavLink } from 'react-router-dom';
 import LiquidityOrchestrator from '../components/LiquidityOrchestrator';
 
-// Definición de Activos Falsos
-const ASSETS = [];
+// Definición de Activos de Grado Institucional
+const ASSETS = [
+    { symbol: 'BTC/USD', name: 'Bitcoin', price: 68420.50, change: 1.2, color: '#f7931a', type: 'crypto', balance: 0.25 },
+    { symbol: 'ETH/USD', name: 'Ethereum', price: 3840.12, change: -0.8, color: '#627eea', type: 'crypto', balance: 4.5 },
+    { symbol: 'IUB/DOP', name: 'Iubel Token', price: 105.50, change: 5.4, color: '#0ea5e9', type: 'security', balance: 15000 },
+    { symbol: 'AAPL', name: 'Apple Inc.', price: 192.30, change: 0.45, color: '#fff', type: 'stock', balance: 40 },
+    { symbol: 'XAU/USD', name: 'Gold', price: 2350.75, change: 0.15, color: '#fbbf24', type: 'commodity', balance: 10 },
+    { symbol: 'USDT', name: 'Tether', price: 1.00, change: 0.01, color: '#26a17b', type: 'stable', balance: 25000 }
+];
 
 
 // Datos históricos simulados para el gráfico principal
@@ -46,9 +53,9 @@ const LIVE_VOL_DATA = generateLiveFeedData();
 
 const WealthTerminal = () => {
     const [assets, setAssets] = useState(ASSETS);
-    const [chartData, setChartData] = useState([]);
-    const [portfolioValue, setPortfolioValue] = useState(0.00);
-    const [dayChange, setDayChange] = useState(0.00);
+    const [chartData, setChartData] = useState(INITIAL_CHART_DATA);
+    const [portfolioValue, setPortfolioValue] = useState(542850.50);
+    const [dayChange, setDayChange] = useState(4250.75);
     
     // Simulación de "Live Ticker" - Precios cambian cada 3 segundos
     useEffect(() => {
@@ -313,10 +320,26 @@ const WealthTerminal = () => {
                         </h3>
                         
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                            <button style={{ flex: 1, padding: '0.75rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', ':hover': { opacity: 0.9 } }}>
+                            <button 
+                                onClick={() => {
+                                    const amount = (Math.random() * 5000 + 1000).toFixed(2);
+                                    setPortfolioValue(prev => prev + Number(amount));
+                                    setDayChange(prev => prev + Number(amount) * 0.1);
+                                    alert(`Orden de COMPRA ejecutada: +$${amount} en portafolio.`);
+                                }}
+                                style={{ flex: 1, padding: '0.75rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
+                            >
                                 COMPRAR
                             </button>
-                            <button style={{ flex: 1, padding: '0.75rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', ':hover': { opacity: 0.9 } }}>
+                            <button 
+                                onClick={() => {
+                                    const amount = (Math.random() * 3000 + 500).toFixed(2);
+                                    setPortfolioValue(prev => prev - Number(amount));
+                                    setDayChange(prev => prev - Number(amount) * 0.1);
+                                    alert(`Orden de VENTA ejecutada: -$${amount} en portafolio.`);
+                                }}
+                                style={{ flex: 1, padding: '0.75rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}
+                            >
                                 VENDER
                             </button>
                         </div>

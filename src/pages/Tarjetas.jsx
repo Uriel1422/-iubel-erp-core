@@ -2,8 +2,19 @@ import React, { useState } from 'react';
 import { CreditCard, Lock, Shield, Settings, Eye, EyeOff, Snowflake, Play, Copy, Check, Filter, Search, ArrowUpRight, ArrowDownRight, RefreshCw, Smartphone, Globe, ShieldCheck, Activity } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const MOCK_CARDS = [];
-const MOCK_TRANSACTIONS = [];
+const MOCK_CARDS = [
+    { id: 'c1', type: 'Iubel Black Elite', last4: '8842', brand: 'ib-black', cardholder: 'CARMEN JIMENEZ', exp: '12/28', cvv: '942', balance: 12540.50, limit: 50000, status: 'active', color: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', textColor: '#fff' },
+    { id: 'c2', type: 'Corporate Visa', last4: '4291', brand: 'visa', cardholder: 'IUBEL ADMIN', exp: '05/27', cvv: '112', balance: 450.20, limit: 25000, status: 'active', color: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)', textColor: '#fff' },
+    { id: 'c3', type: 'Travel Mastercard', last4: '9901', brand: 'mastercard', cardholder: 'MARKETING DEPT', exp: '08/26', cvv: '003', balance: 18420.00, limit: 100000, status: 'frozen', color: 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)', textColor: '#fff' }
+];
+
+const MOCK_TRANSACTIONS = [
+    { id: 't1', cardId: 'c1', merchant: 'AWS Cloud Services', date: '2024-03-14', time: '14:20', amount: -150.25, category: 'Software', status: 'completed' },
+    { id: 't2', cardId: 'c1', merchant: 'Apple Store NYC', date: '2024-03-14', time: '10:05', amount: -2499.00, category: 'Equipos', status: 'completed' },
+    { id: 't3', cardId: 'c1', merchant: 'Starbucks Coffee', date: '2024-03-13', time: '08:45', amount: -12.50, category: 'Gastos', status: 'completed' },
+    { id: 't4', cardId: 'c2', merchant: 'Google Workspace', date: '2024-03-12', time: '09:00', amount: -450.20, category: 'Software', status: 'completed' },
+    { id: 't5', cardId: 'c1', merchant: 'Uber Premium', date: '2024-03-14', time: '16:10', amount: -65.40, category: 'Transporte', status: 'declined', note: 'Límite diario excedido' }
+];
 
 
 const formatMoney = (val) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(Number(val));
@@ -136,9 +147,30 @@ const Tarjetas = () => {
                         </div>
                     </div>
                 ) : (
-                    <div style={{ height: '240px', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                    <div 
+                        onClick={() => {
+                            const newCard = {
+                                id: `c${Date.now()}`,
+                                type: 'Nueva Visa Elite',
+                                last4: Math.floor(1000 + Math.random() * 9000).toString(),
+                                brand: 'visa',
+                                cardholder: user?.nombre || 'TITULAR',
+                                exp: '01/30',
+                                cvv: '331',
+                                balance: 0,
+                                limit: 10000,
+                                status: 'active',
+                                color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                textColor: '#fff'
+                            };
+                            setCards([...cards, newCard]);
+                            setSelectedCardId(newCard.id);
+                            alert('¡Nueva tarjeta emitida exitosamente!');
+                        }}
+                        style={{ height: '240px', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    >
                         <CreditCard size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                        <span style={{ fontSize: '0.85rem' }}>No hay tarjetas activas en tu billetera.</span>
+                        <span style={{ fontSize: '0.85rem' }}>Haz clic aquí para Emitir Nueva Tarjeta</span>
                     </div>
                 )}
 
