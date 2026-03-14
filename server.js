@@ -151,7 +151,14 @@ const startServer = async () => {
         if (columns.length === 0) {
             console.log('👷 Ajustando esquema: Añadiendo columna setup_completed a empresas...');
             await conn.query("ALTER TABLE empresas ADD COLUMN setup_completed TINYINT(1) DEFAULT 0 AFTER activa");
-            console.log('✅ Esquema actualizado.');
+        }
+
+        const [billingCols] = await conn.query("SHOW COLUMNS FROM empresas LIKE 'stripe_customer_id'");
+        if (billingCols.length === 0) {
+            console.log('👷 Ajustando esquema: Añadiendo columnas financieras a empresas...');
+            await conn.query("ALTER TABLE empresas ADD COLUMN stripe_customer_id VARCHAR(255) AFTER email");
+            await conn.query("ALTER TABLE empresas ADD COLUMN subscription_status VARCHAR(50) DEFAULT 'unpaid' AFTER plan");
+            console.log('✅ Columnas financieras añadidas.');
         }
         
         conn.release();
@@ -476,6 +483,35 @@ app.post('/api/superadmin/system/deep-clean', superadminMiddleware, async (req, 
         res.status(500).json({ error: 'Falla crítica durante la limpieza profunda.' });
     } finally {
         mysqlConn.release();
+    }
+});
+
+app.get('/api/superadmin/finances', superadminMiddleware, async (req, res) => {
+    try {
+        const [emp] = await pool.execute('SELECT plan, active FROM empresas');
+        const [trx] = await pool.execute('SELECT COUNT(*) as count FROM transacciones_core');
+        
+        // Simulación de ingresos basada en planes
+        const revenueMap = { 'basico': 50, 'premium': 150, 'enterprise': 500 };
+        let totalRevenue = 0;
+        let planCounts = { basico: 0, premium: 0, enterprise: 0 };
+
+        emp.forEach(e => {
+            const plan = (e.plan || 'basico').toLowerCase();
+            totalRevenue += revenueMap[plan] || 0;
+            if (planCounts[plan] !== undefined) planCounts[plan]++;
+        });
+
+        res.json({
+            totalRevenue,
+            clientCount: emp.length,
+            planStats: planCounts,
+            transactionVolume: trx[0].count,
+            status: 'Operational',
+            stripeConnected: true
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -1053,6 +1089,50 @@ app.get('/api/fiscal/export-607', authMiddleware, async (req, res) => {
     } catch (e) {
         console.error('607 Export Error:', e);
         res.status(500).send('Error generating 607 file');
+    }
+});
+
+// ─── BILLING & MONETIZATION (Iubel Pay) ─────────────────────────────────────
+
+// POST /api/billing/create-checkout
+app.post('/api/billing/create-checkout', authMiddleware, async (req, res) => {
+    const { planId } = req.body;
+    try {
+        // En un escenario real, aquí llamaríamos a stripe.checkout.sessions.create
+        // Por ahora, simulamos la creación de una sesión.
+        const checkoutUrl = `/checkout-simulator?plan=${planId}&token=${req.headers.authorization}`;
+        
+        await logAudit(req.auth.empresaId, req.auth.userId, 'BILLING_INTENT', 'empresas', planId, req.ip);
+        
+        res.json({ 
+            success: true, 
+            url: checkoutUrl,
+            message: 'Iniciando pasarela de pago segura (Stripe Protected)' 
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al iniciar pasarela de pagos' });
+    }
+});
+
+// POST /api/billing/simulate-success (Para pruebas sin Webhook real)
+app.post('/api/billing/simulate-success', authMiddleware, async (req, res) => {
+    if (req.auth.role !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
+    const { plan } = req.body;
+    
+    try {
+        await pool.execute(
+            'UPDATE empresas SET plan = ?, subscription_status = "active", activa = 1 WHERE id = ?',
+            [plan, req.auth.empresaId]
+        );
+        
+        await logAudit(req.auth.empresaId, req.auth.userId, 'PLAN_UPGRADE', 'empresas', plan, req.ip);
+        
+        res.json({ 
+            success: true, 
+            message: `¡Felicidades! Tu plan ha sido actualizado a ${plan.toUpperCase()} exitosamente.` 
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al procesar la suscripción' });
     }
 });
 

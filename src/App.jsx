@@ -106,6 +106,9 @@ import GestionDocumental from './pages/GestionDocumental';
 import ProyectosTareas from './pages/ProyectosTareas';
 import SecuritySovereign from './pages/SecuritySovereign';
 import Portal from './pages/Portal';
+import TermsOfService from './pages/legal/TermsOfService';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import CheckoutSimulator from './pages/CheckoutSimulator';
 
 const GlobalUIWrapper = ({ children }) => {
   const { globalKillSwitch, broadcastMessage, token: saToken } = useSuperAdmin();
@@ -207,6 +210,9 @@ function App() {
                                                                         <Routes>
                                                                           <Route path="/login" element={<LoginPage />} />
                                                                           <Route path="/register" element={<RegisterPage />} />
+                                                                          <Route path="/terminos" element={<TermsOfService />} />
+                                                                          <Route path="/privacidad" element={<PrivacyPolicy />} />
+                                                                          <Route path="/checkout-simulator" element={<CheckoutSimulator />} />
                                                                           <Route path="/" element={<Portal />} />
                                                                           <Route path="/erp" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                                                                             <Route index element={<Dashboard />} />

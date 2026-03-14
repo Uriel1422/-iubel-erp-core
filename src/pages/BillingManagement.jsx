@@ -8,11 +8,27 @@ import {
 const BillingManagement = () => {
     const { empresa } = useAuth();
     
-    // Mock usage data
     const usage = {
-        users: { current: 2, limit: 3 },
-        storage: { current: 124, limit: 1024 }, // MB
-        transactions: { current: 450, limit: 1000 }
+        users: { current: 2, limit: (empresa?.plan === 'basico' ? 3 : (empresa?.plan === 'intermedio' ? 15 : 100)) },
+        storage: { current: 124, limit: (empresa?.plan === 'basico' ? 1024 : (empresa?.plan === 'intermedio' ? 5120 : 25600)) }, // MB
+        transactions: { current: 450, limit: (empresa?.plan === 'basico' ? 1000 : (empresa?.plan === 'intermedio' ? 10000 : 999999)) }
+    };
+
+    const handleUpgrade = async () => {
+        try {
+            const res = await fetch('/api/billing/create-checkout', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ planId: 'intermedio' }) // Por defecto sugerimos el siguiente nivel
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = data.url;
+            }
+        } catch (e) { console.error(e); }
     };
 
     const getProgress = (curr, limit) => (curr / limit) * 100;
@@ -42,7 +58,7 @@ const BillingManagement = () => {
                                 <ShieldCheck size={16} /> Suscripción Activa
                             </div>
                         </div>
-                        <button style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', background: '#6366f1', color: 'white', border: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <button onClick={handleUpgrade} style={{ padding: '0.75rem 1.5rem', borderRadius: '12px', background: '#6366f1', color: 'white', border: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                             <ArrowUpCircle size={18} /> Mejorar Plan
                         </button>
                     </div>

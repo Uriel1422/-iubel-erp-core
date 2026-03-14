@@ -19,6 +19,34 @@ const Portal = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const handlePlanSelect = async (planId) => {
+        if (!isAuthenticated) {
+            navigate(`/register?plan=${planId}`);
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/billing/create-checkout', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ planId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Redirigir a la pasarela segura
+                window.location.href = data.url;
+            } else {
+                alert(data.error || 'Error al conectar con la pasarela');
+            }
+        } catch (e) {
+            console.error('Checkout error:', e);
+            alert('Error de red al procesar el pago');
+        }
+    };
+
     const features = [
         {
             title: "Iubel Copilot AI",
@@ -170,7 +198,7 @@ const Portal = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => navigate('/register?plan=basico')} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>Empezar con Básico</button>
+                                <button onClick={() => handlePlanSelect('basico')} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>Empezar con Básico</button>
                             </div>
 
                             {/* Intermedio (Popular) */}
@@ -191,7 +219,7 @@ const Portal = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => navigate('/register?plan=intermedio')} style={{ padding: '1.1rem', borderRadius: '14px', background: '#6366f1', color: 'white', border: 'none', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(99,102,241,0.3)', transition: '0.3s' }}>Empezar con Intermedio</button>
+                                <button onClick={() => handlePlanSelect('intermedio')} style={{ padding: '1.1rem', borderRadius: '14px', background: '#6366f1', color: 'white', border: 'none', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(99,102,241,0.3)', transition: '0.3s' }}>Empezar con Intermedio</button>
                             </div>
 
                             {/* Avanzado (Enterprise) */}
@@ -211,7 +239,7 @@ const Portal = () => {
                                         </div>
                                     ))}
                                 </div>
-                                <button onClick={() => navigate('/register?plan=avanzado')} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>Empezar con Avanzado</button>
+                                <button onClick={() => handlePlanSelect('avanzado')} style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700, cursor: 'pointer', transition: '0.3s' }}>Empezar con Avanzado</button>
                             </div>
                         </div>
                     </div>
