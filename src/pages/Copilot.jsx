@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useContabilidad } from '../context/ContabilidadContext';
 import {
     AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-    BarChart, Bar, Cell
+    BarChart, Bar, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
 
 const INITIAL_MESSAGES = [
@@ -132,68 +132,79 @@ const Copilot = () => {
             timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         };
 
-        // Memoria de sesión
+        // Memoria de sesión avanzada
         const count = sessionContext.interactionCount + 1;
         setSessionContext(prev => ({ ...prev, interactionCount: count }));
 
-        // Lógica de Intenciones Institucionales (Élite)
-        if (textLower.includes('valor') || textLower.includes('cuanto vale') || textLower.includes('precio') || textLower.includes('competencia')) {
-            aiResponse.text = `Iubel ERP tiene una valuación proyectada de clase mundial. Basado en su arquitectura **Sovereign** (Inmutable) y el motor **Oracle**, estimamos un valor de mercado IP de hasta **$2.5M USD**. Supera a la competencia local por su capacidad de auditoría forense y predicción en tiempo real.`;
-            aiResponse.widget = 'valuationCard';
-        } else if (textLower.includes('segur') || textLower.includes('sovereign') || textLower.includes('blockchain') || textLower.includes('ledger')) {
-            aiResponse.text = `Tu capital y datos están blindados bajo la arquitectura **Iubel Sovereign**. Implementamos un **Immutable Ledger** (libro mayor inmutable) que firma criptográficamente cada transacción. Cualquier intento de alteración es detectado y bloqueado por el **FraudShield** en milisegundos.`;
-            aiResponse.widget = 'riskProfile';
-        } else if (textLower.includes('prestamo') || textLower.includes('préstamo') || textLower.includes('cartera')) {
-            aiResponse.text = `Analizando la cartera de **${empresa?.nombre}**. He detectado que el índice de morosidad se mantiene en un saludable **2.1%**. Las colocaciones comerciales han crecido un **15%** este mes gracias al motor de scoring predictivo.`;
-            aiResponse.widget = 'loansTrend';
-            setSessionContext(prev => ({ ...prev, lastTopic: 'loans' }));
-        } else if (textLower.includes('futuro') || textLower.includes('predic') || textLower.includes('oracle') || textLower.includes('proyec')) {
-            if (oracleInsight) {
-                const trend = oracleInsight.ingresos.prediccion[0] > oracleInsight.ingresos.historial[5] ? 'alcista' : 'estable';
-                aiResponse.text = `El Oráculo de Iubel detecta una tendencia **${trend}**. Proyectamos ingresos de **RD$${(oracleInsight.ingresos.prediccion[0]/1000).toFixed(1)}K** para el cierre de ciclo con un nivel de confianza del **92%**. ¿Deseas que simulemos un escenario de estrés de liquidez?`;
-                aiResponse.widget = 'oracleForecast';
-            } else {
-                aiResponse.text = 'Aún estoy procesando los datos maestros para generar una predicción precisa. Mi motor de IA requiere al menos 3 meses de historial para activar el modo de alta precisión.';
-            }
-        } else if (textLower.includes('como') || textLower.includes('cómo') || textLower.includes('ayuda') || textLower.includes('paso a paso') || textLower.includes('indicaciones')) {
-            // Motor de búsqueda de conocimiento dinámico
-            let foundKey = null;
+        // Lógica de Intenciones Institucionales Elite
+        
+        // 1. Seguridad & Datos (Prioridad Alta)
+        if (textLower.includes('segur') || textLower.includes('sovereign') || textLower.includes('proteger') || textLower.includes('datos') || textLower.includes('privacidad')) {
+            aiResponse.text = `Tu infraestructura operativa de **${empresa?.nombre || 'Iubel'}** está blindada bajo el protocolo **Sovereign V2**. Cada bit de información se procesa en un **Immutable Ledger**, lo que significa que el dato es físicamente imposible de alterar retrospectivamente. Además, el **FraudShield AI** monitorea patrones de acceso en tiempo real para neutralizar cualquier amenaza antes de que ocurra.`;
+            aiResponse.widget = 'securityIntegrity';
+        } 
+        
+        // 2. Analítica & Valuación
+        else if (textLower.includes('valor') || textLower.includes('rendimiento') || textLower.includes('finanza') || textLower.includes('ganancia')) {
+            aiResponse.text = `Estamos operando en un nivel de eficiencia óptimo. La valuación de tus activos digitales y propiedad intelectual bajo el motor Iubel se estima en **$2.5M USD**. He preparado un nodo de estabilidad financiera para que visualices la resiliencia de tu capital actual.`;
+            aiResponse.widget = 'systemHealth';
+        }
+
+        // 3. Consultas de Módulos (Cerebro de Conocimiento)
+        else if (textLower.includes('como') || textLower.includes('qué es') || textLower.includes('ayuda') || textLower.includes('paso') || textLower.includes('guia')) {
+            // Buscador Neuronal de Conocimiento
+            let bestMatch = null;
+            let highestScore = 0;
+
             Object.keys(SYSTEM_KNOWLEDGE).forEach(key => {
-                if (textLower.includes(key.replace('_', ' ')) || SYSTEM_KNOWLEDGE[key].tags.some(tag => textLower.includes(tag))) {
-                    foundKey = key;
+                const item = SYSTEM_KNOWLEDGE[key];
+                let score = 0;
+                
+                // Pesos de coincidencia
+                if (textLower.includes(key.replace('_', ' '))) score += 10;
+                item.tags.forEach(tag => {
+                    if (textLower.includes(tag)) score += 5;
+                });
+                if (textLower.includes(item.title.toLowerCase())) score += 8;
+
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestMatch = item;
                 }
             });
 
-            if (foundKey) {
-                const info = SYSTEM_KNOWLEDGE[foundKey];
-                aiResponse.text = `He consultado el Manual Maestro. Aquí tienes las indicaciones para **${info.title}**:\n\n**Descripción:** ${info.description}\n\n**Paso a Paso:**\n${info.how_to.join('\n')}\n\n**Funciones Clave:**\n- ${info.functions.join('\n- ')}`;
+            if (bestMatch && highestScore > 0) {
+                aiResponse.text = `Accediendo al **Manual Maestro Elite**. Aquí tienes la arquitectura operativa para **${bestMatch.title}**:\n\n> ${bestMatch.description}\n\n**Protocolo de Ejecución:**\n${bestMatch.how_to.join('\n')}\n\n**Capacidades Críticas:**\n- ${bestMatch.functions.join('\n- ')}`;
                 aiResponse.widget = 'knowledgeCard';
             } else {
-                aiResponse.text = "Tengo acceso a los manuales de: **Bóveda Soberana**, **Facturación**, **Nómina**, **Inventario**, **Bancos** y **Wealth Terminal**. ¿Sobre cuál de estos módulos necesitas indicaciones hoy?";
+                aiResponse.text = "Mi base neuronal cubre la totalidad de la suite Iubel: **Bóveda**, **Facturación**, **Préstamos**, **Ahorros**, **Socios**, **Contabilidad** y **Nómina**. ¿Qué área estratégica deseas explorar ahora?";
             }
-        } else if (textLower.includes('riesgo') || textLower.includes('aml') || textLower.includes('lavado')) {
-            aiResponse.text = 'Protocolo de Cumplimiento activado. He cruzado las últimas transacciones con las listas de control global. El **FraudShield** reporta integridad total, pero sugiero una debida diligencia ampliada para transacciones por encima de $500K.';
-            aiResponse.widget = 'riskProfile';
-            setSessionContext(prev => ({ ...prev, lastTopic: 'risk' }));
-        } else if (textLower.includes('gracias') || textLower.includes('bueno') || textLower.includes('ok')) {
-             const options = [
-                "¡De nada! La eficiencia institucional es mi prioridad.",
-                "Es un placer asistirte en la dirección estratégica de tu empresa.",
-                "Entendido. ¿Deseas que verifique la integridad del Libro Mayor ahora?",
-                "¡A tus órdenes! Recuerda que el FraudShield está activo y protegiendo tus transacciones."
-             ];
-             aiResponse.text = options[Math.floor(Math.random() * options.length)];
-        } else if (sessionContext.lastTopic === 'loans' && (textLower.includes('mas') || textLower.includes('detalle'))) {
-            aiResponse.text = 'De los préstamos colocados, el **60%** corresponde a líneas de crédito revolvente. La seguridad del Ledger garantiza que estos registros son 100% auditables.';
-        } else if (textLower.includes('hola') || textLower.includes('buenos dias')) {
-             aiResponse.text = `¡Hola, ${user?.nombre || ''}! Identidad verificada. El sistema opera bajo parámetros de seguridad óptimos. ¿Nos enfocamos en el análisis predictivo o en auditoría de seguridad hoy?`;
-        } else {
-            // Respuestas Proactivas 2.0
+        }
+
+        // 4. Préstamos & Cartera
+        else if (textLower.includes('prestamo') || textLower.includes('mora') || textLower.includes('cartera') || textLower.includes('scoring')) {
+            aiResponse.text = `La cartera de crédito muestra una salud estructural de grado **AAA**. El sistema de scoring ha optimizado el riesgo en un **12%** respecto al trimestre anterior. ¿Quieres que analice un perfil de socio específico o prefieres ver la proyección de amortización global?`;
+            aiResponse.widget = 'loansTrend';
+            setSessionContext(prev => ({ ...prev, lastTopic: 'loans' }));
+        }
+
+        // 5. Interacción Social / Saludos con Autoridad
+        else if (textLower.includes('hola') || textLower.includes('buenos dias') || textLower.includes('saludos')) {
+            aiResponse.text = `Saludos, **${user?.nombre || 'Administrador'}**. Identidad confirmada vía Protocolo Sovereign. Todos los subsistemas operan al 100%. Estoy listo para ejecutar análisis de alto impacto. ¿Por dónde empezamos hoy?`;
+        }
+
+        // 6. Sorpresa / Proactividad Elite
+        else if (textLower.includes('sorpresa') || textLower.includes('qué hay de nuevo') || textLower.includes('recomienda')) {
+            aiResponse.text = `He realizado un escaneo profundo de la arquitectura de datos. He detectado una oportunidad de optimización de liquidez en el **Sovereign Vault**. Además, tu índice de estabilidad operativa es de **98.4%**, el más alto registrado hasta ahora.`;
+            aiResponse.widget = 'eliteAdvisor';
+        }
+
+        // Default
+        else {
             const defaults = [
-                "Sugiero revisar el **Monitor de Integridad Sovereign**. He detectado transacciones que requieren tu firma criptográfica de administrador.",
-                "Interesante pregunta. Según la metadata del Oráculo, tu empresa muestra una estabilidad operativa notable. ¿Quieres ver la proyección de flujo de caja?",
-                "Como tu Copilot Institucional, sugiero activar una auditoría preventiva de las cuentas por cobrar antes del cierre mensual.",
-                "He notado una aceleración analítica disponible. ¿Deseas que optimice el caché de los reportes BI para una carga instantánea?"
+                "Como tu Copilot Institucional, mantengo monitoreo constante sobre la integridad del Ledger. ¿Tienes alguna duda técnica sobre la operación de los módulos?",
+                "He detectado un aumento en la eficiencia de procesamiento. ¿Deseas que genere un informe de inteligencia predictiva sobre el flujo de caja?",
+                "Interesante consulta. Basado en la metadata del sistema, sugiero revisar el módulo de auditoría forense para confirmar la integridad total de los asientos de este mes."
             ];
             aiResponse.text = defaults[Math.floor(Math.random() * defaults.length)];
         }
@@ -310,79 +321,95 @@ const Copilot = () => {
                                     {formatText(msg.text)}
                                 </div>
 
-                                {msg.widget === 'loansTrend' && (
-                                    <div style={{ background: 'white', padding: '1.25rem', borderRadius: '16px', width: '320px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b' }}>TRENDING LOANS</span>
-                                            <TrendingUp size={14} color="#10b981" />
+                                {msg.widget === 'securityIntegrity' && (
+                                    <div style={{ background: '#0f172a', padding: '1.5rem', borderRadius: '24px', width: '320px', color: 'white', border: '1px solid #1e293b', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }}></div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '1px', color: '#94a3b8' }}>SOVEREIGN INTEGRITY</span>
                                         </div>
-                                        <div style={{ height: 120 }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                                                <span style={{ color: '#94a3b8' }}>Ledger Status:</span>
+                                                <span style={{ color: '#10b981', fontWeight: 700 }}>IMMUTABLE</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                                                <span style={{ color: '#94a3b8' }}>Encryption:</span>
+                                                <span style={{ fontWeight: 700 }}>AES-256 GCM</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                                                <span style={{ color: '#94a3b8' }}>FraudShield:</span>
+                                                <span style={{ color: '#6366f1', fontWeight: 700 }}>ACTIVE</span>
+                                            </div>
+                                        </div>
+                                        <div style={{ marginTop: '1.25rem', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                            <div style={{ fontSize: '0.65rem', color: '#a5b4fc', fontWeight: 800, marginBottom: '0.2rem' }}>LAST VERIFICATION</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'white', fontFamily: 'monospace' }}>SHA-256: 8f3a...d9e1</div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {msg.widget === 'systemHealth' && (
+                                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', width: '340px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b' }}>STABILITY NODE</span>
+                                            <Activity size={16} color="#6366f1" />
+                                        </div>
+                                        <div style={{ height: 180 }}>
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={[
-                                                    {n: 'E', v: 40}, {n: 'F', v: 45}, {n: 'M', v: 60}, {n: 'A', v: 55}, {n: 'M', v: 80}
+                                                <RadarChart outerRadius="80%" data={[
+                                                    { subject: 'Liquidez', A: 120, fullMark: 150 },
+                                                    { subject: 'Riesgo', A: 30, fullMark: 150 },
+                                                    { subject: 'Seguridad', A: 150, fullMark: 150 },
+                                                    { subject: 'Crecimiento', A: 90, fullMark: 150 },
+                                                    { subject: 'Integridad', A: 145, fullMark: 150 },
                                                 ]}>
-                                                    <Area type="monotone" dataKey="v" stroke="#6366f1" fill="#6366f120" strokeWidth={2} />
-                                                </AreaChart>
+                                                    <PolarGrid stroke="#e2e8f0" />
+                                                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#64748b' }} />
+                                                    <Radar name="System" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+                                                </RadarChart>
                                             </ResponsiveContainer>
                                         </div>
+                                        <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+                                            <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>98.4% Resilience</span>
+                                        </div>
                                     </div>
                                 )}
 
-                                {msg.widget === 'valuationCard' && (
+                                {msg.widget === 'eliteAdvisor' && (
                                     <div style={{ 
-                                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
-                                        padding: '1.5rem', 
-                                        borderRadius: '24px', 
+                                        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', 
+                                        padding: '1.75rem', 
+                                        borderRadius: '28px', 
                                         width: '320px', 
                                         color: 'white',
-                                        boxShadow: '0 10px 30px rgba(79,70,229,0.3)',
                                         position: 'relative',
-                                        overflow: 'hidden'
+                                        overflow: 'hidden',
+                                        border: '1px solid rgba(255,255,255,0.1)'
                                     }}>
-                                        <div style={{ position: 'absolute', top: '-10%', right: '-10%', opacity: 0.2 }}>
-                                            <Zap size={80} color="white" />
+                                        <div style={{ position: 'absolute', top: '-10%', right: '-10%', opacity: 0.1 }}>
+                                            <Sparkles size={100} color="white" />
                                         </div>
-                                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#c7d2fe', textTransform: 'uppercase', marginBottom: '0.5rem' }}>IP Market Valuation</div>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '0.25rem' }}>$2.5M <span style={{ fontSize: '0.9rem', color: '#c7d2fe' }}>USD</span></div>
-                                        <div style={{ fontSize: '0.7rem', color: '#e0e7ff', lineHeight: 1.4 }}>
-                                            Basado en la arquitectura Sovereign e integración In-Memory.
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#a5b4fc', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Zap size={14} fill="#fbbf24" color="#fbbf24" /> Elite AI Suggestion
                                         </div>
-                                        <div style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '0.65rem', textAlign: 'center', fontWeight: 700 }}>
-                                            ASSET GRADE: AAA+
-                                        </div>
-                                    </div>
-                                )}
-
-                                {msg.widget === 'riskProfile' && (
-                                    <div style={{ background: '#0f172a', padding: '1.25rem', borderRadius: '16px', width: '300px', color: 'white' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                            <ShieldAlert size={16} color="#ef4444" />
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>AML RISK MONITOR</span>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                                                <span>Crítico</span>
-                                                <span style={{ color: '#ef4444' }}>0</span>
-                                            </div>
-                                            <div style={{ width: '100%', height: 4, background: '#1e293b', borderRadius: '2px' }}>
-                                                <div style={{ width: '5%', height: '100%', background: '#ef4444', borderRadius: '2px' }}></div>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                                                <span>Aceptable</span>
-                                                <span style={{ color: '#10b981' }}>98%</span>
-                                            </div>
-                                        </div>
+                                        <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 0.75rem 0' }}>Optimización de Liquidez</h4>
+                                        <p style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
+                                            He detectado un flujo excedente en el Banco BHD. Recomiendo mover **RD$450,000** al Sovereign Vault para asegurar un rendimiento institucional del 6.5%.
+                                        </p>
+                                        <button style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', background: 'white', color: '#1e1b4b', border: 'none', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer' }}>
+                                            Ejecutar Estrategia
+                                        </button>
                                     </div>
                                 )}
 
                                 {msg.widget === 'knowledgeCard' && (
-                                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '16px', width: '320px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '20px', width: '340px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#6366f1' }}>
-                                            <BookOpen size={16} />
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>FRAGMENTO DEL MANUAL</span>
+                                            <BrainCircuit size={18} />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>FRAGMENTO MANUAL MAESTRO</span>
                                         </div>
-                                        <div style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic' }}>
-                                            "El cumplimiento de estos pasos garantiza la integridad de los datos en el Sovereign Ledger."
+                                        <div style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic', lineHeight: 1.5 }}>
+                                            "La ejecución de estos protocolos bajo el estándar Sovereign garantiza que la metadata operativa permanezca auditable y resistente a la manipulación."
                                         </div>
                                     </div>
                                 )}
