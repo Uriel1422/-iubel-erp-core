@@ -13,27 +13,43 @@ import {
     BarChart, Bar
 } from 'recharts';
 
+import { api } from '../utils/api';
+
 const formatMoney = (val) => new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(val);
 
 const CreditIntelligence = () => {
-    const [expenses, setExpenses] = useState(() => {
-        const saved = localStorage.getItem('iubel_credit_expenses');
-        return saved ? JSON.parse(saved) : [];
+    const [expenses, setExpenses] = useState([]);
+    const [cardConfig, setCardConfig] = useState({
+        name: 'Visa Infinite',
+        bank: 'Banreservas',
+        limit: 70000,
+        currency: 'DOP'
     });
 
-    const [cardConfig, setCardConfig] = useState(() => {
-        const saved = localStorage.getItem('iubel_credit_config');
-        return saved ? JSON.parse(saved) : {
-            name: 'Visa Infinite',
-            bank: 'Banreservas',
-            limit: 500000,
-            currency: 'DOP'
-        };
-    });
-
+    const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
     const [isConfiguring, setIsConfiguring] = useState(false);
     
+    // Cargar datos desde el servidor al montar
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const expData = await api.get('credit_expenses');
+                const configData = await api.get('credit_config');
+                if (expData) setExpenses(expData);
+                if (configData && configData.length > 0) {
+                    setCardConfig(configData[0]);
+                }
+            } catch (err) {
+                console.error('Error al cargar datos de Credit Intelligence:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
+
     const [newExpense, setNewExpense] = useState({
         merchant: '',
         amount: '',
@@ -45,16 +61,12 @@ const CreditIntelligence = () => {
     const [tempConfig, setTempConfig] = useState(cardConfig);
 
     useEffect(() => {
-        localStorage.setItem('iubel_credit_expenses', JSON.stringify(expenses));
-    }, [expenses]);
-
-    useEffect(() => {
-        localStorage.setItem('iubel_credit_config', JSON.stringify(cardConfig));
-    }, [cardConfig]);
+        if (!loading) setTempConfig(cardConfig);
+    }, [cardConfig, loading]);
 
     // Cálculos
     const limit = cardConfig.limit;
-    const totalSpent = expenses.reduce((acc, exp) => acc + exp.amount, 0);
+    const totalSpent = expenses.reduce((acc, exp) => acc + (parseFloat(exp.amount) || 0), 0);
     const ownerSpent = expenses.filter(e => e.type === 'owner').reduce((acc, exp) => acc + exp.amount, 0);
     const thirdSpent = expenses.filter(e => e.type === 'third').reduce((acc, exp) => acc + exp.amount, 0);
     const utilization = (totalSpent / limit) * 100;
@@ -75,22 +87,41 @@ const CreditIntelligence = () => {
         }, {})
     ).map(([name, value]) => ({ name, value }));
 
-    const handleAddExpense = (e) => {
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '1rem' }}>
+                <Activity size={48} color="var(--primary)" className="animate-spin" />
+                <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Cargando Sovereign Intelligence...</p>
+                <div style={{ width: '200px', height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div className="animate-pulse" style={{ height: '100%', background: 'var(--primary)', width: '60%' }}></div>
+                </div>
+            </div>
+        );
+    }
+
+    const handleAddExpense = async (e) => {
         e.preventDefault();
         const expense = {
             ...newExpense,
-            id: Date.now(),
+            id: Date.now().toString(),
             date: new Date().toISOString().split('T')[0],
             amount: parseFloat(newExpense.amount)
         };
-        setExpenses([expense, ...expenses]);
+        const updatedExpenses = [expense, ...expenses];
+        setExpenses(updatedExpenses);
+        
+        // Persistencia segura en el servidor
+        await api.save('credit_expenses', updatedExpenses);
+        
         setIsAdding(false);
         setNewExpense({ merchant: '', amount: '', category: 'Alimentos', type: 'owner', person: 'Yo' });
     };
 
-    const handleDeleteExpense = (id) => {
+    const handleDeleteExpense = async (id) => {
         if (window.confirm('¿Estás seguro de que deseas eliminar este registro de gasto?')) {
-            setExpenses(expenses.filter(exp => exp.id !== id));
+            const updatedExpenses = expenses.filter(exp => exp.id !== id);
+            setExpenses(updatedExpenses);
+            await api.save('credit_expenses', updatedExpenses);
         }
     };
 
@@ -422,7 +453,12 @@ const CreditIntelligence = () => {
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button onClick={() => setIsConfiguring(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancelar</button>
-                                <button onClick={() => { setCardConfig(tempConfig); setIsConfiguring(false); }} className="btn btn-primary" style={{ flex: 1 }}>Guardar Cambios</button>
+                                <button onClick={async () => { 
+                                    const finalConfig = { ...tempConfig, id: 'main' };
+                                    setCardConfig(finalConfig);
+                                    await api.save('credit_config', finalConfig);
+                                    setIsConfiguring(false); 
+                                }} className="btn btn-primary" style={{ flex: 1 }}>Guardar Cambios</button>
                             </div>
                         </div>
                     </div>
