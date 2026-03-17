@@ -122,57 +122,73 @@ const CompraAvanzadaModal = ({ isOpen, onClose }) => {
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '1000px', width: '95%' }}>
-                <div className="modal-header">
-                    <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <ShoppingBag className="text-primary" /> Entrada Avanzada de Inventario (Compra)
-                    </h2>
-                    <button className="btn" onClick={onClose} style={{ padding: '0.25rem' }}><X size={20} /></button>
+            <div style={{ width: '100%', maxWidth: '1000px', background: 'var(--card-bg)', borderRadius: '24px', position: 'relative', border: '1px solid var(--border)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', overflow: 'hidden', animation: 'scaleUp 0.3s ease-out' }}>
+                <div style={{ padding: '1.5rem 2rem', background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: 42, height: 42, borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                            <ShoppingBag color="white" size={24} />
+                        </div>
+                        <div>
+                            <h2 style={{ margin: 0, color: 'white', fontSize: '1.25rem', fontWeight: 800 }}>Registro de Compra Avanzada</h2>
+                            <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Actualización masiva de inventario y precios</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white' }}>
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <div className="modal-body" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
                     <form id="compraAvanzadaForm" onSubmit={handleGuardar}>
 
-                        {/* Cabecera Proveedor */}
-                        <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'var(--primary-light)', borderRadius: '14px', border: '1px solid rgba(99,102,241,0.15)' }}>
-                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <ShoppingBag size={13} /> Datos del Proveedor
+                        {/* Cabecera de Compra Elite */}
+                        <div style={{ marginBottom: '2.5rem', padding: '1.75rem', background: 'var(--background)', borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                                <Users size={16} /> Información del Proveedor y Comprobante
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">Proveedor</label>
+                                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Search size={14} color="var(--primary)" /> Proveedor
+                                    </label>
                                     <input required type="text" className="input-field" value={proveedorNombre} onChange={(e) => setProveedorNombre(e.target.value)} placeholder="Nombre del proveedor" />
                                 </div>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">RNC</label>
-                                    <input type="text" className="input-field" value={proveedorRnc} onChange={(e) => setProveedorRnc(e.target.value)} placeholder="Opcional" />
+                                    <label className="input-label">RNC / Cédula</label>
+                                    <input required type="text" className="input-field" value={proveedorRnc} onChange={(e) => setProveedorRnc(e.target.value)} placeholder="001-0000000-0" />
                                 </div>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">NCF Recibido</label>
-                                    <input required type="text" className="input-field" value={ncf} onChange={(e) => setNcf(e.target.value)} placeholder="Ej: B01000..." maxLength="11" />
+                                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <FileText size={14} color="var(--primary)" /> NCF (Comprobante)
+                                    </label>
+                                    <input required type="text" className="input-field" value={ncf} onChange={(e) => setNcf(e.target.value)} placeholder="B0100000001" maxLength="11" />
                                 </div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '1rem', alignItems: 'end' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '1.5rem', alignItems: 'end' }}>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">Fecha Factura</label>
+                                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Calendar size={14} color="var(--primary)" /> Fecha Factura
+                                    </label>
                                     <input required type="date" className="input-field" value={fechaFactura} onChange={(e) => setFechaFactura(e.target.value)} />
                                 </div>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">Condición de Pago</label>
+                                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <CreditCard size={14} color="var(--primary)" /> Condición
+                                    </label>
                                     <select className="input-field" value={condicion} onChange={(e) => setCondicion(e.target.value)}>
-                                        <option value="Contado">Al Contado (Efectivo/Banco)</option>
-                                        <option value="Credito">A Crédito (Cuentas por Pagar)</option>
+                                        <option value="Contado">💵 Contado</option>
+                                        <option value="Crédito">⏳ Crédito</option>
                                     </select>
                                 </div>
-                                <div className="input-group" style={{ margin: 0, display: 'flex', alignItems: 'center', paddingTop: '1.5rem' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.75rem 1rem', background: incluirItbisGeneral ? 'rgba(99,102,241,0.15)' : 'var(--background)', borderRadius: '10px', border: `1px solid ${incluirItbisGeneral ? 'var(--primary)' : 'var(--border)'}`, width: '100%', transition: 'all 0.2s' }}>
+                                <div className="input-group" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.75rem 1rem', background: incluirItbisGeneral ? 'rgba(59,130,246,0.1)' : 'var(--background)', borderRadius: '12px', border: `1px solid ${incluirItbisGeneral ? 'var(--primary)' : 'var(--border)'}`, width: '100%', transition: 'all 0.2s', marginBottom: 0 }}>
                                         <input
                                             type="checkbox"
                                             checked={incluirItbisGeneral}
                                             onChange={(e) => setIncluirItbisGeneral(e.target.checked)}
                                             style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
                                         />
-                                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3 }}>Incluye ITBIS (se calcula por producto gravado)</span>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>Incluye ITBIS General (18%)</span>
                                     </label>
                                 </div>
                             </div>
@@ -312,8 +328,14 @@ const CompraAvanzadaModal = ({ isOpen, onClose }) => {
                             </div>
                         </div>
 
-                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid var(--primary)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
-                            <strong>📌 Integración Contable:</strong> Al guardar, se sumará el stock, se afectará el Débito a Inventario (e ITBIS) y Crédito a la Condición de Pago seleccionada. Los Costos y Precios de Venta modificados se actualizarán globalmente.
+                        <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '16px', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <div style={{ width: 40, height: 40, borderRadius: '10px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <AlertTriangle size={20} color="#3b82f6" />
+                            </div>
+                            <div style={{ fontSize: '0.82rem', lineHeight: 1.5, color: 'var(--text-muted)' }}>
+                                <strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '0.2rem' }}>📌 Integración Contable y Catálogo:</strong> 
+                                Al guardar, se sumará el stock automáticamente, el sistema generará los débitos a Inventario/ITBIS y los créditos a Caja/Proveedores. Los Costos y Precios de Venta modificados se actualizarán globalmente en el catálogo.
+                            </div>
                         </div>
 
                     </form>

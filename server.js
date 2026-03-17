@@ -538,6 +538,33 @@ app.delete('/api/superadmin/empresas/:id', superadminMiddleware, async (req, res
     }
 });
 
+// --- BIOMETRIC OVERRIDE ---
+app.post('/api/vault_face_profile/reset', superadminMiddleware, async (req, res) => {
+    const { empresaId } = req.body;
+    if (!empresaId) return res.status(400).json({ error: 'ID de empresa requerido' });
+
+    try {
+        // En Iubel, el perfil facial se guarda en una tabla prefijada por tenant
+        // Buscamos el slug de la empresa para determinar el prefijo
+        const [empresas] = await pool.execute('SELECT slug FROM empresas WHERE id = ?', [empresaId]);
+        if (empresas.length === 0) return res.status(404).json({ error: 'Empresa no encontrada' });
+        
+        const prefix = empresas[0].slug.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+        const tableName = `${prefix}vault_security`;
+
+        // Borramos el registro del perfil facial
+        await pool.execute(`DELETE FROM \`${tableName}\` WHERE id = 'face_profile'`);
+        
+        await logAudit(empresaId, req.auth.userId, 'SUPERADMIN_BIOMETRIC_RESET', 'vault_security', 'face_profile', req.ip);
+        
+        console.log(`🛡️ [OVERRIDE] Perfil facial reseteado para empresa: ${empresaId}`);
+        res.json({ success: true, message: 'Perfil facial eliminado exitosamente.' });
+    } catch (err) {
+        console.error('Biometric reset error:', err);
+        res.status(500).json({ error: 'Error al procesar reseteo biométrico' });
+    }
+});
+
 // ─── AUTH ROUTES (public) ─────────────────────────────────────────────────────
 
 // POST /api/auth/register

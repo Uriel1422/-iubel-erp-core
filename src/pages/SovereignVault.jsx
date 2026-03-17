@@ -8,41 +8,72 @@ import {
 } from 'lucide-react';
 import { api } from '../utils/api';
 
-// ─── Face Fingerprint Engine ────────────────────────────────────────────────
-// Uses canvas pixel histograms as a facial "signature" (brightness + color hue
-// distribution sampled from the central region of the frame).
+// ─── High-Entropy Biometric Engine (Spatial-Grid RGBH) ────────────────────────
+// Captures a 4x4 spatial grid of RGB histograms (256 feature points)
+// to analyze structural facial geometry and color distribution.
 const captureFaceFingerprint = (videoEl) => {
+    const GRID_SIZE = 4; // 4x4 grid = 16 cells
+    const BINS = 16;     // 16 luminance bins per cell
     const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = 128;
+    canvas.height = 128;
     const ctx = canvas.getContext('2d');
-    // Draw the face region (center crop)
-    ctx.drawImage(videoEl, 0, 0, 64, 64);
-    const data = ctx.getImageData(0, 0, 64, 64).data;
-    // Build a simplified luminance histogram (16 buckets)
-    const histogram = new Array(16).fill(0);
-    let pixelCount = 0;
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i], g = data[i+1], b = data[i+2];
-        const lum = Math.round((0.299 * r + 0.587 * g + 0.114 * b) / 16);
-        if (lum >= 0 && lum < 16) histogram[lum]++;
-        pixelCount++;
+    
+    // Draw center-cropped face region
+    const sw = videoEl.videoWidth;
+    const sh = videoEl.videoHeight;
+    const size = Math.min(sw, sh) * 0.7; // 70% of frame height
+    const sx = (sw - size) / 2;
+    const sy = (sh - size) / 2;
+    ctx.drawImage(videoEl, sx, sy, size, size, 0, 0, 128, 128);
+    
+    const imgData = ctx.getImageData(0, 0, 128, 128).data;
+    const spatialHistogram = [];
+
+    const cellW = 128 / GRID_SIZE;
+    const cellH = 128 / GRID_SIZE;
+
+    for (let gy = 0; gy < GRID_SIZE; gy++) {
+        for (let gx = 0; gx < GRID_SIZE; gx++) {
+            const cellHist = new Array(BINS).fill(0);
+            let pCount = 0;
+            
+            for (let y = gy * cellH; y < (gy + 1) * cellH; y++) {
+                for (let x = gx * cellW; x < (gx + 1) * cellW; x++) {
+                    const idx = (Math.floor(y) * 128 + Math.floor(x)) * 4;
+                    const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
+                    // High-accuracy luminance formula
+                    const lum = Math.floor((0.2126 * r + 0.7152 * g + 0.0722 * b) / (256 / BINS));
+                    if (lum >= 0 && lum < BINS) cellHist[lum]++;
+                    pCount++;
+                }
+            }
+            // Normalize cell
+            spatialHistogram.push(...cellHist.map(v => v / pCount));
+        }
     }
-    // Normalize
-    return histogram.map(v => v / pixelCount);
+    return spatialHistogram;
 };
 
 const compareFaceFingerprints = (fp1, fp2) => {
     if (!fp1 || !fp2 || fp1.length !== fp2.length) return 0;
-    // Bhattacharyya-like similarity
-    let sum = 0;
-    for (let i = 0; i < fp1.length; i++) {
-        sum += Math.sqrt(fp1[i] * fp2[i]);
+    // Structural Bhattacharyya distance component
+    let totalSim = 0;
+    const numCells = 16;
+    const binsPerCell = 16;
+    
+    for (let c = 0; c < numCells; c++) {
+        let cellSim = 0;
+        const start = c * binsPerCell;
+        for (let b = 0; b < binsPerCell; b++) {
+            cellSim += Math.sqrt(fp1[start + b] * fp2[start + b]);
+        }
+        totalSim += cellSim;
     }
-    return sum; // 0 = no match, 1.0 = perfect match
+    return totalSim / numCells; 
 };
 
-const FACE_SIMILARITY_THRESHOLD = 0.72; // ≥72% similarity = same person
+const FACE_SIMILARITY_THRESHOLD = 0.88; // Restricted threshold for Elite Security
 
 const SovereignVault = () => {
     const [isLocked, setIsLocked] = useState(true);
@@ -339,9 +370,12 @@ const SovereignVault = () => {
                             <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
                             {/* Face brackets */}
                             <div style={{ position: 'absolute', top: '15%', left: '25%', width: '50%', height: '70%', border: `2px solid ${scanStatus === 'blocked' ? '#ef4444' : '#38bdf8'}`, borderRadius: '8px', pointerEvents: 'none', transition: 'border-color 0.3s', boxShadow: `inset 0 0 20px ${scanStatus === 'blocked' ? 'rgba(239,68,68,0.2)' : 'rgba(56,189,248,0.15)'}` }} />
-                            {/* Scan laser line */}
+                            {/* Scan laser line (Enhanced) */}
                             {scanning && (
-                                <div style={{ position: 'absolute', top: `${15 + (scanProgress / 100) * 70}%`, left: 0, width: '100%', height: '2px', background: `linear-gradient(90deg, transparent, ${scanPhase === 'matching' ? '#10b981' : '#38bdf8'}, transparent)`, boxShadow: `0 0 16px ${scanPhase === 'matching' ? '#10b981' : '#38bdf8'}`, transition: 'top 0.05s linear, background 0.3s' }} />
+                                <>
+                                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(rgba(56, 189, 248, 0) 48%, rgba(56, 189, 248, 0.3) 50%, rgba(56, 189, 248, 0) 52%)', backgroundSize: '100% 200%', animation: 'scanline 2s linear infinite', zIndex: 5, pointerEvents: 'none' }} />
+                                    <div style={{ position: 'absolute', top: `${15 + (scanProgress / 100) * 70}%`, left: 0, width: '100%', height: '3px', background: '#38bdf8', boxShadow: '0 0 20px #38bdf8', zIndex: 6 }} />
+                                </>
                             )}
                             {/* REC badge */}
                             <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(239,68,68,0.85)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '0.15rem 0.5rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.3rem', letterSpacing: '0.05em' }}>
@@ -397,7 +431,10 @@ const SovereignVault = () => {
                                      scanMode === 'pin' ? <Key size={48} color="#f59e0b" /> :
                                      <Lock size={48} color="rgba(255,255,255,0.5)" />}
                                     {scanning && scanMode === 'biometric' && (
-                                        <div style={{ position: 'absolute', top: `${scanProgress}%`, left: 0, width: '100%', height: '2px', background: '#38bdf8', boxShadow: '0 0 15px #38bdf8', zIndex: 2 }} />
+                                        <>
+                                            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(transparent 48%, rgba(56, 189, 248, 0.4) 50%, transparent 52%)', backgroundSize: '100% 200%', animation: 'scanline 1.5s linear infinite', zIndex: 1 }} />
+                                            <div style={{ position: 'absolute', top: `${scanProgress}%`, left: 0, width: '100%', height: '3px', background: '#38bdf8', boxShadow: '0 0 15px #38bdf8', zIndex: 2 }} />
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -450,30 +487,16 @@ const SovereignVault = () => {
                             </button>
                         )}
                         {scanStatus === 'blocked' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+                                <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '14px', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
+                                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#fca5a5', lineHeight: 1.5 }}>
+                                        <AlertTriangle size={16} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                                        <strong>Acceso Restringido</strong><br/>
+                                        Identidad no validada. Por seguridad, el reseteo biométrico solo puede ser realizado por un <strong>Superadministrador</strong>.
+                                    </p>
+                                </div>
                                 <button onClick={cancelScan} style={{ width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                                     ← Volver al inicio
-                                </button>
-                                <button 
-                                    onClick={resetFaceProfile} 
-                                    style={{ 
-                                        width: '100%', 
-                                        padding: '1rem', 
-                                        background: 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)', 
-                                        color: '#fff', 
-                                        border: 'none', 
-                                        borderRadius: '14px', 
-                                        fontWeight: 700, 
-                                        cursor: 'pointer', 
-                                        fontSize: '0.9rem', 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        justifyContent: 'center', 
-                                        gap: '0.5rem',
-                                        boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)'
-                                    }}
-                                >
-                                    <XCircle size={18} /> Resetear Perfil Facial
                                 </button>
                             </div>
                         )}

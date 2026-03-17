@@ -83,6 +83,15 @@ CREATE TABLE IF NOT EXISTS auditoria (
   INDEX idx_empresa (empresa_id),
   INDEX idx_created (created_at)
 );
+
+CREATE TABLE IF NOT EXISTS global_settings (
+    \`key\`   VARCHAR(64) PRIMARY KEY,
+    \`value\` TEXT
+);
+
+-- Insert default settings if they don't exist
+INSERT IGNORE INTO global_settings (\`key\`, \`value\`) VALUES ('sa_kill_switch', 'false');
+INSERT IGNORE INTO global_settings (\`key\`, \`value\`) VALUES ('sa_broadcast_msg', '');
 `;
 
 try {

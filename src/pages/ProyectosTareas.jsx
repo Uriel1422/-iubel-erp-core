@@ -187,37 +187,64 @@ const ProyectosTareas = () => {
                         const priorSt = PRIORIDAD_STYLES[p.prioridad] || PRIORIDAD_STYLES.media;
                         const EIcon = estadoSt.Icon;
                         return (
-                            <div key={p.id} className="card" style={{ cursor: 'pointer', padding: '1.5rem' }} onClick={() => setProyectoActivo(p)}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: 'calc(100% - 80px)' }}>
-                                        <EIcon size={18} color={estadoSt.color} style={{ flexShrink: 0 }} />
-                                        <h3 style={{ fontWeight: 800, fontSize: '1rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nombre}</h3>
+                            <div 
+                                key={p.id} 
+                                className="card" 
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    padding: '1.75rem', 
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    border: '1px solid var(--border)',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }} 
+                                onClick={() => setProyectoActivo(p)}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.transform = 'translateY(-6px)';
+                                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(59, 130, 246, 0.15), 0 8px 10px -6px rgba(59, 130, 246, 0.1)';
+                                    e.currentTarget.style.borderColor = 'var(--primary)';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                    e.currentTarget.style.borderColor = 'var(--border)';
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', maxWidth: 'calc(100% - 80px)' }}>
+                                        <div style={{ padding: '0.5rem', borderRadius: '10px', background: estadoSt.bg }}>
+                                            <EIcon size={20} color={estadoSt.color} style={{ flexShrink: 0 }} />
+                                        </div>
+                                        <h3 style={{ fontWeight: 800, fontSize: '1.1rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>{p.nombre}</h3>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
-                                        <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, background: priorSt.bg, color: priorSt.color }}>{priorSt.label}</span>
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                                        <span style={{ padding: '0.25rem 0.625rem', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, background: priorSt.bg, color: priorSt.color, textTransform: 'uppercase' }}>{priorSt.label}</span>
                                     </div>
                                 </div>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '1.25rem', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.descripcion}</p>
-                                <div style={{ marginBottom: '1rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>Progreso</span>
-                                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--primary)' }}>{p.progreso}%</span>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.descripcion}</p>
+                                <div style={{ marginBottom: '1.25rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Estado de Avance</span>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>{p.progreso}%</span>
                                     </div>
-                                    <div style={{ height: 7, background: 'var(--border)', borderRadius: '999px', overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', width: `${p.progreso}%`, background: 'linear-gradient(90deg,#2563eb,#7c3aed)', borderRadius: '999px', transition: 'width 0.5s ease' }} />
+                                    <div style={{ height: 8, background: 'var(--border)', borderRadius: '999px', overflow: 'hidden' }}>
+                                        <div style={{ height: '100%', width: `${p.progreso}%`, background: 'linear-gradient(90deg, #3b82f6, #6366f1)', borderRadius: '999px', transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }} />
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.875rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        <Users size={13} /> {p.responsable}
-                                        <span style={{ margin: '0 0.25rem' }}>·</span>
-                                        <BarChart3 size={13} /> {p.tareas.filter(t=>t.estado==='completado').length}/{p.tareas.length} tareas
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--background)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                                            <Users size={14} /> {p.responsable || 'Sin asignar'}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--background)', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                                            <BarChart3 size={14} /> {p.tareas.filter(t=>t.estado==='completado').length}/{p.tareas.length}
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                                        <button onClick={e => { e.stopPropagation(); setConfirmDel({ open: true, id: p.id, nombre: p.nombre }); }} style={{ padding: '0.3rem', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--danger)' }}>
-                                            <Trash2 size={14} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <button onClick={e => { e.stopPropagation(); setConfirmDel({ open: true, id: p.id, nombre: p.nombre }); }} style={{ padding: '0.4rem', borderRadius: '8px', border: 'none', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', color: 'var(--danger)', transition: 'background 0.2s' }}>
+                                            <Trash2 size={16} />
                                         </button>
-                                        <ChevronRight size={16} color="var(--text-muted)" />
+                                        <ChevronRight size={18} color="var(--text-muted)" />
                                     </div>
                                 </div>
                             </div>
@@ -226,51 +253,95 @@ const ProyectosTareas = () => {
                 </div>
             )}
 
-            {/* Modal Nuevo Proyecto */}
+            {/* Modal Nuevo Proyecto Elite */}
             {showNuevoProyecto && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <div style={{ width: '100%', maxWidth: '560px', background: 'var(--card-bg)', borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 32px 64px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', maxWidth: '600px', background: 'var(--card-bg)', borderRadius: '28px', border: '1px solid var(--border)', boxShadow: '0 32px 64px -12px rgba(0,0,0,0.4)', overflow: 'hidden', animation: 'scaleUp 0.3s ease-out' }}>
                         {/* Modal Header */}
-                        <div style={{ padding: '1.75rem 2rem', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Briefcase size={22} color="white" />
+                        <div style={{ padding: '2rem 2.5rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                <div style={{ width: 48, height: 48, borderRadius: '14px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                                    <Briefcase size={24} color="white" />
+                                </div>
+                                <div>
+                                    <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: 'white' }}>Nuevo Proyecto Elite</h2>
+                                    <p style={{ margin: 0, fontSize: '0.825rem', color: 'rgba(255,255,255,0.9)' }}>Define la arquitectura y el alcance del proyecto</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'white' }}>Nuevo Proyecto</h2>
-                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>Define los parámetros del proyecto institucional</p>
-                            </div>
+                            <button onClick={() => setShowNuevoProyecto(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'white' }}>
+                                <AlertTriangle size={20} />
+                            </button>
                         </div>
+
                         {/* Modal Body */}
-                        <form onSubmit={handleNuevoProyecto} style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <form onSubmit={handleNuevoProyecto} style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             <div className="input-group" style={{ margin: 0 }}>
-                                <label className="input-label">Nombre del Proyecto *</label>
-                                <input required className="input-field" placeholder="Ej: Implementación ERP Fase 2" value={nuevoProyecto.nombre} onChange={e => setNuevoProyecto({...nuevoProyecto, nombre: e.target.value})} style={{ fontSize: '1rem', padding: '0.875rem' }} />
+                                <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Briefcase size={14} color="var(--primary)" /> Nombre del Proyecto *
+                                </label>
+                                <input required className="input-field" placeholder="Ej: Expansión de Red de Sucursales" value={nuevoProyecto.nombre} onChange={e => setNuevoProyecto({...nuevoProyecto, nombre: e.target.value})} style={{ fontSize: '1rem', padding: '1rem' }} />
                             </div>
+
                             <div className="input-group" style={{ margin: 0 }}>
-                                <label className="input-label">Descripción</label>
-                                <textarea className="input-field" rows={3} placeholder="Describe el objetivo y alcance del proyecto..." value={nuevoProyecto.descripcion} onChange={e => setNuevoProyecto({...nuevoProyecto, descripcion: e.target.value})} style={{ resize: 'vertical', padding: '0.875rem', lineHeight: 1.6 }} />
+                                <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Edit3 size={14} color="var(--primary)" /> Descripción del Alcance
+                                </label>
+                                <textarea className="input-field" rows={3} placeholder="Describe detalladamente los objetivos y entregables esperados..." value={nuevoProyecto.descripcion} onChange={e => setNuevoProyecto({...nuevoProyecto, descripcion: e.target.value})} style={{ resize: 'vertical', padding: '1rem', lineHeight: 1.6 }} />
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">Responsable</label>
-                                    <input className="input-field" placeholder="Nombre del responsable" value={nuevoProyecto.responsable} onChange={e => setNuevoProyecto({...nuevoProyecto, responsable: e.target.value})} />
+                                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Users size={14} color="var(--primary)" /> Líder de Proyecto
+                                    </label>
+                                    <input className="input-field" placeholder="Nombre completo" value={nuevoProyecto.responsable} onChange={e => setNuevoProyecto({...nuevoProyecto, responsable: e.target.value})} style={{ padding: '0.875rem' }} />
                                 </div>
                                 <div className="input-group" style={{ margin: 0 }}>
-                                    <label className="input-label">Prioridad</label>
-                                    <select className="input-field" value={nuevoProyecto.prioridad} onChange={e => setNuevoProyecto({...nuevoProyecto, prioridad: e.target.value})}>
-                                        <option value="baja">🟢 Baja</option>
-                                        <option value="media">🟡 Media</option>
-                                        <option value="alta">🔴 Alta</option>
-                                    </select>
+                                    <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Calendar size={14} color="var(--primary)" /> Fecha de Cierre
+                                    </label>
+                                    <input type="date" className="input-field" value={nuevoProyecto.fechaFin} onChange={e => setNuevoProyecto({...nuevoProyecto, fechaFin: e.target.value})} style={{ padding: '0.875rem' }} />
                                 </div>
                             </div>
+
+                            {/* Priority Selection Pills */}
                             <div className="input-group" style={{ margin: 0 }}>
-                                <label className="input-label">Fecha de Entrega</label>
-                                <input type="date" className="input-field" value={nuevoProyecto.fechaFin} onChange={e => setNuevoProyecto({...nuevoProyecto, fechaFin: e.target.value})} style={{ padding: '0.875rem' }} />
+                                <label className="input-label">Nivel de Prioridad Estratégica</label>
+                                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                    {Object.entries(PRIORIDAD_STYLES).map(([key, style]) => (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => setNuevoProyecto({...nuevoProyecto, prioridad: key})}
+                                            style={{ 
+                                                flex: 1, 
+                                                padding: '0.75rem', 
+                                                borderRadius: '12px', 
+                                                border: `2px solid ${nuevoProyecto.prioridad === key ? style.color : 'var(--border)'}`, 
+                                                background: nuevoProyecto.prioridad === key ? style.bg : 'transparent', 
+                                                color: nuevoProyecto.prioridad === key ? style.color : 'var(--text-muted)', 
+                                                fontWeight: 800, 
+                                                fontSize: '0.85rem', 
+                                                cursor: 'pointer', 
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '0.5rem'
+                                            }}
+                                        >
+                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: style.color }} />
+                                            {style.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                                <button type="button" className="btn btn-secondary" style={{ flex: 1, padding: '0.875rem' }} onClick={() => setShowNuevoProyecto(false)}>Cancelar</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.875rem', background: 'linear-gradient(135deg,#10b981,#059669)', border: 'none' }}><Plus size={16} /> Crear Proyecto</button>
+
+                            <div style={{ display: 'flex', gap: '1.25rem', marginTop: '1rem' }}>
+                                <button type="button" className="btn btn-secondary" style={{ flex: 1, padding: '1rem', borderRadius: '14px', border: '1px solid var(--border)' }} onClick={() => setShowNuevoProyecto(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '1rem', borderRadius: '14px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', fontWeight: 800, boxShadow: '0 10px 20px -5px rgba(16,185,129,0.4)' }}>
+                                    🚀 Lanzar Proyecto
+                                </button>
                             </div>
                         </form>
                     </div>

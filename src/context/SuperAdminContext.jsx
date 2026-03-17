@@ -15,10 +15,7 @@ export const SuperAdminProvider = ({ children }) => {
     // Persistencia y Sincronización Inter-pestañas y Cloud
     const fetchGlobalSettings = async () => {
         try {
-            const url = window.location.hostname === 'localhost' 
-                ? `http://localhost:3001/api/system/settings?v=${Date.now()}` 
-                : `/api/system/settings?v=${Date.now()}`;
-            const resp = await fetch(url);
+            const resp = await fetch(`/api/system/settings?v=${Date.now()}`);
             if (resp.ok) {
                 const data = await resp.json();
                 if (data.killSwitch !== undefined) setGlobalKillSwitch(data.killSwitch);
@@ -48,8 +45,7 @@ export const SuperAdminProvider = ({ children }) => {
     const updateKillSwitch = async (val) => {
         setGlobalKillSwitch(val);
         try {
-            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/settings' : '/api/superadmin/settings';
-            await fetch(url, {
+            await fetch('/api/superadmin/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ killSwitch: val })
@@ -62,8 +58,7 @@ export const SuperAdminProvider = ({ children }) => {
     const updateBroadcast = async (msg) => {
         setBroadcastMessage(msg);
         try {
-            const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/settings' : '/api/superadmin/settings';
-            await fetch(url, {
+            await fetch('/api/superadmin/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ broadcastMessage: msg })
@@ -84,8 +79,7 @@ export const SuperAdminProvider = ({ children }) => {
             
             const validateToken = async () => {
                 try {
-                    const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/me' : '/api/superadmin/me';
-                    const resp = await fetch(url, {
+                    const resp = await fetch('/api/superadmin/me', {
                         headers: {
                             'Authorization': `Bearer ${savedToken}`,
                             'Content-Type': 'application/json'
@@ -112,8 +106,7 @@ export const SuperAdminProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const url = window.location.hostname === 'localhost' ? 'http://localhost:3001/api/superadmin/login' : '/api/superadmin/login';
-        const resp = await fetch(url, {
+        const resp = await fetch('/api/superadmin/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
