@@ -134,40 +134,47 @@ const CompraAvanzadaModal = ({ isOpen, onClose }) => {
                     <form id="compraAvanzadaForm" onSubmit={handleGuardar}>
 
                         {/* Cabecera Proveedor */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem', padding: '1rem', background: 'var(--background)', borderRadius: 'var(--radius-md)' }}>
-                            <div className="input-group">
-                                <label className="input-label">Proveedor</label>
-                                <input required type="text" className="input-field" value={proveedorNombre} onChange={(e) => setProveedorNombre(e.target.value)} placeholder="Nombre del proveedor" />
+                        <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'var(--primary-light)', borderRadius: '14px', border: '1px solid rgba(99,102,241,0.15)' }}>
+                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <ShoppingBag size={13} /> Datos del Proveedor
                             </div>
-                            <div className="input-group">
-                                <label className="input-label">RNC</label>
-                                <input type="text" className="input-field" value={proveedorRnc} onChange={(e) => setProveedorRnc(e.target.value)} placeholder="Opcional" />
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">Proveedor</label>
+                                    <input required type="text" className="input-field" value={proveedorNombre} onChange={(e) => setProveedorNombre(e.target.value)} placeholder="Nombre del proveedor" />
+                                </div>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">RNC</label>
+                                    <input type="text" className="input-field" value={proveedorRnc} onChange={(e) => setProveedorRnc(e.target.value)} placeholder="Opcional" />
+                                </div>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">NCF Recibido</label>
+                                    <input required type="text" className="input-field" value={ncf} onChange={(e) => setNcf(e.target.value)} placeholder="Ej: B01000..." maxLength="11" />
+                                </div>
                             </div>
-                            <div className="input-group">
-                                <label className="input-label">NCF Recibido</label>
-                                <input required type="text" className="input-field" value={ncf} onChange={(e) => setNcf(e.target.value)} placeholder="Ej: B01000..." maxLength="11" />
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">Fecha Factura</label>
-                                <input required type="date" className="input-field" value={fechaFactura} onChange={(e) => setFechaFactura(e.target.value)} />
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">Condición de Pago</label>
-                                <select className="input-field" value={condicion} onChange={(e) => setCondicion(e.target.value)}>
-                                    <option value="Contado">Al Contado (Efectivo/Banco)</option>
-                                    <option value="Credito">A Crédito (Cuentas por Pagar)</option>
-                                </select>
-                            </div>
-                            <div className="input-group" style={{ gridColumn: 'span 3', display: 'flex', alignItems: 'center' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={incluirItbisGeneral}
-                                        onChange={(e) => setIncluirItbisGeneral(e.target.checked)}
-                                        style={{ width: '18px', height: '18px' }}
-                                    />
-                                    <span>La factura general incluye ITBIS (Se calculará según producto gravado)</span>
-                                </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '1rem', alignItems: 'end' }}>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">Fecha Factura</label>
+                                    <input required type="date" className="input-field" value={fechaFactura} onChange={(e) => setFechaFactura(e.target.value)} />
+                                </div>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">Condición de Pago</label>
+                                    <select className="input-field" value={condicion} onChange={(e) => setCondicion(e.target.value)}>
+                                        <option value="Contado">Al Contado (Efectivo/Banco)</option>
+                                        <option value="Credito">A Crédito (Cuentas por Pagar)</option>
+                                    </select>
+                                </div>
+                                <div className="input-group" style={{ margin: 0, display: 'flex', alignItems: 'center', paddingTop: '1.5rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', padding: '0.75rem 1rem', background: incluirItbisGeneral ? 'rgba(99,102,241,0.15)' : 'var(--background)', borderRadius: '10px', border: `1px solid ${incluirItbisGeneral ? 'var(--primary)' : 'var(--border)'}`, width: '100%', transition: 'all 0.2s' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={incluirItbisGeneral}
+                                            onChange={(e) => setIncluirItbisGeneral(e.target.checked)}
+                                            style={{ width: '18px', height: '18px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3 }}>Incluye ITBIS (se calcula por producto gravado)</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 

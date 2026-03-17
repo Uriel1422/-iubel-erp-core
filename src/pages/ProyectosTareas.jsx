@@ -228,24 +228,49 @@ const ProyectosTareas = () => {
 
             {/* Modal Nuevo Proyecto */}
             {showNuevoProyecto && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-                    <div className="card glass" style={{ width: '100%', maxWidth: '500px' }}>
-                        <h2 style={{ marginBottom: '1.5rem' }}><Briefcase size={22} color="var(--success)" style={{ verticalAlign: 'middle', marginRight: 8 }} />Nuevo Proyecto</h2>
-                        <form onSubmit={handleNuevoProyecto}>
-                            <div className="input-group"><label className="input-label">Nombre del Proyecto</label><input required className="input-field" value={nuevoProyecto.nombre} onChange={e => setNuevoProyecto({...nuevoProyecto, nombre: e.target.value})} /></div>
-                            <div className="input-group"><label className="input-label">Descripción</label><textarea className="input-field" rows={2} value={nuevoProyecto.descripcion} onChange={e => setNuevoProyecto({...nuevoProyecto, descripcion: e.target.value})} style={{ resize: 'vertical' }} /></div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div className="input-group"><label className="input-label">Responsable</label><input className="input-field" value={nuevoProyecto.responsable} onChange={e => setNuevoProyecto({...nuevoProyecto, responsable: e.target.value})} /></div>
-                                <div className="input-group"><label className="input-label">Prioridad</label>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div style={{ width: '100%', maxWidth: '560px', background: 'var(--card-bg)', borderRadius: '20px', border: '1px solid var(--border)', boxShadow: '0 32px 64px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+                        {/* Modal Header */}
+                        <div style={{ padding: '1.75rem 2rem', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Briefcase size={22} color="white" />
+                            </div>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'white' }}>Nuevo Proyecto</h2>
+                                <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>Define los parámetros del proyecto institucional</p>
+                            </div>
+                        </div>
+                        {/* Modal Body */}
+                        <form onSubmit={handleNuevoProyecto} style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div className="input-group" style={{ margin: 0 }}>
+                                <label className="input-label">Nombre del Proyecto *</label>
+                                <input required className="input-field" placeholder="Ej: Implementación ERP Fase 2" value={nuevoProyecto.nombre} onChange={e => setNuevoProyecto({...nuevoProyecto, nombre: e.target.value})} style={{ fontSize: '1rem', padding: '0.875rem' }} />
+                            </div>
+                            <div className="input-group" style={{ margin: 0 }}>
+                                <label className="input-label">Descripción</label>
+                                <textarea className="input-field" rows={3} placeholder="Describe el objetivo y alcance del proyecto..." value={nuevoProyecto.descripcion} onChange={e => setNuevoProyecto({...nuevoProyecto, descripcion: e.target.value})} style={{ resize: 'vertical', padding: '0.875rem', lineHeight: 1.6 }} />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">Responsable</label>
+                                    <input className="input-field" placeholder="Nombre del responsable" value={nuevoProyecto.responsable} onChange={e => setNuevoProyecto({...nuevoProyecto, responsable: e.target.value})} />
+                                </div>
+                                <div className="input-group" style={{ margin: 0 }}>
+                                    <label className="input-label">Prioridad</label>
                                     <select className="input-field" value={nuevoProyecto.prioridad} onChange={e => setNuevoProyecto({...nuevoProyecto, prioridad: e.target.value})}>
-                                        <option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option>
+                                        <option value="baja">🟢 Baja</option>
+                                        <option value="media">🟡 Media</option>
+                                        <option value="alta">🔴 Alta</option>
                                     </select>
                                 </div>
                             </div>
-                            <div className="input-group"><label className="input-label">Fecha de Entrega</label><input type="date" className="input-field" value={nuevoProyecto.fechaFin} onChange={e => setNuevoProyecto({...nuevoProyecto, fechaFin: e.target.value})} /></div>
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowNuevoProyecto(false)}>Cancelar</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}><Plus size={16} /> Crear Proyecto</button>
+                            <div className="input-group" style={{ margin: 0 }}>
+                                <label className="input-label">Fecha de Entrega</label>
+                                <input type="date" className="input-field" value={nuevoProyecto.fechaFin} onChange={e => setNuevoProyecto({...nuevoProyecto, fechaFin: e.target.value})} style={{ padding: '0.875rem' }} />
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                                <button type="button" className="btn btn-secondary" style={{ flex: 1, padding: '0.875rem' }} onClick={() => setShowNuevoProyecto(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.875rem', background: 'linear-gradient(135deg,#10b981,#059669)', border: 'none' }}><Plus size={16} /> Crear Proyecto</button>
                             </div>
                         </form>
                     </div>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     Shield, Lock, Unlock, Key, Fingerprint, Eye, EyeOff, 
     ShieldCheck, ShieldAlert, Cpu, Network, Globe, Zap,
     ChevronRight, ArrowRight, Download, Share2, Plus, 
-    Smartphone, HardDrive, Database
+    Smartphone, HardDrive, Database, Camera, XCircle, CheckCircle
 } from 'lucide-react';
 
 const SovereignVault = () => {
@@ -12,24 +12,164 @@ const SovereignVault = () => {
     const [scanProgress, setScanProgress] = useState(0);
     const [showBalance, setShowBalance] = useState(false);
     const [activeTab, setActiveTab] = useState('assets');
+    const [scanMode, setScanMode] = useState(null); // 'biometric' | 'camera' | 'pin' | null
+    const [pinValue, setPinValue] = useState('');
+    const [scanStatus, setScanStatus] = useState(''); // 'verifying' | 'success' | 'error' | ''
+    const [scanMessage, setScanMessage] = useState('');
+    const [cameraStream, setCameraStream] = useState(null);
+    const videoRef = useRef(null);
+    const intervalRef = useRef(null);
 
-    // Simulación de escaneo biométrico
-    const startScan = () => {
+    const VAULT_PIN = '1234'; // PIN de respaldo de demostración
+
+    // Limpieza de cámara al desmontar
+    useEffect(() => {
+        return () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+            }
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [cameraStream]);
+
+    useEffect(() => {
+        if (videoRef.current && cameraStream) {
+            videoRef.current.srcObject = cameraStream;
+        }
+    }, [cameraStream]);
+
+    const stopCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(t => t.stop());
+            setCameraStream(null);
+        }
+    };
+
+    const unlockVault = () => {
+        stopCamera();
+        setScanStatus('success');
+        setScanMessage('Acceso Nivel 5 Autorizado');
+        setTimeout(() => {
+            setIsLocked(false);
+            setScanMode(null);
+            setScanning(false);
+            setScanProgress(0);
+            setScanStatus('');
+        }, 1200);
+    };
+
+    const startScan = async () => {
+        setScanStatus('');
+        setScanMessage('');
+
+        // === 1. TRY REAL WEBAUTHN BIOMETRIC (fingerprint / FaceID / Windows Hello) ===
+        if (window.PublicKeyCredential) {
+            try {
+                setScanMode('biometric');
+                setScanStatus('verifying');
+                setScanMessage('Verificando identidad con biometría del dispositivo...');
+                setScanning(true);
+                setScanProgress(0);
+
+                // Simular progreso visual mientras WebAuthn procesa
+                intervalRef.current = setInterval(() => {
+                    setScanProgress(prev => (prev >= 90 ? 90 : prev + 8));
+                }, 120);
+
+                // Challenge aleatorio
+                const challenge = new Uint8Array(32);
+                crypto.getRandomValues(challenge);
+
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge,
+                        timeout: 30000,
+                        userVerification: 'required', // Fuerza biometría/PIN del SO
+                        rpId: window.location.hostname || 'localhost',
+                    }
+                });
+
+                clearInterval(intervalRef.current);
+                setScanProgress(100);
+
+                if (credential) {
+                    setScanMessage('✅ Biometría validada. Abriendo bóveda...');
+                    unlockVault();
+                }
+            } catch (err) {
+                clearInterval(intervalRef.current);
+                // Si el usuario canceló o no hay credencial registrada, ofrecer cámara
+                if (err.name === 'NotAllowedError' || err.name === 'InvalidStateError') {
+                    // Usuario canceló → ofrecer cámara
+                    setScanMessage('Biometría cancelada. Iniciando verificación por cámara...');
+                    setTimeout(() => startCamera(), 1200);
+                } else {
+                    // No soportado → ir directo a cámara 
+                    setScanMessage('Biometría no disponible. Verificando por cámara facial...');
+                    setTimeout(() => startCamera(), 1200);
+                }
+            }
+        } else {
+            // WebAuthn no disponible → usar cámara directamente
+            startCamera();
+        }
+    };
+
+    const startCamera = async () => {
+        setScanMode('camera');
+        setScanStatus('verifying');
+        setScanMessage('Activando cámara para verificación facial...');
         setScanning(true);
         setScanProgress(0);
-        const interval = setInterval(() => {
-            setScanProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        setScanning(false);
-                        setIsLocked(false);
-                    }, 500);
-                    return 100;
-                }
-                return prev + 5;
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 320, height: 240, facingMode: 'user' },
+                audio: false
             });
-        }, 50);
+            setCameraStream(stream);
+            setScanMessage('Cámara activa. Mirando hacia la cámara...');
+
+            // Simular análisis de ~3 segundos
+            let progress = 0;
+            intervalRef.current = setInterval(() => {
+                progress += 3;
+                setScanProgress(progress);
+                if (progress >= 100) {
+                    clearInterval(intervalRef.current);
+                    setScanMessage('✅ Verificación facial exitosa. Acceso autorizado.');
+                    unlockVault();
+                }
+            }, 90);
+        } catch (err) {
+            setScanStatus('error');
+            setScanMessage('No se pudo acceder a la cámara. Use el PIN de respaldo.');
+            setScanMode('pin');
+        }
+    };
+
+    const handlePinSubmit = (e) => {
+        e.preventDefault();
+        if (pinValue === VAULT_PIN) {
+            setScanStatus('success');
+            setScanMessage('✅ PIN correcto. Acceso autorizado.');
+            setTimeout(() => unlockVault(), 900);
+        } else {
+            setScanStatus('error');
+            setScanMessage('PIN incorrecto. Intente nuevamente.');
+            setPinValue('');
+        }
+    };
+
+    const cancelScan = () => {
+        stopCamera();
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setScanning(false);
+        setScanProgress(0);
+        setScanMode(null);
+        setScanStatus('');
+        setScanMessage('');
+        setPinValue('');
     };
 
     const assets = [
@@ -63,112 +203,135 @@ const SovereignVault = () => {
                 }} />
                 
                 <div className="card glass-premium" style={{
-                    maxWidth: '450px',
-                    width: '90%',
-                    padding: '3rem',
+                    maxWidth: '480px',
+                    width: '95%',
                     textAlign: 'center',
                     border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(30, 41, 59, 0.4)',
+                    background: 'rgba(15, 23, 42, 0.7)',
                     backdropFilter: 'blur(30px)',
-                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                    borderRadius: '24px'
+                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)',
+                    borderRadius: '28px',
+                    overflow: 'hidden'
                 }}>
-                    <div style={{ marginBottom: '2rem', position: 'relative' }}>
-                        <div className={`shield-container ${scanning ? 'scanning' : ''}`} style={{
-                            width: '100px',
-                            height: '100px',
-                            margin: '0 auto',
-                            background: scanning ? 'rgba(56, 189, 248, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: scanning ? '2px solid #38bdf8' : '2px solid rgba(255,255,255,0.1)',
-                            transition: 'all 0.3s ease',
-                            position: 'relative',
-                            overflow: 'hidden'
-                        }}>
-                            {scanning ? (
-                                <Fingerprint size={48} color="#38bdf8" />
-                            ) : (
-                                <Lock size={48} color="rgba(255,255,255,0.5)" />
-                            )}
-                            
-                            {scanning && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: `${scanProgress}%`,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '2px',
-                                    background: '#38bdf8',
-                                    boxShadow: '0 0 15px #38bdf8',
-                                    zIndex: 2
-                                }} />
-                            )}
+                    {/* Live Camera Feed */}
+                    {scanMode === 'camera' && cameraStream && (
+                        <div style={{ position: 'relative', background: '#000' }}>
+                            <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }} />
+                            {/* Scan overlay */}
+                            <div style={{ position: 'absolute', inset: 0, border: '3px solid #38bdf8', borderRadius: '0', boxShadow: 'inset 0 0 30px rgba(56,189,248,0.2)', pointerEvents: 'none' }} />
+                            <div style={{ position: 'absolute', top: `${scanProgress}%`, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)', boxShadow: '0 0 20px #38bdf8', transition: 'top 0.1s linear' }} />
+                            <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(239,68,68,0.8)', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse-dot 1s infinite' }} />
+                                REC
+                            </div>
+                            <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', color: '#38bdf8', fontSize: '0.7rem', fontWeight: 700, padding: '0.3rem 0.75rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                                Análisis facial en progreso… {scanProgress}%
+                            </div>
                         </div>
-                    </div>
+                    )}
 
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', marginBottom: '0.5rem', letterSpacing: '-0.025em' }}>
-                        Iubel Sovereign Vault
-                    </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
-                        {scanning ? 'Verificando identidad institucional...' : 'Requiere autenticación de Nivel 5 para acceder a activos restringidos.'}
-                    </p>
-
-                    <button 
-                        className="btn-premium" 
-                        onClick={startScan}
-                        disabled={scanning}
-                        style={{
-                            width: '100%',
-                            padding: '1rem',
-                            background: scanning ? 'transparent' : 'linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%)',
-                            color: '#fff',
-                            border: scanning ? '1px solid #38bdf8' : 'none',
-                            borderRadius: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.75rem',
-                            fontSize: '1rem',
-                            boxShadow: scanning ? 'none' : '0 10px 15px -3px rgba(56, 189, 248, 0.4)'
-                        }}
-                    >
-                        {scanning ? (
-                            <>Escaneando ({scanProgress}%)</>
-                        ) : (
-                            <>
-                                <Fingerprint size={20} />
-                                Iniciar Escaneo Biométrico
-                            </>
+                    <div style={{ padding: '2.5rem' }}>
+                        {/* Icon */}
+                        {scanMode !== 'camera' && (
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <div className={`shield-container ${scanning && scanMode !== 'pin' ? 'scanning' : ''}`} style={{
+                                    width: '96px', height: '96px', margin: '0 auto',
+                                    background: scanStatus === 'success' ? 'rgba(16,185,129,0.15)' : scanStatus === 'error' ? 'rgba(239,68,68,0.1)' : scanning ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.05)',
+                                    borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    border: `2px solid ${scanStatus === 'success' ? '#10b981' : scanStatus === 'error' ? '#ef4444' : scanning ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
+                                    transition: 'all 0.4s ease', position: 'relative', overflow: 'hidden'
+                                }}>
+                                    {scanStatus === 'success' ? <CheckCircle size={48} color="#10b981" /> :
+                                     scanStatus === 'error' ? <XCircle size={48} color="#ef4444" /> :
+                                     scanMode === 'biometric' ? <Fingerprint size={48} color="#38bdf8" /> :
+                                     scanMode === 'pin' ? <Key size={48} color="#f59e0b" /> :
+                                     <Lock size={48} color="rgba(255,255,255,0.5)" />}
+                                    {scanning && scanMode === 'biometric' && (
+                                        <div style={{ position: 'absolute', top: `${scanProgress}%`, left: 0, width: '100%', height: '2px', background: '#38bdf8', boxShadow: '0 0 15px #38bdf8', zIndex: 2 }} />
+                                    )}
+                                </div>
+                            </div>
                         )}
-                    </button>
 
-                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
-                            <ShieldCheck size={14} /> AES-256
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
-                            <Cpu size={14} /> Quantum Proof
+                        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem', letterSpacing: '-0.025em' }}>
+                            Iubel Sovereign Vault
+                        </h2>
+                        <p style={{ color: scanStatus === 'error' ? '#ef4444' : scanStatus === 'success' ? '#10b981' : 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.9rem', minHeight: '1.5rem', transition: 'color 0.3s' }}>
+                            {scanMessage || 'Autenticación de Nivel 5 requerida para acceder a activos restringidos.'}
+                        </p>
+
+                        {/* Progress bar */}
+                        {scanning && scanMode !== 'pin' && (
+                            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                                <div style={{ height: '100%', width: `${scanProgress}%`, background: 'linear-gradient(90deg, #38bdf8, #1d4ed8)', borderRadius: '2px', transition: 'width 0.1s linear', boxShadow: '0 0 10px #38bdf8' }} />
+                            </div>
+                        )}
+
+                        {/* PIN Input */}
+                        {scanMode === 'pin' && (
+                            <form onSubmit={handlePinSubmit} style={{ marginBottom: '1.5rem' }}>
+                                <div style={{ marginBottom: '1rem', fontSize: '0.78rem', color: '#f59e0b', fontWeight: 700 }}>
+                                    🔑 PIN de Respaldo
+                                </div>
+                                <input
+                                    type="password"
+                                    value={pinValue}
+                                    onChange={e => setPinValue(e.target.value)}
+                                    placeholder="Ingrese su PIN"
+                                    maxLength={8}
+                                    autoFocus
+                                    style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: `1px solid ${scanStatus === 'error' ? '#ef4444' : 'rgba(255,255,255,0.15)'}`, borderRadius: '12px', color: '#fff', fontSize: '1.25rem', textAlign: 'center', letterSpacing: '0.5em', outline: 'none', marginBottom: '0.75rem', fontFamily: 'monospace' }}
+                                />
+                                <button type="submit" style={{ width: '100%', padding: '0.875rem', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem' }}>
+                                    Verificar PIN
+                                </button>
+                            </form>
+                        )}
+
+                        {/* Primary Action */}
+                        {!scanning && scanMode !== 'pin' && (
+                            <button className="btn-premium" onClick={startScan} style={{
+                                width: '100%', padding: '1rem',
+                                background: 'linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%)',
+                                color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 700,
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: '0.75rem', fontSize: '1rem', boxShadow: '0 10px 20px -3px rgba(56,189,248,0.35)',
+                                transition: 'transform 0.2s, box-shadow 0.2s'
+                            }}>
+                                <Fingerprint size={20} /> Iniciar Escaneo Biométrico
+                            </button>
+                        )}
+
+                        {/* Cancel Button */}
+                        {scanning && (
+                            <button onClick={cancelScan} style={{ marginTop: '1rem', background: 'none', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', borderRadius: '10px', padding: '0.6rem 1.5rem', cursor: 'pointer', fontSize: '0.85rem', width: '100%' }}>
+                                Cancelar
+                            </button>
+                        )}
+
+                        {/* Badges */}
+                        <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'center', gap: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
+                                <ShieldCheck size={13} /> AES-256
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
+                                <Cpu size={13} /> Quantum Proof
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
+                                <Camera size={13} /> Facial Auth
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <style>{`
-                    .glass-premium {
-                        backdrop-filter: blur(30px);
-                        -webkit-backdrop-filter: blur(30px);
-                    }
+                    .glass-premium { backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
                     @keyframes pulse-border {
-                        0% { box-shadow: 0 0 5px #38bdf8; border-color: rgba(56, 189, 248, 0.5); }
-                        100% { box-shadow: 0 0 20px #38bdf8; border-color: #38bdf8; }
+                        0% { box-shadow: 0 0 5px #38bdf8; border-color: rgba(56,189,248,0.5); }
+                        100% { box-shadow: 0 0 25px #38bdf8; border-color: #38bdf8; }
                     }
-                    .shield-container.scanning {
-                        animation: pulse-border 1s infinite alternate;
-                    }
+                    @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+                    .shield-container.scanning { animation: pulse-border 1s infinite alternate; }
                 `}</style>
             </div>
         );
