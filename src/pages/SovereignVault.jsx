@@ -78,14 +78,7 @@ const SovereignVault = () => {
             stopCameraInternal();
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, []);
-
-    // Assign stream to video element whenever it arrives
-    useEffect(() => {
-        if (videoRef.current && streamRef.current) {
-            videoRef.current.srcObject = streamRef.current;
-        }
-    });
+    }, []); // ← Only runs on mount/unmount - NO infinite loop
 
     const stopCameraInternal = () => {
         if (streamRef.current) {
