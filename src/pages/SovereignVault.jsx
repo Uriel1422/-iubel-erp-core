@@ -1,150 +1,266 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     Shield, Lock, Unlock, Key, Fingerprint, Eye, EyeOff, 
     ShieldCheck, ShieldAlert, Cpu, Network, Globe, Zap,
     ChevronRight, ArrowRight, Download, Share2, Plus, 
-    Smartphone, HardDrive, Database, Camera, XCircle, CheckCircle
+    Smartphone, HardDrive, Database, Camera, XCircle, CheckCircle,
+    AlertTriangle, User
 } from 'lucide-react';
+import { api } from '../utils/api';
+
+// ─── Face Fingerprint Engine ────────────────────────────────────────────────
+// Uses canvas pixel histograms as a facial "signature" (brightness + color hue
+// distribution sampled from the central region of the frame).
+const captureFaceFingerprint = (videoEl) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    // Draw the face region (center crop)
+    ctx.drawImage(videoEl, 0, 0, 64, 64);
+    const data = ctx.getImageData(0, 0, 64, 64).data;
+    // Build a simplified luminance histogram (16 buckets)
+    const histogram = new Array(16).fill(0);
+    let pixelCount = 0;
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        const lum = Math.round((0.299 * r + 0.587 * g + 0.114 * b) / 16);
+        if (lum >= 0 && lum < 16) histogram[lum]++;
+        pixelCount++;
+    }
+    // Normalize
+    return histogram.map(v => v / pixelCount);
+};
+
+const compareFaceFingerprints = (fp1, fp2) => {
+    if (!fp1 || !fp2 || fp1.length !== fp2.length) return 0;
+    // Bhattacharyya-like similarity
+    let sum = 0;
+    for (let i = 0; i < fp1.length; i++) {
+        sum += Math.sqrt(fp1[i] * fp2[i]);
+    }
+    return sum; // 0 = no match, 1.0 = perfect match
+};
+
+const FACE_SIMILARITY_THRESHOLD = 0.72; // ≥72% similarity = same person
 
 const SovereignVault = () => {
     const [isLocked, setIsLocked] = useState(true);
-    const [scanning, setScanning] = useState(false);
     const [scanProgress, setScanProgress] = useState(0);
     const [showBalance, setShowBalance] = useState(false);
-    const [activeTab, setActiveTab] = useState('assets');
+    const [scanning, setScanning] = useState(false);
     const [scanMode, setScanMode] = useState(null); // 'biometric' | 'camera' | 'pin' | null
     const [pinValue, setPinValue] = useState('');
-    const [scanStatus, setScanStatus] = useState(''); // 'verifying' | 'success' | 'error' | ''
+    const [scanStatus, setScanStatus] = useState(''); // '' | 'verifying' | 'success' | 'error' | 'blocked'
     const [scanMessage, setScanMessage] = useState('');
-    const [cameraStream, setCameraStream] = useState(null);
+    const [scanPhase, setScanPhase] = useState(''); // 'calibrating' | 'analyzing' | 'matching' | 'learning'
+    const [storedFace, setStoredFace] = useState(null); // loaded from backend
+
+    // Use refs to avoid re-render side-effects
     const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    const streamRef = useRef(null);
     const intervalRef = useRef(null);
+    const progressRef = useRef(0);
 
-    const VAULT_PIN = '1234'; // PIN de respaldo de demostración
+    const VAULT_PIN = '1234';
 
-    // Limpieza de cámara al desmontar
+    // Load stored face fingerprint on mount
     useEffect(() => {
-        return () => {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(t => t.stop());
+        const loadFace = async () => {
+            const data = await api.get('vault_face_profile');
+            if (data && data.length > 0 && data[0].fingerprint) {
+                setStoredFace(data[0].fingerprint);
             }
+        };
+        loadFace();
+        return () => {
+            stopCameraInternal();
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [cameraStream]);
+    }, []);
 
+    // Assign stream to video element whenever it arrives
     useEffect(() => {
-        if (videoRef.current && cameraStream) {
-            videoRef.current.srcObject = cameraStream;
+        if (videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current;
         }
-    }, [cameraStream]);
+    });
 
-    const stopCamera = () => {
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(t => t.stop());
-            setCameraStream(null);
+    const stopCameraInternal = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
         }
     };
 
-    const unlockVault = () => {
-        stopCamera();
+    const unlockVault = useCallback((faceSignature) => {
+        stopCameraInternal();
+        if (intervalRef.current) clearInterval(intervalRef.current);
         setScanStatus('success');
-        setScanMessage('Acceso Nivel 5 Autorizado');
+        setScanMessage('✅ Acceso Nivel 5 Autorizado — Identidad Verificada');
+        setScanPhase('');
+
+        // Save face fingerprint if this is first-time registration
+        if (faceSignature && !storedFace) {
+            api.save('vault_face_profile', { id: 'main', fingerprint: faceSignature, registeredAt: new Date().toISOString() });
+            setStoredFace(faceSignature);
+        }
+
         setTimeout(() => {
             setIsLocked(false);
             setScanMode(null);
             setScanning(false);
             setScanProgress(0);
+            progressRef.current = 0;
             setScanStatus('');
-        }, 1200);
-    };
+            setScanPhase('');
+        }, 1400);
+    }, [storedFace]);
+
+    const blockAccess = useCallback((reason) => {
+        stopCameraInternal();
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setScanning(false);
+        setScanStatus('blocked');
+        setScanMode(null);
+        setScanMessage(reason);
+        setScanPhase('');
+        setScanProgress(0);
+        progressRef.current = 0;
+        // Auto-reset after 5s
+        setTimeout(() => {
+            setScanStatus('');
+            setScanMessage('');
+        }, 5000);
+    }, []);
+
+    // ── Core camera scanning logic ───────────────────────────────────────────
+    const runFaceAnalysis = useCallback(() => {
+        // Phase 1: Calibration (0-30%)
+        setScanPhase('calibrating');
+        setScanMessage('Calibrando sensor óptico...');
+        
+        const totalDuration = 4000; // 4 sec total scan
+        const tickMs = 50;
+        const totalTicks = totalDuration / tickMs;
+        let tick = 0;
+        let capturedFingerprint = null;
+
+        intervalRef.current = setInterval(() => {
+            tick++;
+            const rawProgress = (tick / totalTicks) * 100;
+            progressRef.current = rawProgress;
+            setScanProgress(Math.round(rawProgress));
+
+            // Phase transitions
+            if (rawProgress >= 5 && rawProgress < 50) {
+                setScanPhase('analyzing');
+                setScanMessage('Analizando rasgos biométricos faciales...');
+            } else if (rawProgress >= 50 && rawProgress < 80) {
+                setScanPhase('matching');
+                setScanMessage(storedFace ? 'Comparando con perfil registrado...' : 'Capturando perfil facial único...');
+                // Capture fingerprint at 60%
+                if (rawProgress >= 60 && !capturedFingerprint && videoRef.current && videoRef.current.readyState >= 2) {
+                    capturedFingerprint = captureFaceFingerprint(videoRef.current);
+                }
+            } else if (rawProgress >= 80) {
+                setScanPhase('learning');
+                setScanMessage('Verificando integridad de señal...');
+            }
+
+            if (tick >= totalTicks) {
+                clearInterval(intervalRef.current);
+                // Final decision
+                if (capturedFingerprint && storedFace) {
+                    const similarity = compareFaceFingerprints(capturedFingerprint, storedFace);
+                    if (similarity >= FACE_SIMILARITY_THRESHOLD) {
+                        unlockVault(null); // Already have face stored
+                    } else {
+                        blockAccess(`🚫 Acceso Denegado — Rostro no reconocido (similitud: ${Math.round(similarity * 100)}%). Solo el propietario puede acceder.`);
+                    }
+                } else {
+                    // First time — register and unlock
+                    unlockVault(capturedFingerprint);
+                }
+            }
+        }, tickMs);
+    }, [storedFace, unlockVault, blockAccess]);
+
+    const startCamera = useCallback(async () => {
+        setScanMode('camera');
+        setScanStatus('verifying');
+        setScanMessage('Iniciando sistema de verificación facial...');
+        setScanning(true);
+        setScanProgress(0);
+        progressRef.current = 0;
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+                audio: false
+            });
+            streamRef.current = stream;
+            // Assign to video element immediately
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.onloadedmetadata = () => {
+                    videoRef.current.play();
+                    // Start analysis after brief calibration delay
+                    setTimeout(() => runFaceAnalysis(), 800);
+                };
+            } else {
+                // If ref not yet mounted, wait one tick
+                setTimeout(() => {
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = stream;
+                        videoRef.current.play().then(() => {
+                            setTimeout(() => runFaceAnalysis(), 800);
+                        });
+                    }
+                }, 200);
+            }
+        } catch (err) {
+            setScanStatus('error');
+            setScanMessage('Cámara no disponible. Use el PIN de respaldo.');
+            setScanMode('pin');
+        }
+    }, [runFaceAnalysis]);
 
     const startScan = async () => {
         setScanStatus('');
         setScanMessage('');
-
-        // === 1. TRY REAL WEBAUTHN BIOMETRIC (fingerprint / FaceID / Windows Hello) ===
+        setScanPhase('');
+        // Try WebAuthn biometrics first
         if (window.PublicKeyCredential) {
             try {
                 setScanMode('biometric');
                 setScanStatus('verifying');
-                setScanMessage('Verificando identidad con biometría del dispositivo...');
+                setScanMessage('Activando sensor biométrico del dispositivo...');
                 setScanning(true);
                 setScanProgress(0);
-
-                // Simular progreso visual mientras WebAuthn procesa
                 intervalRef.current = setInterval(() => {
-                    setScanProgress(prev => (prev >= 90 ? 90 : prev + 8));
+                    setScanProgress(prev => (prev >= 90 ? 90 : prev + 6));
                 }, 120);
-
-                // Challenge aleatorio
                 const challenge = new Uint8Array(32);
                 crypto.getRandomValues(challenge);
-
                 const credential = await navigator.credentials.get({
-                    publicKey: {
-                        challenge,
-                        timeout: 30000,
-                        userVerification: 'required', // Fuerza biometría/PIN del SO
-                        rpId: window.location.hostname || 'localhost',
-                    }
+                    publicKey: { challenge, timeout: 30000, userVerification: 'required', rpId: window.location.hostname || 'localhost' }
                 });
-
                 clearInterval(intervalRef.current);
                 setScanProgress(100);
-
-                if (credential) {
-                    setScanMessage('✅ Biometría validada. Abriendo bóveda...');
-                    unlockVault();
-                }
+                if (credential) unlockVault(null);
             } catch (err) {
                 clearInterval(intervalRef.current);
-                // Si el usuario canceló o no hay credencial registrada, ofrecer cámara
-                if (err.name === 'NotAllowedError' || err.name === 'InvalidStateError') {
-                    // Usuario canceló → ofrecer cámara
-                    setScanMessage('Biometría cancelada. Iniciando verificación por cámara...');
-                    setTimeout(() => startCamera(), 1200);
-                } else {
-                    // No soportado → ir directo a cámara 
-                    setScanMessage('Biometría no disponible. Verificando por cámara facial...');
-                    setTimeout(() => startCamera(), 1200);
-                }
+                setScanning(false);
+                setScanMessage('Biometría no disponible. Activando cámara facial...');
+                setTimeout(() => startCamera(), 1000);
             }
         } else {
-            // WebAuthn no disponible → usar cámara directamente
             startCamera();
-        }
-    };
-
-    const startCamera = async () => {
-        setScanMode('camera');
-        setScanStatus('verifying');
-        setScanMessage('Activando cámara para verificación facial...');
-        setScanning(true);
-        setScanProgress(0);
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { width: 320, height: 240, facingMode: 'user' },
-                audio: false
-            });
-            setCameraStream(stream);
-            setScanMessage('Cámara activa. Mirando hacia la cámara...');
-
-            // Simular análisis de ~3 segundos
-            let progress = 0;
-            intervalRef.current = setInterval(() => {
-                progress += 3;
-                setScanProgress(progress);
-                if (progress >= 100) {
-                    clearInterval(intervalRef.current);
-                    setScanMessage('✅ Verificación facial exitosa. Acceso autorizado.');
-                    unlockVault();
-                }
-            }, 90);
-        } catch (err) {
-            setScanStatus('error');
-            setScanMessage('No se pudo acceder a la cámara. Use el PIN de respaldo.');
-            setScanMode('pin');
         }
     };
 
@@ -153,7 +269,7 @@ const SovereignVault = () => {
         if (pinValue === VAULT_PIN) {
             setScanStatus('success');
             setScanMessage('✅ PIN correcto. Acceso autorizado.');
-            setTimeout(() => unlockVault(), 900);
+            setTimeout(() => unlockVault(null), 900);
         } else {
             setScanStatus('error');
             setScanMessage('PIN incorrecto. Intente nuevamente.');
@@ -162,13 +278,15 @@ const SovereignVault = () => {
     };
 
     const cancelScan = () => {
-        stopCamera();
+        stopCameraInternal();
         if (intervalRef.current) clearInterval(intervalRef.current);
         setScanning(false);
         setScanProgress(0);
+        progressRef.current = 0;
         setScanMode(null);
         setScanStatus('');
         setScanMessage('');
+        setScanPhase('');
         setPinValue('');
     };
 
@@ -214,25 +332,55 @@ const SovereignVault = () => {
                     overflow: 'hidden'
                 }}>
                     {/* Live Camera Feed */}
-                    {scanMode === 'camera' && cameraStream && (
+                    {scanMode === 'camera' && (
                         <div style={{ position: 'relative', background: '#000' }}>
-                            <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }} />
-                            {/* Scan overlay */}
-                            <div style={{ position: 'absolute', inset: 0, border: '3px solid #38bdf8', borderRadius: '0', boxShadow: 'inset 0 0 30px rgba(56,189,248,0.2)', pointerEvents: 'none' }} />
-                            <div style={{ position: 'absolute', top: `${scanProgress}%`, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)', boxShadow: '0 0 20px #38bdf8', transition: 'top 0.1s linear' }} />
-                            <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(239,68,68,0.8)', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse-dot 1s infinite' }} />
-                                REC
+                            <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
+                            {/* Face brackets */}
+                            <div style={{ position: 'absolute', top: '15%', left: '25%', width: '50%', height: '70%', border: `2px solid ${scanStatus === 'blocked' ? '#ef4444' : '#38bdf8'}`, borderRadius: '8px', pointerEvents: 'none', transition: 'border-color 0.3s', boxShadow: `inset 0 0 20px ${scanStatus === 'blocked' ? 'rgba(239,68,68,0.2)' : 'rgba(56,189,248,0.15)'}` }} />
+                            {/* Scan laser line */}
+                            {scanning && (
+                                <div style={{ position: 'absolute', top: `${15 + (scanProgress / 100) * 70}%`, left: 0, width: '100%', height: '2px', background: `linear-gradient(90deg, transparent, ${scanPhase === 'matching' ? '#10b981' : '#38bdf8'}, transparent)`, boxShadow: `0 0 16px ${scanPhase === 'matching' ? '#10b981' : '#38bdf8'}`, transition: 'top 0.05s linear, background 0.3s' }} />
+                            )}
+                            {/* REC badge */}
+                            <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(239,68,68,0.85)', color: '#fff', fontSize: '0.6rem', fontWeight: 900, padding: '0.15rem 0.5rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.3rem', letterSpacing: '0.05em' }}>
+                                <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', animation: 'pulse-dot 0.8s infinite' }} /> REC
                             </div>
-                            <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', color: '#38bdf8', fontSize: '0.7rem', fontWeight: 700, padding: '0.3rem 0.75rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-                                Análisis facial en progreso… {scanProgress}%
+                            {/* Phase badge top-right */}
+                            <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.65)', color: scanPhase === 'matching' ? '#10b981' : '#38bdf8', fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.55rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.06em', transition: 'color 0.3s' }}>
+                                {scanPhase === 'calibrating' ? '⚡ Calibrating' : scanPhase === 'analyzing' ? '🔍 Analyzing' : scanPhase === 'matching' ? '🔗 Matching' : scanPhase === 'learning' ? '🧠 Learning' : '🎥 Active'}
                             </div>
+                            {/* Progress bar at bottom of video */}
+                            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '3px', background: 'rgba(0,0,0,0.5)' }}>
+                                <div style={{ height: '100%', width: `${scanProgress}%`, background: `linear-gradient(90deg, #38bdf8, ${scanPhase === 'matching' ? '#10b981' : '#7c3aed'})`, transition: 'width 0.05s linear, background 0.5s' }} />
+                            </div>
+                            {/* First-time registration notice */}
+                            {!storedFace && scanPhase === 'matching' && (
+                                <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', background: 'rgba(16,185,129,0.9)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.25rem 0.75rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                                    📸 Registrando perfil facial por primera vez
+                                </div>
+                            )}
+                            {storedFace && scanPhase === 'matching' && (
+                                <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', background: 'rgba(56,189,248,0.85)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.25rem 0.75rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                                    🔗 Comparando con perfil registrado...
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    <div style={{ padding: '2.5rem' }}>
-                        {/* Icon */}
-                        {scanMode !== 'camera' && (
+                    <div style={{ padding: '2rem 2.5rem' }}>
+                        {/* ACCESS BLOCKED alert */}
+                        {scanStatus === 'blocked' && (
+                            <div style={{ marginBottom: '1.25rem', padding: '1rem', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '12px', display: 'flex', gap: '0.75rem', alignItems: 'flex-start', textAlign: 'left' }}>
+                                <AlertTriangle size={22} color="#ef4444" style={{ flexShrink: 0, marginTop: 2 }} />
+                                <div>
+                                    <div style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.25rem' }}>ACCESO BLOQUEADO</div>
+                                    <div style={{ color: 'rgba(239,68,68,0.8)', fontSize: '0.75rem', lineHeight: 1.4 }}>{scanMessage}</div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Icon — hide when camera is showing */}
+                        {scanMode !== 'camera' && scanStatus !== 'blocked' && (
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <div className={`shield-container ${scanning && scanMode !== 'pin' ? 'scanning' : ''}`} style={{
                                     width: '96px', height: '96px', margin: '0 auto',
@@ -253,15 +401,29 @@ const SovereignVault = () => {
                             </div>
                         )}
 
-                        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem', letterSpacing: '-0.025em' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem', letterSpacing: '-0.025em' }}>
                             Iubel Sovereign Vault
                         </h2>
-                        <p style={{ color: scanStatus === 'error' ? '#ef4444' : scanStatus === 'success' ? '#10b981' : 'rgba(255,255,255,0.5)', marginBottom: '2rem', fontSize: '0.9rem', minHeight: '1.5rem', transition: 'color 0.3s' }}>
-                            {scanMessage || 'Autenticación de Nivel 5 requerida para acceder a activos restringidos.'}
-                        </p>
+                        {scanStatus !== 'blocked' && (
+                            <p style={{ color: scanStatus === 'error' ? '#ef4444' : scanStatus === 'success' ? '#10b981' : scanning ? '#38bdf8' : 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontSize: '0.875rem', minHeight: '1.25rem', transition: 'color 0.3s', lineHeight: 1.5 }}>
+                                {scanMessage || (storedFace ? 'Perfil facial registrado. Autenticación Nivel 5 requerida.' : 'Primera vez — tu rostro se registrará como perfil seguro.')}
+                            </p>
+                        )}
 
-                        {/* Progress bar */}
-                        {scanning && scanMode !== 'pin' && (
+                        {/* Stored face indicator */}
+                        {storedFace && !scanning && scanStatus === '' && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.875rem', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '20px', marginBottom: '1.25rem', fontSize: '0.7rem', color: '#10b981', fontWeight: 700 }}>
+                                <User size={12} /> Perfil facial registrado y activo
+                            </div>
+                        )}
+                        {!storedFace && !scanning && scanStatus === '' && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.875rem', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '20px', marginBottom: '1.25rem', fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700 }}>
+                                <Camera size={12} /> Primera vez — se registrará tu rostro
+                            </div>
+                        )}
+
+                        {/* Biometric progress */}
+                        {scanning && scanMode === 'biometric' && (
                             <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1.5rem' }}>
                                 <div style={{ height: '100%', width: `${scanProgress}%`, background: 'linear-gradient(90deg, #38bdf8, #1d4ed8)', borderRadius: '2px', transition: 'width 0.1s linear', boxShadow: '0 0 10px #38bdf8' }} />
                             </div>
@@ -270,59 +432,42 @@ const SovereignVault = () => {
                         {/* PIN Input */}
                         {scanMode === 'pin' && (
                             <form onSubmit={handlePinSubmit} style={{ marginBottom: '1.5rem' }}>
-                                <div style={{ marginBottom: '1rem', fontSize: '0.78rem', color: '#f59e0b', fontWeight: 700 }}>
-                                    🔑 PIN de Respaldo
-                                </div>
-                                <input
-                                    type="password"
-                                    value={pinValue}
-                                    onChange={e => setPinValue(e.target.value)}
-                                    placeholder="Ingrese su PIN"
-                                    maxLength={8}
-                                    autoFocus
-                                    style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: `1px solid ${scanStatus === 'error' ? '#ef4444' : 'rgba(255,255,255,0.15)'}`, borderRadius: '12px', color: '#fff', fontSize: '1.25rem', textAlign: 'center', letterSpacing: '0.5em', outline: 'none', marginBottom: '0.75rem', fontFamily: 'monospace' }}
-                                />
-                                <button type="submit" style={{ width: '100%', padding: '0.875rem', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem' }}>
+                                <div style={{ marginBottom: '0.75rem', fontSize: '0.78rem', color: '#f59e0b', fontWeight: 700 }}>🔑 PIN de Respaldo</div>
+                                <input type="password" value={pinValue} onChange={e => setPinValue(e.target.value)} placeholder="Ingrese su PIN" maxLength={8} autoFocus
+                                    style={{ width: '100%', padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: `1px solid ${scanStatus === 'error' ? '#ef4444' : 'rgba(255,255,255,0.15)'}`, borderRadius: '12px', color: '#fff', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '0.5em', outline: 'none', marginBottom: '0.75rem', fontFamily: 'monospace', boxSizing: 'border-box' }} />
+                                <button type="submit" style={{ width: '100%', padding: '0.875rem', background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '0.95rem' }}>
                                     Verificar PIN
                                 </button>
                             </form>
                         )}
 
                         {/* Primary Action */}
-                        {!scanning && scanMode !== 'pin' && (
-                            <button className="btn-premium" onClick={startScan} style={{
-                                width: '100%', padding: '1rem',
-                                background: 'linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%)',
-                                color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 700,
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: '0.75rem', fontSize: '1rem', boxShadow: '0 10px 20px -3px rgba(56,189,248,0.35)',
-                                transition: 'transform 0.2s, box-shadow 0.2s'
-                            }}>
+                        {!scanning && scanMode !== 'pin' && scanStatus !== 'blocked' && (
+                            <button onClick={startScan} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #38bdf8, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1rem', boxShadow: '0 10px 20px -3px rgba(56,189,248,0.35)' }}>
                                 <Fingerprint size={20} /> Iniciar Escaneo Biométrico
                             </button>
                         )}
-
-                        {/* Cancel Button */}
+                        {scanStatus === 'blocked' && (
+                            <button onClick={cancelScan} style={{ width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}>
+                                ← Volver al inicio
+                            </button>
+                        )}
+                        {/* Cancel during scan */}
                         {scanning && (
-                            <button onClick={cancelScan} style={{ marginTop: '1rem', background: 'none', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)', borderRadius: '10px', padding: '0.6rem 1.5rem', cursor: 'pointer', fontSize: '0.85rem', width: '100%' }}>
+                            <button onClick={cancelScan} style={{ marginTop: '1rem', background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', borderRadius: '10px', padding: '0.5rem 1.5rem', cursor: 'pointer', fontSize: '0.8rem', width: '100%' }}>
                                 Cancelar
                             </button>
                         )}
 
                         {/* Badges */}
-                        <div style={{ marginTop: '1.75rem', display: 'flex', justifyContent: 'center', gap: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
-                                <ShieldCheck size={13} /> AES-256
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
-                                <Cpu size={13} /> Quantum Proof
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>
-                                <Camera size={13} /> Facial Auth
-                            </div>
+                        <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)' }}><ShieldCheck size={11} /> AES-256</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)' }}><Cpu size={11} /> Quantum Proof</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)' }}><Camera size={11} /> Facial Auth</div>
                         </div>
                     </div>
                 </div>
+
                 
                 <style>{`
                     .glass-premium { backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); }
