@@ -124,12 +124,21 @@ const SovereignVault = () => {
         setScanPhase('');
         setScanProgress(0);
         progressRef.current = 0;
-        // Auto-reset after 5s
-        setTimeout(() => {
-            setScanStatus('');
-            setScanMessage('');
-        }, 5000);
+        // No auto-dismiss — user must take action
     }, []);
+
+    const resetFaceProfile = async () => {
+        // Delete the stored face from backend
+        try {
+            await api.delete('vault_face_profile', 'main');
+        } catch(e) {
+            // If delete API not available, overwrite with empty
+            await api.save('vault_face_profile', { id: 'main', fingerprint: null, registeredAt: null });
+        }
+        setStoredFace(null);
+        setScanStatus('');
+        setScanMessage('');
+    };
 
     // ── Core camera scanning logic ───────────────────────────────────────────
     const runFaceAnalysis = useCallback(() => {
@@ -441,9 +450,32 @@ const SovereignVault = () => {
                             </button>
                         )}
                         {scanStatus === 'blocked' && (
-                            <button onClick={cancelScan} style={{ width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}>
-                                ← Volver al inicio
-                            </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                                <button onClick={cancelScan} style={{ width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                    ← Volver al inicio
+                                </button>
+                                <button 
+                                    onClick={resetFaceProfile} 
+                                    style={{ 
+                                        width: '100%', 
+                                        padding: '1rem', 
+                                        background: 'linear-gradient(135deg, #f97316 0%, #ef4444 100%)', 
+                                        color: '#fff', 
+                                        border: 'none', 
+                                        borderRadius: '14px', 
+                                        fontWeight: 700, 
+                                        cursor: 'pointer', 
+                                        fontSize: '0.9rem', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        gap: '0.5rem',
+                                        boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3)'
+                                    }}
+                                >
+                                    <XCircle size={18} /> Resetear Perfil Facial
+                                </button>
+                            </div>
                         )}
                         {/* Cancel during scan */}
                         {scanning && (
