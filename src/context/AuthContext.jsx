@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     const initialized = useRef(false);
 
     const refreshAuth = async () => {
-        const savedToken = localStorage.getItem('iubel_token');
+        const savedToken = sessionStorage.getItem('iubel_token');
         if (!savedToken) return;
 
         try {
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
         if (initialized.current) return;
         initialized.current = true;
 
-        const savedToken = localStorage.getItem('iubel_token');
+        const savedToken = sessionStorage.getItem('iubel_token');
 
         if (!savedToken) {
             // No token stored → go straight to login
@@ -122,11 +122,11 @@ export const AuthProvider = ({ children }) => {
                     setEmpresa(data.empresa);
                 } else {
                     // Token invalid / expired
-                    localStorage.removeItem('iubel_token');
+                    sessionStorage.removeItem('iubel_token');
                 }
             } catch {
                 // Network error or timeout → clear token to force re-login
-                localStorage.removeItem('iubel_token');
+                sessionStorage.removeItem('iubel_token');
             } finally {
                 clearTimeout(timeout);
                 setIsLoading(false);
@@ -146,10 +146,10 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const clearSession = () => {
-        localStorage.removeItem('iubel_token');
+        sessionStorage.removeItem('iubel_token');
         // Wipe any residual cached data so next login starts fresh
-        const keysToRemove = Object.keys(localStorage).filter(k => k !== 'iubel_token');
-        keysToRemove.forEach(k => localStorage.removeItem(k));
+        const keysToRemove = Object.keys(sessionStorage).filter(k => k !== 'iubel_token');
+        keysToRemove.forEach(k => sessionStorage.removeItem(k));
         sessionStorage.clear();
         setToken(null);
         setUser(null);
@@ -173,7 +173,7 @@ export const AuthProvider = ({ children }) => {
         
         // ACTUALIZACIÓN INMEDIATA DEL ESTADO (ELITE SYNC)
         const { token: newToken, user: newUser, empresa: newEmpresa } = result.data;
-        localStorage.setItem('iubel_token', newToken);
+        sessionStorage.setItem('iubel_token', newToken);
         setToken(newToken);
         setUser(newUser);
         setEmpresa(newEmpresa);

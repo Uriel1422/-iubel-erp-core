@@ -1,7 +1,7 @@
 const isLocal = window.location.hostname === 'localhost';
 const BASE_URL = isLocal ? 'http://localhost:3001/api' : '/api';
 
-const getToken = () => localStorage.getItem('iubel_token');
+const getToken = () => sessionStorage.getItem('iubel_token');
 
 const authHeaders = () => {
     const token = getToken();
