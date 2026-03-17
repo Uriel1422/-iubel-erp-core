@@ -46,6 +46,7 @@ const Compras = () => {
     const [mostrarAsientoDetalle, setMostrarAsientoDetalle] = useState(false);
     const [compraExitosa, setCompraExitosa] = useState(null);
     const [editingId, setEditingId] = useState(null);
+    const [detalles, setDetalles] = useState('');
     const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
     const [showArticuloModal, setShowArticuloModal] = useState(false);
     const [showProveedorModal, setShowProveedorModal] = useState(false);
@@ -139,6 +140,7 @@ const Compras = () => {
             proveedorNombre: proveedorNombre || 'Proveedor Genérico',
             proveedorRnc,
             ncf,
+            detalles,
             fechaFactura,
             diasVencimiento: condicion === 'Credito' ? Number(diasVencimiento) || 0 : 0,
             fechaVencimiento: fechaVencimientoCalc ? fechaVencimientoCalc.toISOString().split('T')[0] : null,
@@ -160,7 +162,12 @@ const Compras = () => {
             setEditingId(null);
             alert("Compra actualizada con éxito.");
         } else {
-            const compraRegistrada = registrarCompra(dataCompra, mostrarAsientoDetalle ? lineasAsiento : null);
+            if (!mostrarAsientoDetalle) {
+                alert("Por favor, verifique y confirme el asiento contable manualmente antes de registrar.");
+                generarAsientoSugerido();
+                return;
+            }
+            const compraRegistrada = registrarCompra(dataCompra, lineasAsiento);
             setCompraExitosa(compraRegistrada);
         }
 
@@ -169,6 +176,7 @@ const Compras = () => {
         setProveedorNombre('');
         setProveedorRnc('');
         setNcf('');
+        setDetalles('');
         setMontoInput('');
         setCuentaDestinoId('');
         setCuentaCreditoId('');
@@ -184,6 +192,7 @@ const Compras = () => {
         setProveedorNombre(compra.proveedorNombre);
         setProveedorRnc(compra.proveedorRnc || '');
         setNcf(compra.ncf || '');
+        setDetalles(compra.detalles || '');
         setFechaFactura(compra.fechaFactura || new Date(compra.fechaRegistro).toISOString().split('T')[0]);
         setTipoGasto(compra.tipoGasto || '02');
         setCondicion(compra.condicion || 'Contado');
@@ -387,7 +396,7 @@ const Compras = () => {
 
                         <div className="input-group">
                             <label className="input-label">NCF Recibido</label>
-                            <input type="text" className="input-field" value={ncf} onChange={e => setNcf(e.target.value)} placeholder="B01... (Debe ser un NCF válido)" required maxLength="11" />
+                            <input type="text" className="input-field" value={ncf} onChange={e => setNcf(e.target.value)} placeholder="B01... (Hasta 13 dígitos)" required maxLength="13" />
                         </div>
                         <div className="input-group">
                             <label className="input-label">Fecha de Comprobante (Física)</label>
@@ -515,6 +524,18 @@ const Compras = () => {
                                 style={{ paddingLeft: '3.5rem', fontWeight: 700, fontSize: '1.1rem' }}
                             />
                         </div>
+                    </div>
+
+                    {/* DETALLES DE LA COMPRA (ELITE ADDITION) */}
+                    <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+                        <label className="input-label" style={{ fontWeight: 600 }}>Detalles de la Compra / Glosa</label>
+                        <textarea
+                            className="input-field"
+                            value={detalles}
+                            onChange={e => setDetalles(e.target.value)}
+                            placeholder="Describa el propósito de esta compra o gasto..."
+                            style={{ minHeight: '80px', paddingTop: '0.75rem', resize: 'vertical' }}
+                        />
                     </div>
 
                     {/* Rest of the form stays same */}

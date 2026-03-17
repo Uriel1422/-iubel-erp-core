@@ -273,7 +273,7 @@ const Reportes = () => {
             {/* ── PAGE HEADER ─────────────────────────────────────────────── */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 className="page-title" style={{ marginBottom: '0.25rem' }}>Estados Financieros y Reportes</h1>
+                    <h1 className="page-title" style={{ marginBottom: '0.25rem' }}>Estados Financieros</h1>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Visualiza la salud financiera con filtros de período y comparación.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }} className="no-print">

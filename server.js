@@ -242,7 +242,8 @@ const authMiddleware = async (req, res, next) => {
         }
 
         req.auth = decoded; // { userId, empresaId, empresaSlug, role, nombre, empresa }
-        req.tablePrefix = decoded.empresaSlug + '_';
+        // Se utiliza empresaId para el prefijo de tablas para garantizar aislamiento total (Elite Security)
+        req.tablePrefix = decoded.empresaId.replace(/[^a-zA-Z0-9]/g, '_') + '_';
         next();
     } catch {
         return res.status(401).json({ error: 'Token inválido o expirado' });

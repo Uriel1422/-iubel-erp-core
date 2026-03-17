@@ -67,7 +67,7 @@ const Sidebar = () => {
             label: 'Reportes y Análisis',
             display: hasAccess('reportes'),
             items: [
-                { path: 'reportes', icon: <PieChart className="nav-icon" />, label: 'Dashboard Reportes', display: true, featureId: 'enterprise_reportes' },
+                { path: 'reportes', icon: <PieChart className="nav-icon" />, label: 'Estados Financieros', display: true, featureId: 'enterprise_reportes' },
                 { path: 'niif', icon: <Landmark className="nav-icon" style={{color: '#f59e0b'}} />, label: <span>Estados NIIF <span style={{ fontSize: '9px', background: '#f59e0b', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>PRO</span></span>, display: true, featureId: 'enterprise_reportes' },
                 { path: 'efectivo', icon: <Activity className="nav-icon" />, label: 'Flujo de Efectivo', display: true, featureId: 'enterprise_reportes' },
                 { path: 'presupuestos', icon: <Target className="nav-icon" />, label: 'Presupuestos', display: true, featureId: 'enterprise_reportes' },

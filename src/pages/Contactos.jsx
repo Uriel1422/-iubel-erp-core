@@ -4,9 +4,10 @@ import { Users, Plus, Contact, Mail, Phone, MapPin, Trash2, Edit } from 'lucide-
 import ConfirmModal from '../components/ConfirmModal';
 
 const Contactos = () => {
-    const { contactos, agregarContacto, eliminarContacto } = useContactos();
+    const { contactos, agregarContacto, editarContacto, eliminarContacto } = useContactos();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
+    const [editingId, setEditingId] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -18,10 +19,28 @@ const Contactos = () => {
         direccion: ''
     });
 
+    const handleEdit = (contacto) => {
+        setEditingId(contacto.id);
+        setFormData({
+            nombre: contacto.nombre || '',
+            rnc: contacto.rnc || '',
+            tipo: contacto.tipo || 'Cliente',
+            email: contacto.email || '',
+            telefono: contacto.telefono || '',
+            direccion: contacto.direccion || ''
+        });
+        setIsModalOpen(true);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        agregarContacto(formData);
+        if (editingId) {
+            editarContacto(editingId, formData);
+        } else {
+            agregarContacto(formData);
+        }
         setIsModalOpen(false);
+        setEditingId(null);
         setFormData({ nombre: '', rnc: '', tipo: 'Cliente', email: '', telefono: '', direccion: '' });
     };
 
@@ -33,7 +52,7 @@ const Contactos = () => {
                         <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>Gestión de Contactos</h1>
                         <p style={{ color: 'var(--text-muted)' }}>Administra tus Clientes y Proveedores de forma centralizada.</p>
                     </div>
-                    <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                    <button className="btn btn-primary" onClick={() => { setEditingId(null); setFormData({ nombre: '', rnc: '', tipo: 'Cliente', email: '', telefono: '', direccion: '' }); setIsModalOpen(true); }}>
                         <Plus size={20} /> Nuevo Contacto
                     </button>
                 </div>
@@ -76,7 +95,7 @@ const Contactos = () => {
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem' }}>
-                                <button className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem' }}>
+                                <button className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem' }} onClick={() => handleEdit(contacto)}>
                                     <Edit size={16} /> Editar
                                 </button>
                                 <button className="btn btn-secondary" style={{ color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }} onClick={() => setConfirmDelete({ open: true, id: contacto.id })}>
@@ -100,7 +119,7 @@ const Contactos = () => {
                         zIndex: 10
                     }}>
                         <div style={{ padding: '2rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Añadir Nuevo Contacto</h2>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{editingId ? 'Editar Contacto' : 'Añadir Nuevo Contacto'}</h2>
                             <button onClick={() => setIsModalOpen(false)} style={{ color: 'var(--text-muted)', fontSize: '1.5rem' }}>×</button>
                         </div>
                         <form onSubmit={handleSubmit} style={{ padding: '2rem' }}>
@@ -136,7 +155,7 @@ const Contactos = () => {
 
                             <div style={{ display: 'flex', gap: '1.25rem', marginTop: '2rem' }}>
                                 <button type="button" className="btn btn-secondary" style={{ flex: 1, height: '3.5rem' }} onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '3.5rem' }}>Guardar Contacto</button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '3.5rem' }}>{editingId ? 'Guardar Cambios' : 'Guardar Contacto'}</button>
                             </div>
                         </form>
                     </div>
