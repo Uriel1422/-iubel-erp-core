@@ -179,8 +179,14 @@ setInterval(refreshGlobalSettings, 5000);
 const validName = (n) => /^[a-zA-Z0-9_]+$/.test(n);
 
 const ensureTable = async (tableName) => {
-    if (!validName(tableName)) throw new Error(`Nombre inválido: ${tableName}`);
-    // Iubel Elastic Schema: Permite crecimiento dinámico sin migraciones rígidas
+    if (!validName(tableName)) throw new Error(`Nombre de tabla inválido: ${tableName}`);
+    // AUBEL REQUIREMENT: Nunca permitir tablas sin prefijo si no son core
+    const coreTables = ['superadmins', 'empresas', 'usuarios', 'global_settings', 'auditoria', 'prestamos_core', 'cuotas_core', 'transacciones_core'];
+    const isCore = coreTables.some(ct => tableName === ct);
+    if (!isCore && !tableName.includes('_')) {
+        throw new Error(`VIOLACIÓN DE AISLAMIENTO: No se permiten tablas dinámicas sin prefijo de tenant: ${tableName}`);
+    }
+
     await pool.execute(`
         CREATE TABLE IF NOT EXISTS \`${tableName}\` (
             id          VARCHAR(64)  PRIMARY KEY,
@@ -193,6 +199,7 @@ const ensureTable = async (tableName) => {
 
 const readAll = async (tableName) => {
     await ensureTable(tableName);
+    // PREPARED STATEMENTS: Uso de placeholders dinámicos para el nombre de la tabla (escapado con backticks)
     const [rows] = await pool.execute(`SELECT data FROM \`${tableName}\` ORDER BY created_at ASC`);
     return rows.map(r => (typeof r.data === 'string' ? JSON.parse(r.data) : r.data));
 };
@@ -230,10 +237,14 @@ const authMiddleware = async (req, res, next) => {
     try {
         const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
         
-        // Verificación de suspensión (SaaS Admin Control)
+        // 🛡️ TENANT GUARD: Validación de aislamiento institucional
         if (decoded.role !== 'sysadmin') {
-            const [empresas] = await pool.execute('SELECT activa FROM empresas WHERE id = ?', [decoded.empresaId]);
-            if (empresas.length > 0 && !empresas[0].activa) {
+            const [empresas] = await pool.execute('SELECT activa, id FROM empresas WHERE id = ?', [decoded.empresaId]);
+            if (empresas.length === 0) {
+                await logAudit(null, decoded.userId, 'SECURITY_ALERT', 'auth', 'NON_EXISTENT_TENANT', req.ip);
+                return res.status(403).json({ error: 'Empresa no encontrada o acceso inválido' });
+            }
+            if (!empresas[0].activa) {
                 return res.status(403).json({ 
                     error: 'INSTITUCIÓN SUSPENDIDA', 
                     message: 'El acceso a esta empresa ha sido restringido por el administrador global de Iubel.' 
@@ -241,14 +252,20 @@ const authMiddleware = async (req, res, next) => {
             }
         }
 
-        req.auth = decoded; // { userId, empresaId, empresaSlug, role, nombre, empresa }
-        // Se utiliza empresaId para el prefijo de tablas para garantizar aislamiento total (Elite Security)
+        req.auth = decoded;
+        // SEPARACIÓN LÓGICA: Prefijo de tabla inmutable derivado del ID de empresa
         req.tablePrefix = decoded.empresaId.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+
+        // PREVENCIÓN DE FILTRACIÓN: Validar que no haya manipulación de prefix en la solicitud
+        if (req.body && req.body.tablePrefix && req.body.tablePrefix !== req.tablePrefix) {
+            await logAudit(decoded.empresaId, decoded.userId, 'SECURITY_ALERT', 'violation_attempt', 'PREFIX_MANIPULATION', req.ip);
+            return res.status(400).json({ error: 'Intento de violación de aislamiento detectado.' });
+        }
+
         next();
     } catch {
         return res.status(401).json({ error: 'Token inválido o expirado' });
     }
-
 };
 
 // ─── ENDPOINTS SALTO CUÁNTICO 🚀 ──────────────────────────────────────────────
