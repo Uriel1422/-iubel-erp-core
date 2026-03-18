@@ -223,5 +223,17 @@ CREATE TABLE IF NOT EXISTS moneda (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ============================================================
+-- TABLAS DE CONFIGURACION GLOBAL (SuperAdmin)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS global_settings (
+    `key`   VARCHAR(64) PRIMARY KEY,
+    `value` TEXT
+);
+
+INSERT IGNORE INTO global_settings (`key`, `value`) VALUES ('sa_kill_switch', 'false');
+INSERT IGNORE INTO global_settings (`key`, `value`) VALUES ('sa_broadcast_msg', '');
+
 -- Índice de texto completo sobre campos JSON comunes para búsquedas futuras
 -- ALTER TABLE facturas ADD INDEX idx_fecha ((CAST(data->>'$.fecha' AS DATE)));

@@ -3,7 +3,7 @@ services:
     name: iubel-erp-elite
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run db:schema && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
