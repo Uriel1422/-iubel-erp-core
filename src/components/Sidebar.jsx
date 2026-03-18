@@ -37,6 +37,7 @@ const Sidebar = () => {
             label: 'Ventas y Compras',
             display: true,
             items: [
+                { path: 'pos', icon: <ShoppingCart className="nav-icon" style={{color: '#6366f1'}} />, label: <span>Punto de Venta <span style={{ fontSize: '9px', background: '#6366f1', color: 'white', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>ELITE</span></span>, display: true, featureId: 'core_pos' },
                 { path: 'documentos', icon: <FolderOpen className="nav-icon" />, label: 'Gestión Documental', display: hasRole(['admin', 'contador', 'auditor']), featureId: 'enterprise_auditoria' },
                 { path: 'proyectos', icon: <Layers className="nav-icon" />, label: 'Proyectos & Tareas', display: hasRole(['admin', 'contador']), featureId: 'enterprise_reportes' },
                 { path: 'cotizaciones', icon: <ClipboardList className="nav-icon" />, label: 'Cotizaciones', display: hasRole(['admin', 'contador', 'cajero']), featureId: 'core_facturacion' },

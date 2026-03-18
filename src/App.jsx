@@ -60,6 +60,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SovereignVault from './pages/SovereignVault';
 import CreditIntelligence from './pages/CreditIntelligence';
+import POS from './pages/POS';
 
 
 // Contexts
@@ -95,6 +96,7 @@ import { CobrosProvider } from './context/CobrosContext';
 import { SegmentacionProvider } from './context/SegmentacionContext';
 import { AhorrosProvider } from './context/AhorrosContext';
 import { SuperAdminProvider, useSuperAdmin } from './context/SuperAdminContext';
+import { POSProvider } from './context/POSContext';
 import { ShieldAlert } from 'lucide-react';
 
 import Auditoria from './pages/Auditoria';
@@ -203,7 +205,8 @@ function App() {
                                                                   <CobrosProvider>
                                                                     <SegmentacionProvider>
                                                                       <AhorrosProvider>
-                                                                        <Routes>
+                                                                        <POSProvider>
+                                                                          <Routes>
                                                                           <Route path="/login" element={<LoginPage />} />
                                                                           <Route path="/register" element={<RegisterPage />} />
                                                                           <Route path="/" element={<Portal />} />
@@ -220,6 +223,7 @@ function App() {
                                                                             <Route path="cuentas" element={<FeatureProtectedRoute featureId="core_contabilidad"><Cuentas /></FeatureProtectedRoute>} />
                                                                             <Route path="bancos" element={<FeatureProtectedRoute featureId="core_banca"><Bancos /></FeatureProtectedRoute>} />
                                                                             <Route path="inventario" element={<FeatureProtectedRoute featureId="core_inventario"><Inventario /></FeatureProtectedRoute>} />
+                                                                            <Route path="pos" element={<FeatureProtectedRoute featureId="core_pos"><POS /></FeatureProtectedRoute>} />
                                                                             <Route path="facturas" element={<FeatureProtectedRoute featureId="core_facturacion"><Facturacion /></FeatureProtectedRoute>} />
                                                                             <Route path="compras" element={<FeatureProtectedRoute featureId="core_compras"><Compras /></FeatureProtectedRoute>} />
                                                                             <Route path="ingresos" element={<FeatureProtectedRoute featureId="core_banca"><Tesoreria tipo="ingreso" /></FeatureProtectedRoute>} />
@@ -279,7 +283,8 @@ function App() {
                                                                           <Route path="/superadmin/sovereign" element={<SecuritySovereign />} />
                                                                           <Route path="/superadmin" element={<Navigate to="/superadmin/dashboard" replace />} />
                                                                         </Routes>
-                                                                      </AhorrosProvider>
+                                                                      </POSProvider>
+                                                                    </AhorrosProvider>
                                                                     </SegmentacionProvider>
                                                                   </CobrosProvider>
                                                                 </BalanceSocialProvider>

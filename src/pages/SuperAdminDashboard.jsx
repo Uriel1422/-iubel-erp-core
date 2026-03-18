@@ -59,6 +59,7 @@ const SuperAdminDashboard = () => {
                 { id: 'core_contactos', label: 'Clientes / Proveedores', icon: <Users size={16} /> },
                 { id: 'core_contabilidad', label: 'Contabilidad & Diario', icon: <Calculator size={16} /> },
                 { id: 'core_inventario', label: 'Inventario & Stock', icon: <Package size={16} /> },
+                { id: 'core_pos', label: 'Punto de Venta (POS)', icon: <ShoppingCart size={16} /> },
                 { id: 'core_compras', label: 'Gestión de Compras', icon: <ShoppingCart size={16} /> },
                 { id: 'core_fiscal', label: 'Impuestos (DGII)', icon: <ShieldCheck size={16} /> },
             ]
