@@ -54,40 +54,17 @@ const Compras = () => {
 
     const [cuentaCreditoId, setCuentaCreditoId] = useState('');
 
-    // 🧠 AUTO-GEN ASIENTO: Regenera automáticamente cuando cambian los campos clave
-    // Esto es lo que hace que el asiento aparezca automáticamente como en la imagen 3.
+    // Auto-generación de asiento en tiempo real (Elite Experience)
     React.useEffect(() => {
-        if (!cuentaDestinoId || !cuentaCreditoId || !montoInput || Number(montoInput) <= 0) {
-            setMostrarAsientoDetalle(false);
-            return;
+        if (montoInput > 0 && !editingId) {
+            // Auto-generar si el usuario cambia el monto, pero solo si aún no está modificado intensamente por el usuario
+            // O simplemente auto-inicializarlo
+            const timeout = setTimeout(() => {
+                generarAsientoSugerido();
+            }, 500);
+            return () => clearTimeout(timeout);
         }
-        // Re-compute values based on current state
-        const mIngresado = Number(montoInput) || 0;
-        let sub = 0, itbisAdel = 0;
-        if (facturaExenta) { sub = mIngresado; itbisAdel = 0; }
-        else if (esItbisManual) { itbisAdel = Number(itbisManual) || 0; sub = Math.max(0, mIngresado - itbisAdel); }
-        else if (incluirItbis) { sub = mIngresado / 1.18; itbisAdel = mIngresado - sub; }
-        else { sub = mIngresado; itbisAdel = 0; }
-
-        const totalGen = sub + itbisAdel;
-        const isrRet = sub * (Number(porcentajeIsr) / 100);
-        const itbisRet = Number(itbisRetenido) || 0;
-        const netoPagar = totalGen - itbisRet - isrRet;
-
-        const sugerido = [
-            { cuentaId: cuentaDestinoId, debito: sub, credito: 0, cuentaCodigo: cuentaDestinoId }
-        ];
-        if (itbisAdel > 0) {
-            sugerido.push({ cuentaId: '110501', debito: itbisAdel, credito: 0, cuentaCodigo: '110501' });
-        }
-        sugerido.push({ cuentaId: cuentaCreditoId, debito: 0, credito: netoPagar, cuentaCodigo: cuentaCreditoId });
-        if (itbisRet > 0) sugerido.push({ cuentaId: '210401', debito: 0, credito: itbisRet, cuentaCodigo: '210401', nombre: 'ITBIS Retenido por Pagar' });
-        if (isrRet > 0) sugerido.push({ cuentaId: '210501', debito: 0, credito: isrRet, cuentaCodigo: '210501', nombre: 'ISR Retenido por Pagar' });
-
-        setLineasAsiento(sugerido);
-        setMostrarAsientoDetalle(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cuentaDestinoId, cuentaCreditoId, montoInput, facturaExenta, esItbisManual, itbisManual, incluirItbis, porcentajeIsr, itbisRetenido]);
+    }, [montoInput, incluirItbis, facturaExenta, esItbisManual, itbisManual, porcentajeIsr, itbisRetenido, condicion, cuentaDestinoId, cuentaCreditoId]); // Added cuentaDestinoId, cuentaCreditoId to dependencies for completeness
 
     const cuentasCredito = cuentas.filter(c =>
         c.activa &&
@@ -133,17 +110,16 @@ const Compras = () => {
     const netoAPagar = totalGeneral - itbisRetenidoNum - isrRetenidoNum;
 
     const generarAsientoSugerido = () => {
-        if (!cuentaDestinoId) {
-            alert("Seleccione primero la cuenta de destino del gasto.");
-            return;
-        }
+        // En el modo Elite, si no hay cuenta seleccionada, usamos la primera de gasto disponible
+        const defaultDestino = cuentaDestinoId || (cuentasGastoActivo[0]?.id || '');
         const cuentaPagoId = cuentaCreditoId || (condicion === 'Contado' ? '110101' : '210101');
+        
         const sugerido = [
-            { cuentaId: cuentaDestinoId, debito: subtotalNum, credito: 0, cuentaCodigo: cuentaDestinoId }
+            { cuentaId: defaultDestino, debito: subtotalNum, credito: 0, cuentaCodigo: defaultDestino }
         ];
         
         if (itbisAdelantado > 0) {
-            sugerido.push({ cuentaId: '110501', debito: itbisAdelantado, credito: 0, cuentaCodigo: '110501' });
+            sugerido.push({ cuentaId: '110501', debito: itbisAdelantado, credito: 0, cuentaCodigo: '110501', nombre: 'ITBIS por Adelantar' });
         }
         
         sugerido.push({ cuentaId: cuentaPagoId, debito: 0, credito: netoAPagar, cuentaCodigo: cuentaPagoId });
@@ -161,10 +137,20 @@ const Compras = () => {
 
     const handleRegistrar = (e) => {
         if (e && e.preventDefault) e.preventDefault();
-        if (!cuentaDestinoId) {
-            alert("Debe seleccionar una cuenta contable de destino para el gasto/compra.");
+        
+        if (lineasAsiento.length === 0) {
+            alert("Debe definir el asiento contable.");
             return;
         }
+
+        const totalDR = lineasAsiento.reduce((a,b) => a + Number(b.debito || 0), 0);
+        const totalCR = lineasAsiento.reduce((a,b) => a + Number(b.credito || 0), 0);
+        
+        if (Math.abs(totalDR - totalCR) > 0.005) {
+            alert("El asiento contable no está cuadrado. Por favor revise los montos.");
+            return;
+        }
+
         if (subtotalNum <= 0) {
             alert("El monto (subtotal) debe ser mayor a 0.");
             return;
@@ -181,8 +167,8 @@ const Compras = () => {
             fechaVencimiento: fechaVencimientoCalc ? fechaVencimientoCalc.toISOString().split('T')[0] : null,
             tipoGasto,
             condicion,
-            cuentaDestinoId,
-            cuentaCreditoId: cuentaCreditoId || (condicion === 'Contado' ? '110101' : '210101'),
+            cuentaDestinoId: lineasAsiento[0]?.cuentaId, // Tomamos la principal del asiento
+            cuentaCreditoId: lineasAsiento.find(l => l.credito > 0)?.cuentaId || (condicion === 'Contado' ? '110101' : '210101'),
             subtotal: subtotalNum,
             itbis: itbisAdelantado,
             itbisRetenido: itbisRetenidoNum,
@@ -197,23 +183,17 @@ const Compras = () => {
             setEditingId(null);
             alert("Compra actualizada con éxito.");
         } else {
-            if (!mostrarAsientoDetalle) {
-                generarAsientoSugerido();
-                return;
-            }
             const compraRegistrada = registrarCompra(dataCompra, lineasAsiento);
             setCompraExitosa(compraRegistrada);
         }
 
-        // Reset simple
+        // Reset
         setProveedorId('');
         setProveedorNombre('');
         setProveedorRnc('');
         setNcf('');
         setDetalles('');
         setMontoInput('');
-        setCuentaDestinoId('');
-        setCuentaCreditoId('');
         setItbisRetenido(0);
         setPorcentajeIsr(0);
         setFacturaExenta(false);
@@ -501,33 +481,18 @@ const Compras = () => {
                         )}
                     </div>
 
-                    {/* ── CUENTAS CONTABLES: DÉBITO & CRÉDITO (Selectores compactos Elite) ── */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-                        <div className="input-group" style={{ marginBottom: 0 }}>
-                            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563eb', display: 'inline-block', flexShrink: 0 }}></span>
-                                Cuenta Débito (DR) — Gasto/Activo
-                            </label>
-                            <select className="input-field" value={cuentaDestinoId} onChange={e => { setCuentaDestinoId(e.target.value); setMostrarAsientoDetalle(false); }} required style={{ borderLeft: '3px solid #2563eb' }}>
-                                <option value="">-- Gasto · Activo · Costo --</option>
-                                {cuentasGastoActivo.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
-                            </select>
-                        </div>
-                        <div className="input-group" style={{ marginBottom: 0 }}>
-                            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', display: 'inline-block', flexShrink: 0 }}></span>
-                                Cuenta Crédito (CR) — {condicion === 'Contado' ? 'Caja/Banco' : 'CxP Prov.'}
-                            </label>
-                            <select className="input-field" value={cuentaCreditoId} onChange={e => { setCuentaCreditoId(e.target.value); setMostrarAsientoDetalle(false); }} required style={{ borderLeft: '3px solid #16a34a' }}>
-                                <option value="">-- Caja · Banco · CxP Proveedor --</option>
-                                {cuentasCredito.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
-                            </select>
+                    {/* ── CUENTAS CONTABLES ELITE (Reemplazado por Tabla de Asiento Abajo) ── */}
+                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ fontSize: '1.25rem' }}>📋</div>
+                        <div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>Configuración Contable Avanzada</div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Defina el asiento detallado en la sección inferior. El sistema pre-calcula ITBIS y retenciones automáticamente.</div>
                         </div>
                     </div>
 
                     {/* ── MONTO TOTAL FACTURADO (Elite Display) ── */}
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <label className="input-label" style={{ fontWeight: 700, marginBottom: '0.75rem', display: 'block' }}>Monto Total Facturado <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(ITBIS incluido si aplica)</span></label>
+                        <label className="input-label" style={{ fontWeight: 800, marginBottom: '0.75rem', display: 'block', color: '#1e293b' }}>Monto Total Facturado <span style={{ color: '#64748b', fontWeight: 400 }}>(ITBIS incluido si aplica)</span></label>
                         <div style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', flexWrap: 'wrap' }}>
                             {/* Input */}
                             <div style={{ position: 'relative', flex: '0 0 220px' }}>
@@ -536,17 +501,17 @@ const Compras = () => {
                                     required type="number" step="0.01" min="0"
                                     className="input-field"
                                     value={montoInput}
-                                    onChange={e => { setMontoInput(e.target.value); setMostrarAsientoDetalle(false); }}
-                                    style={{ paddingLeft: '3.5rem', fontWeight: 800, fontSize: '1.2rem', border: '2px solid #6366f1', borderRadius: '12px', height: '54px' }}
+                                    onChange={e => { setMontoInput(e.target.value); }}
+                                    style={{ paddingLeft: '3.5rem', fontWeight: 800, fontSize: '1.2rem', border: '2px solid #6366f1', borderRadius: '12px', height: '54px', background: '#f5f3ff' }}
                                     placeholder="0.00"
                                 />
                             </div>
                             {/* Total pill */}
                             {montoInput > 0 && (
-                                <div style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '14px', padding: '0 1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '200px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
-                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Total a Procesar</div>
-                                    <div style={{ color: '#fff', fontWeight: 900, fontSize: '1.5rem', fontFamily: 'monospace', lineHeight: 1.2 }}>{formatMoney(montoIngresado)}</div>
-                                    {!facturaExenta && itbisAdelantado > 0 && <div style={{ color: '#6ee7b7', fontSize: '0.7rem', fontWeight: 600 }}>ITBIS: {formatMoney(itbisAdelantado)}</div>}
+                                <div style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '14px', padding: '0 1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '220px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)' }}>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Total a Procesar</div>
+                                    <div style={{ color: '#fff', fontWeight: 900, fontSize: '1.6rem', fontFamily: 'monospace', lineHeight: 1.2 }}>{formatMoney(montoIngresado)}</div>
+                                    {!facturaExenta && itbisAdelantado > 0 && <div style={{ color: '#10b981', fontSize: '0.7rem', fontWeight: 700, marginTop: '2px' }}>Incluye {formatMoney(itbisAdelantado)} de ITBIS</div>}
                                 </div>
                             )}
                         </div>
@@ -663,108 +628,104 @@ const Compras = () => {
                     </div>
 
                     {/* ===== PANEL DE ASIENTO CONTABLE (ERP PROFESIONAL) ===== */}
-                    {mostrarAsientoDetalle && (() => {
-                        const totalDebitos = lineasAsiento.reduce((a,b) => a + b.debito, 0);
-                        const totalCreditos = lineasAsiento.reduce((a,b) => a + b.credito, 0);
+                    {/* ── PANEL DE ASIENTO CONTABLE (ESTILO IMAGEN 2 - ELITE) ── */}
+                    {true && (() => { // Siempre visible si hay datos
+                        const totalDebitos = lineasAsiento.reduce((a,b) => a + Number(b.debito||0), 0);
+                        const totalCreditos = lineasAsiento.reduce((a,b) => a + Number(b.credito||0), 0);
                         const diferencia = totalDebitos - totalCreditos;
                         const cuadrado = Math.abs(diferencia) < 0.005;
                         const cuentasDetalle = cuentas.filter(acc => acc.subtipo === 'Cuenta Detalle');
+
+                        if (lineasAsiento.length === 0 && !montoInput) return null;
+
                         return (
-                            <div style={{ marginTop: '2rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-                                {/* Header */}
-                                <div style={{ background: 'linear-gradient(135deg, #1e293b, #334155)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ marginTop: '2rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)', background: '#fff' }}>
+                                {/* Header (Estilo Imagen 2) */}
+                                <div style={{ background: '#262d3d', padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>📒</div>
+                                        <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>📒</div>
                                         <div>
-                                            <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.5px' }}>ASIENTO CONTABLE</div>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase' }}>Editable · Doble Partida</div>
+                                            <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.5px' }}>ASIENTO CONTABLE</div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Editable · Doble Partida</div>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <div style={{ padding: '0.3rem 0.9rem', borderRadius: '20px', background: cuadrado ? '#16a34a' : '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <span>{cuadrado ? '✓' : '!'}</span>
-                                            <span>{cuadrado ? 'CUADRADO' : `Diferencia: ${formatMoney(Math.abs(diferencia))}`}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ padding: '0.35rem 1rem', borderRadius: '8px', background: cuadrado ? '#16a34a' : '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <span>{cuadrado ? '✓' : '⚠️'}</span>
+                                            <span>{cuadrado ? 'CUADRADO' : `Incompleto`}</span>
                                         </div>
-                                        <button type="button" onClick={() => setMostrarAsientoDetalle(false)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>✕ Usar Auto</button>
+                                        <button type="button" onClick={() => setMostrarAsientoDetalle(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', borderRadius: '6px', padding: '0.35rem 0.75rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>✕ Usar Auto</button>
                                     </div>
                                 </div>
 
-                                {/* Table */}
+                                {/* Table Body */}
                                 <div style={{ overflowX: 'auto' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                         <thead>
-                                            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                                                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', width: '3rem' }}>#</th>
-                                                <th style={{ padding: '0.65rem 1rem', textAlign: 'left', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>Cuenta Contable</th>
-                                                <th style={{ padding: '0.65rem 1.5rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '1px', width: '170px' }}>DÉBITO (DR)</th>
-                                                <th style={{ padding: '0.65rem 1.5rem', textAlign: 'right', fontSize: '0.72rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '1px', width: '170px' }}>CRÉDITO (CR)</th>
-                                                <th style={{ width: '2rem' }}></th>
+                                            <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
+                                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', width: '3.5rem' }}>#</th>
+                                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Cuenta Contable</th>
+                                                <th style={{ padding: '0.75rem 1.5rem', textAlign: 'right', fontSize: '0.7rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', width: '180px' }}>DÉBITO (DR)</th>
+                                                <th style={{ padding: '0.75rem 1.5rem', textAlign: 'right', fontSize: '0.7rem', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', width: '180px' }}>CRÉDITO (CR)</th>
+                                                <th style={{ width: '3rem' }}></th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {lineasAsiento.map((linea, idx) => {
-                                                const esDebito = linea.debito > 0;
-                                                const esCredito = linea.credito > 0;
+                                                const hasDebito = Number(linea.debito) > 0;
+                                                const hasCredito = Number(linea.credito) > 0;
                                                 return (
-                                                    <tr key={idx} style={{
-                                                        borderBottom: '1px solid #f1f5f9',
-                                                        background: idx % 2 === 0 ? '#ffffff' : '#fafafa',
-                                                        transition: 'background 0.15s'
-                                                    }}>
-                                                        <td style={{ padding: '0.6rem 1rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'monospace' }}>{String(idx + 1).padStart(2, '0')}</td>
-                                                        <td style={{ padding: '0.6rem 1rem' }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <div style={{ width: '5px', height: '28px', borderRadius: '3px', background: esDebito ? '#2563eb' : '#16a34a', flexShrink: 0 }} />
+                                                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                        <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700 }}>{String(idx + 1).padStart(2, '0')}</td>
+                                                        <td style={{ padding: '0.75rem 1rem' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                                <div style={{ width: '4px', height: '32px', borderRadius: '4px', background: hasDebito ? '#2563eb' : (hasCredito ? '#16a34a' : '#cbd5e1') }} />
                                                                 <select
                                                                     value={linea.cuentaId}
                                                                     className="input-field-mini"
-                                                                    style={{ width: '100%', fontSize: '0.82rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}
+                                                                    style={{ flex: 1, fontSize: '0.85rem', border: '1.5px solid #e2e8f0', height: '40px', fontWeight: 600, color: '#1e293b' }}
                                                                     onChange={e => {
-                                                                        const newLines = [...lineasAsiento];
-                                                                        newLines[idx].cuentaId = e.target.value;
-                                                                        newLines[idx].cuentaCodigo = e.target.value;
-                                                                        setLineasAsiento(newLines);
+                                                                        const l = [...lineasAsiento];
+                                                                        l[idx].cuentaId = e.target.value;
+                                                                        setLineasAsiento(l);
                                                                     }}
                                                                 >
+                                                                    <option value="">-- Seleccione Cuenta --</option>
                                                                     {cuentasDetalle.map(acc => (
                                                                         <option key={acc.id} value={acc.id}>{acc.codigo} — {acc.nombre}</option>
                                                                     ))}
                                                                 </select>
                                                             </div>
-                                                            {linea.nombre && <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginLeft: '1rem', marginTop: '2px' }}>{linea.nombre}</div>}
+                                                            {linea.nombre && idx > 2 && <div style={{ fontSize: '0.65rem', color: '#64748b', marginLeft: '1rem', marginTop: '2px', fontWeight: 600 }}>{linea.nombre}</div>}
                                                         </td>
-                                                        <td style={{ padding: '0.6rem 1.5rem', verticalAlign: 'middle' }}>
+                                                        <td style={{ padding: '0.75rem 1.5rem' }}>
                                                             <input
-                                                                type="number" step="0.01" min="0"
+                                                                type="number" step="0.01"
                                                                 value={linea.debito || ''}
-                                                                placeholder="0.00"
-                                                                onChange={e => { const l = [...lineasAsiento]; l[idx].debito = Number(e.target.value)||0; setLineasAsiento(l); }}
+                                                                onChange={e => { const l = [...lineasAsiento]; l[idx].debito = e.target.value; setLineasAsiento(l); }}
                                                                 style={{
-                                                                    width: '100%', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700,
-                                                                    fontSize: '0.95rem', color: '#2563eb',
-                                                                    border: linea.debito > 0 ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
-                                                                    borderRadius: '6px', padding: '0.4rem 0.6rem',
-                                                                    background: linea.debito > 0 ? '#eff6ff' : 'transparent', outline: 'none'
+                                                                    width: '100%', textAlign: 'right', fontWeight: 800, fontSize: '0.95rem',
+                                                                    padding: '0.5rem 0.75rem', borderRadius: '8px', border: hasDebito ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                                                                    background: hasDebito ? '#eff6ff' : '#fff', color: hasDebito ? '#2563eb' : '#64748b'
                                                                 }}
+                                                                placeholder="0.00"
                                                             />
                                                         </td>
-                                                        <td style={{ padding: '0.6rem 1.5rem', verticalAlign: 'middle' }}>
+                                                        <td style={{ padding: '0.75rem 1.5rem' }}>
                                                             <input
-                                                                type="number" step="0.01" min="0"
+                                                                type="number" step="0.01"
                                                                 value={linea.credito || ''}
-                                                                placeholder="0.00"
-                                                                onChange={e => { const l = [...lineasAsiento]; l[idx].credito = Number(e.target.value)||0; setLineasAsiento(l); }}
+                                                                onChange={e => { const l = [...lineasAsiento]; l[idx].credito = e.target.value; setLineasAsiento(l); }}
                                                                 style={{
-                                                                    width: '100%', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700,
-                                                                    fontSize: '0.95rem', color: '#16a34a',
-                                                                    border: linea.credito > 0 ? '1.5px solid #16a34a' : '1px solid #e2e8f0',
-                                                                    borderRadius: '6px', padding: '0.4rem 0.6rem',
-                                                                    background: linea.credito > 0 ? '#f0fdf4' : 'transparent', outline: 'none'
+                                                                    width: '100%', textAlign: 'right', fontWeight: 800, fontSize: '0.95rem',
+                                                                    padding: '0.5rem 0.75rem', borderRadius: '8px', border: hasCredito ? '2px solid #16a34a' : '1px solid #e2e8f0',
+                                                                    background: hasCredito ? '#f0fdf4' : '#fff', color: hasCredito ? '#16a34a' : '#64748b'
                                                                 }}
+                                                                placeholder="0.00"
                                                             />
                                                         </td>
-                                                        <td style={{ padding: '0.25rem', textAlign: 'center' }}>
-                                                            <button type="button" onClick={() => setLineasAsiento(lineasAsiento.filter((_,i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '0.2rem' }} title="Eliminar línea">×</button>
+                                                        <td style={{ textAlign: 'center' }}>
+                                                            <button type="button" onClick={() => setLineasAsiento(lineasAsiento.filter((_,i) => i !== idx))} style={{ color: '#cbd5e1', fontSize: '1.25rem', padding: '0.25rem' }}>×</button>
                                                         </td>
                                                     </tr>
                                                 );
@@ -772,42 +733,29 @@ const Compras = () => {
                                         </tbody>
                                         <tfoot>
                                             <tr style={{ background: '#f8fafc', borderTop: '2px solid #e2e8f0' }}>
-                                                <td colSpan="2" style={{ padding: '0.75rem 1rem', fontSize: '0.8rem', color: '#64748b' }}>
-                                                    <button type="button" onClick={() => setLineasAsiento([...lineasAsiento, { cuentaId: cuentas[0]?.id || '', debito: 0, credito: 0 }])} style={{ background: 'none', border: '1px dashed #cbd5e1', borderRadius: '6px', padding: '0.3rem 0.75rem', color: '#64748b', cursor: 'pointer', fontSize: '0.8rem' }}>+ Agregar línea</button>
+                                                <td colSpan="2" style={{ padding: '1rem' }}>
+                                                    <button type="button" onClick={() => setLineasAsiento([...lineasAsiento, { cuentaId: '', debito: 0, credito: 0 }])} style={{ background: '#fff', border: '1.5px dashed #cbd5e1', borderRadius: '8px', padding: '0.5rem 1rem', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>+ Agregar línea</button>
                                                 </td>
-                                                <td style={{ padding: '0.75rem 1.5rem', textAlign: 'right' }}>
-                                                    <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total DR</div>
-                                                    <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '1rem', color: '#2563eb' }}>{formatMoney(totalDebitos)}</div>
+                                                <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Total DR</div>
+                                                    <div style={{ color: '#2563eb', fontWeight: 900, fontSize: '1.1rem', fontFamily: 'monospace' }}>RD$ {formatMoney(totalDebitos)}</div>
                                                 </td>
-                                                <td style={{ padding: '0.75rem 1.5rem', textAlign: 'right' }}>
-                                                    <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total CR</div>
-                                                    <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '1rem', color: '#16a34a' }}>{formatMoney(totalCreditos)}</div>
+                                                <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Total CR</div>
+                                                    <div style={{ color: '#16a34a', fontWeight: 900, fontSize: '1.1rem', fontFamily: 'monospace' }}>RD$ {formatMoney(totalCreditos)}</div>
                                                 </td>
-                                                <td />
+                                                <td></td>
                                             </tr>
                                         </tfoot>
                                     </table>
-                                </div>
-
-                                {/* Footer */}
-                                <div style={{ background: cuadrado ? '#f0fdf4' : '#fef2f2', padding: '0.65rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderTop: `1px solid ${cuadrado ? '#bbf7d0' : '#fecaca'}` }}>
-                                    <span style={{ fontSize: '1rem' }}>{cuadrado ? '✅' : '⚠️'}</span>
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: cuadrado ? '#15803d' : '#b91c1c' }}>
-                                        {cuadrado ? 'El asiento está cuadrado. Puede guardar con conciencia.' : `El asiento tiene una diferencia de ${formatMoney(Math.abs(diferencia))}. Ajuste los montos antes de guardar.`}
-                                    </span>
                                 </div>
                             </div>
                         );
                     })()}
 
-                    <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                        {!mostrarAsientoDetalle && (
-                            <button type="button" className="btn btn-secondary" onClick={generarAsientoSugerido} style={{ flex: 1, padding: '1rem', border: '1px solid var(--primary)', color: 'var(--primary)' }}>
-                                <Edit2 size={18} /> Modificar Asiento Manualmente
-                            </button>
-                        )}
-                        <button type="submit" className="btn btn-primary" style={{ flex: 2, fontSize: '1.125rem', padding: '1rem' }}>
-                            {editingId ? 'Guardar Cambios' : 'Registrar Compra / Gasto'}
+                    <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1.25rem' }}>
+                        <button type="submit" className="btn btn-primary" style={{ flex: 1, height: '64px', fontSize: '1.2rem', fontWeight: 800, borderRadius: '14px', boxShadow: '0 15px 30px -5px rgba(99, 102, 241, 0.3)' }}>
+                            {editingId ? '💾 Finalizar Edición' : '💎 Registrar Gasto / Compra Elite'}
                         </button>
                     </div>
                 </form>
