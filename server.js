@@ -1117,14 +1117,37 @@ app.post('/api/:entity', authMiddleware, async (req, res) => {
 
         if (Array.isArray(body)) {
             await ensureTable(tableName);
-            // 🛡️ PROTECCIÓN NUCLEAR: Solo permitimos borrar y re-insertar si la lista NO está vacía.
-            // Esto evita que un fallo de carga en el frontend resulte en un borrado total.
+            
+            // 🛡️ IUBEL SOVEREIGN GUARD v2: Estratégia de Upsert Seguro
+            // Problema anterior: DELETE all + reinsert era peligroso ante race conditions en Render.
+            // Solución: Upsert de cada item + borrado de huérfanos SOLO si cobertura >= 90%.
+            // Esto protege a usuarios como Aubel SRL de perder datos al actualizar.
             if (body.length > 0) {
-                await pool.execute(`DELETE FROM \`${tableName}\``);
+                // Paso 1: Obtener IDs actuales en BD
+                const [existingRows] = await pool.execute(`SELECT id FROM \`${tableName}\``);
+                const existingIds = new Set(existingRows.map(r => String(r.id)));
+                const incomingIds = new Set(body.map(item => String(item.id || '')).filter(Boolean));
+                
+                // Paso 2: Upsert de todos los items entrantes
                 for (let item of body) {
                     const id = String(item.id || `${Date.now()}_${Math.random()}`);
-                    const securedItem = ImmutableLedger.signTransaction(item, null); 
+                    const securedItem = ImmutableLedger.signTransaction(item, null);
                     await upsertRow(tableName, id, securedItem);
+                }
+                
+                // Paso 3: Solo borrar huérfanos si la lista cubre ≥90% de los registros en BD
+                // Esto evita que un save parcial por race condition borre datos válidos.
+                const coverageRatio = existingIds.size === 0 ? 1 : incomingIds.size / existingIds.size;
+                if (coverageRatio >= 0.90) {
+                    for (const existingId of existingIds) {
+                        if (!incomingIds.has(existingId)) {
+                            await pool.execute(`DELETE FROM \`${tableName}\` WHERE id = ?`, [existingId]);
+                        }
+                    }
+                } else {
+                    // 🚨 ALERTA: Lista entrante muy pequeña vs BD. Bloqueando borrado para proteger datos.
+                    console.warn(`[SOVEREIGN GUARD] ${tableName}: Cobertura ${Math.round(coverageRatio * 100)}% (${incomingIds.size}/${existingIds.size}). Operación de borrado BLOQUEADA.`);
+                    await logAudit(req.auth.empresaId, req.auth.userId, 'PARTIAL_SAVE_GUARDED', req.params.entity, null, req.ip);
                 }
             }
         } else {

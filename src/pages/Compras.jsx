@@ -54,6 +54,41 @@ const Compras = () => {
 
     const [cuentaCreditoId, setCuentaCreditoId] = useState('');
 
+    // 🧠 AUTO-GEN ASIENTO: Regenera automáticamente cuando cambian los campos clave
+    // Esto es lo que hace que el asiento aparezca automáticamente como en la imagen 3.
+    React.useEffect(() => {
+        if (!cuentaDestinoId || !cuentaCreditoId || !montoInput || Number(montoInput) <= 0) {
+            setMostrarAsientoDetalle(false);
+            return;
+        }
+        // Re-compute values based on current state
+        const mIngresado = Number(montoInput) || 0;
+        let sub = 0, itbisAdel = 0;
+        if (facturaExenta) { sub = mIngresado; itbisAdel = 0; }
+        else if (esItbisManual) { itbisAdel = Number(itbisManual) || 0; sub = Math.max(0, mIngresado - itbisAdel); }
+        else if (incluirItbis) { sub = mIngresado / 1.18; itbisAdel = mIngresado - sub; }
+        else { sub = mIngresado; itbisAdel = 0; }
+
+        const totalGen = sub + itbisAdel;
+        const isrRet = sub * (Number(porcentajeIsr) / 100);
+        const itbisRet = Number(itbisRetenido) || 0;
+        const netoPagar = totalGen - itbisRet - isrRet;
+
+        const sugerido = [
+            { cuentaId: cuentaDestinoId, debito: sub, credito: 0, cuentaCodigo: cuentaDestinoId }
+        ];
+        if (itbisAdel > 0) {
+            sugerido.push({ cuentaId: '110501', debito: itbisAdel, credito: 0, cuentaCodigo: '110501' });
+        }
+        sugerido.push({ cuentaId: cuentaCreditoId, debito: 0, credito: netoPagar, cuentaCodigo: cuentaCreditoId });
+        if (itbisRet > 0) sugerido.push({ cuentaId: '210401', debito: 0, credito: itbisRet, cuentaCodigo: '210401', nombre: 'ITBIS Retenido por Pagar' });
+        if (isrRet > 0) sugerido.push({ cuentaId: '210501', debito: 0, credito: isrRet, cuentaCodigo: '210501', nombre: 'ISR Retenido por Pagar' });
+
+        setLineasAsiento(sugerido);
+        setMostrarAsientoDetalle(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cuentaDestinoId, cuentaCreditoId, montoInput, facturaExenta, esItbisManual, itbisManual, incluirItbis, porcentajeIsr, itbisRetenido]);
+
     const cuentasCredito = cuentas.filter(c =>
         c.activa &&
         c.subtipo === 'Cuenta Detalle' &&
@@ -163,7 +198,6 @@ const Compras = () => {
             alert("Compra actualizada con éxito.");
         } else {
             if (!mostrarAsientoDetalle) {
-                alert("Por favor, verifique y confirme el asiento contable manualmente antes de registrar.");
                 generarAsientoSugerido();
                 return;
             }
@@ -406,9 +440,15 @@ const Compras = () => {
                         <div className="input-group">
                             <label className="input-label">Tipo de Gasto (DGII)</label>
                             <select className="input-field" value={tipoGasto} onChange={e => setTipoGasto(e.target.value)}>
+                                <option value="01">01 - Gastos de Personal</option>
                                 <option value="02">02 - Gastos por Trabajos, Suministros y Servicios</option>
-                                <option value="09">09 - Compras e Inversiones que forman parte del Costo</option>
-                                <option value="11">11 - Gastos de Representación</option>
+                                <option value="03">03 - Arrendamientos</option>
+                                <option value="04">04 - Gastos de Activos Fijo</option>
+                                <option value="05">05 - Gastos de Representación</option>
+                                <option value="06">06 - Otras Deducciones Admitidas</option>
+                                <option value="07">07 - Gastos Financieros</option>
+                                <option value="08">08 - Gastos Extraordinarios</option>
+                                <option value="09">09 - Compras y Gastos que Formarán Parte del Costo de Venta</option>
                             </select>
                         </div>
                         <div className="input-group">
@@ -461,68 +501,54 @@ const Compras = () => {
                         )}
                     </div>
 
-                    {/* ── CUENTAS CONTABLES: DÉBITO & CRÉDITO (diseño unificado igual) ── */}
+                    {/* ── CUENTAS CONTABLES: DÉBITO & CRÉDITO (Selectores compactos Elite) ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-
-                        {/* ── DÉBITO ── */}
-                        <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                            <div style={{ background: 'linear-gradient(90deg,#eff6ff,#dbeafe)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #bfdbfe' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', flexShrink: 0 }} />
-                                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase', letterSpacing: '1px' }}>Cuenta Destino — Débito (DR)</span>
-                            </div>
-                            <div style={{ padding: '0.75rem 1rem' }}>
-                                <select
-                                    className="input-field"
-                                    value={cuentaDestinoId}
-                                    onChange={e => setCuentaDestinoId(e.target.value)}
-                                    required
-                                    style={{ border: '1.5px solid #bfdbfe', borderRadius: '8px', background: '#f8faff' }}
-                                >
-                                    <option value="">-- Gasto · Activo · Costo --</option>
-                                    {cuentasGastoActivo.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
-                                </select>
-                                <p style={{ fontSize: '0.72rem', color: '#3b82f6', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    <span>ℹ</span> La cuenta que recibirá el cargo del gasto/compra
-                                </p>
-                            </div>
+                        <div className="input-group" style={{ marginBottom: 0 }}>
+                            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563eb', display: 'inline-block', flexShrink: 0 }}></span>
+                                Cuenta Débito (DR) — Gasto/Activo
+                            </label>
+                            <select className="input-field" value={cuentaDestinoId} onChange={e => { setCuentaDestinoId(e.target.value); setMostrarAsientoDetalle(false); }} required style={{ borderLeft: '3px solid #2563eb' }}>
+                                <option value="">-- Gasto · Activo · Costo --</option>
+                                {cuentasGastoActivo.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
+                            </select>
                         </div>
-
-                        {/* ── CRÉDITO ── */}
-                        <div style={{ borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                            <div style={{ background: 'linear-gradient(90deg,#f0fdf4,#dcfce7)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #bbf7d0' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a', flexShrink: 0 }} />
-                                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '1px' }}>Cuenta Origen — Crédito (CR)</span>
-                            </div>
-                            <div style={{ padding: '0.75rem 1rem' }}>
-                                <select
-                                    className="input-field"
-                                    value={cuentaCreditoId}
-                                    onChange={e => setCuentaCreditoId(e.target.value)}
-                                    required
-                                    style={{ border: '1.5px solid #bbf7d0', borderRadius: '8px', background: '#f8fff9' }}
-                                >
-                                    <option value="">-- Caja · Banco · CxP Proveedor --</option>
-                                    {cuentasCredito.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
-                                </select>
-                                <p style={{ fontSize: '0.72rem', color: '#16a34a', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    <span>ℹ</span> {condicion === 'Contado' ? 'Caja o Banco — el dinero sale de aquí' : 'CxP Proveedor — se registra como deuda'}
-                                </p>
-                            </div>
+                        <div className="input-group" style={{ marginBottom: 0 }}>
+                            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', display: 'inline-block', flexShrink: 0 }}></span>
+                                Cuenta Crédito (CR) — {condicion === 'Contado' ? 'Caja/Banco' : 'CxP Prov.'}
+                            </label>
+                            <select className="input-field" value={cuentaCreditoId} onChange={e => { setCuentaCreditoId(e.target.value); setMostrarAsientoDetalle(false); }} required style={{ borderLeft: '3px solid #16a34a' }}>
+                                <option value="">-- Caja · Banco · CxP Proveedor --</option>
+                                {cuentasCredito.map(c => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
+                            </select>
                         </div>
                     </div>
 
-                    {/* ── MONTO ── */}
-                    <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                        <label className="input-label" style={{ fontWeight: 700 }}>Monto Total Facturado <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(ITBIS incluido si aplica)</span></label>
-                        <div style={{ position: 'relative', maxWidth: '280px' }}>
-                            <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 700, fontSize: '1rem' }}>DOP $</span>
-                            <input
-                                required type="number" step="0.01" min="0"
-                                className="input-field"
-                                value={montoInput}
-                                onChange={e => setMontoInput(e.target.value)}
-                                style={{ paddingLeft: '3.5rem', fontWeight: 700, fontSize: '1.1rem' }}
-                            />
+                    {/* ── MONTO TOTAL FACTURADO (Elite Display) ── */}
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label className="input-label" style={{ fontWeight: 700, marginBottom: '0.75rem', display: 'block' }}>Monto Total Facturado <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(ITBIS incluido si aplica)</span></label>
+                        <div style={{ display: 'flex', alignItems: 'stretch', gap: '1rem', flexWrap: 'wrap' }}>
+                            {/* Input */}
+                            <div style={{ position: 'relative', flex: '0 0 220px' }}>
+                                <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#6366f1', fontWeight: 800, fontSize: '0.9rem', pointerEvents: 'none' }}>DOP</span>
+                                <input
+                                    required type="number" step="0.01" min="0"
+                                    className="input-field"
+                                    value={montoInput}
+                                    onChange={e => { setMontoInput(e.target.value); setMostrarAsientoDetalle(false); }}
+                                    style={{ paddingLeft: '3.5rem', fontWeight: 800, fontSize: '1.2rem', border: '2px solid #6366f1', borderRadius: '12px', height: '54px' }}
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            {/* Total pill */}
+                            {montoInput > 0 && (
+                                <div style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '14px', padding: '0 1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '200px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Total a Procesar</div>
+                                    <div style={{ color: '#fff', fontWeight: 900, fontSize: '1.5rem', fontFamily: 'monospace', lineHeight: 1.2 }}>{formatMoney(montoIngresado)}</div>
+                                    {!facturaExenta && itbisAdelantado > 0 && <div style={{ color: '#6ee7b7', fontSize: '0.7rem', fontWeight: 600 }}>ITBIS: {formatMoney(itbisAdelantado)}</div>}
+                                </div>
+                            )}
                         </div>
                     </div>
 
