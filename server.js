@@ -219,6 +219,48 @@ const deleteRow = async (tableName, id) => {
     await pool.execute(`DELETE FROM \`${tableName}\` WHERE id = ?`, [String(id)]);
 };
 
+// --- SOVEREIGN GUARD v3: SHADOW LEDGER ---
+const createSnapshot = async (empresaId, tableName, reason = 'AUTO_BEFORE_BATCH') => {
+    try {
+        const fullTableName = tableName.startsWith(empresaId.replace(/[^a-zA-Z0-9]/g, '_')) ? tableName : `${empresaId.replace(/[^a-zA-Z0-9]/g, '_')}_${tableName}`;
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS shadow_ledger (
+                id          INT AUTO_INCREMENT PRIMARY KEY,
+                empresa_id  VARCHAR(64),
+                table_name  VARCHAR(128),
+                data_snapshot LONGJSON,
+                reason      VARCHAR(64),
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        const [rows] = await pool.execute(`SELECT data FROM \`${fullTableName}\``);
+        if (rows.length === 0) return; // Nada que respaldar
+
+        await pool.execute(
+            'INSERT INTO shadow_ledger (empresa_id, table_name, data_snapshot, reason) VALUES (?, ?, ?, ?)',
+            [empresaId, fullTableName, JSON.stringify(rows), reason]
+        );
+        console.log(`🛡️ [SHADOW LEDGER] Snapshot creado para ${fullTableName} (${rows.length} registros)`);
+        
+        // Mantener solo los últimos 10 snapshots por tabla para no saturar
+        await pool.execute(`
+            DELETE FROM shadow_ledger 
+            WHERE empresa_id = ? AND table_name = ? 
+            AND id NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM shadow_ledger 
+                    WHERE empresa_id = ? AND table_name = ? 
+                    ORDER BY created_at DESC LIMIT 10
+                ) x
+            )
+        `, [empresaId, fullTableName, empresaId, fullTableName]);
+        
+    } catch (err) {
+        console.error('⚠️ [SHADOW LEDGER] Error creating snapshot:', err.message);
+    }
+};
+
 const logAudit = async (empresaId, usuarioId, accion, entidad, registroId, ip) => {
     try {
         await pool.execute(
@@ -1119,10 +1161,10 @@ app.post('/api/:entity', authMiddleware, async (req, res) => {
         if (Array.isArray(body)) {
             await ensureTable(tableName);
             
-            // 🛡️ IUBEL SOVEREIGN GUARD v2: Estratégia de Upsert Seguro
-            // Problema anterior: DELETE all + reinsert era peligroso ante race conditions en Render.
-            // Solución: Upsert de cada item + borrado de huérfanos SOLO si cobertura >= 90%.
-            // Esto protege a usuarios como Aubel SRL de perder datos al actualizar.
+            // 🛡️ IUBEL SOVEREIGN GUARD v3: Shadow Ledger Protection
+            // Antes de cualquier operación masiva, creamos un snapshot de seguridad.
+            await createSnapshot(req.auth.empresaId, req.params.entity);
+
             if (body.length > 0) {
                 // Paso 1: Obtener IDs actuales en BD
                 const [existingRows] = await pool.execute(`SELECT id FROM \`${tableName}\``);
