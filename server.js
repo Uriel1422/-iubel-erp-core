@@ -1,4 +1,5 @@
 import 'dotenv/config';
+// Iubel ERP Server - Elite Edition v2.0.1 (Sovereign Guard Active)
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql2/promise';
