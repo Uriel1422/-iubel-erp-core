@@ -14,7 +14,7 @@ const FlujoEfectivo = () => {
     // Lógica Simplificada de Flujo de Efectivo (Método Indirecto / por Categoría)
     const analysis = useMemo(() => {
         const cashAccountIds = cuentas
-            .filter(c => c.codigo?.startsWith('1101') || c.codigo?.startsWith('1102'))
+            .filter(c => String(c.codigo || '').startsWith('1101') || String(c.codigo || '').startsWith('1102'))
             .map(c => c.id);
 
         let flujoOperativo = 0;
@@ -34,12 +34,13 @@ const FlujoEfectivo = () => {
                 // El impacto neto en efectivo = crédito a contrapartida = ingreso de efectivo
                 const contraMonto = (Number(m.credito) || 0) - (Number(m.debito) || 0);
 
-                if (m.cuentaId.startsWith('4') || m.cuentaId.startsWith('5') ||
-                    m.cuentaId.startsWith('6') || m.cuentaId.startsWith('1103') || m.cuentaId.startsWith('21')) {
+                const cId = String(m.cuentaId || '');
+                if (cId.startsWith('4') || cId.startsWith('5') ||
+                    cId.startsWith('6') || cId.startsWith('1103') || cId.startsWith('21')) {
                     flujoOperativo += contraMonto;
-                } else if (m.cuentaId.startsWith('12')) {
+                } else if (cId.startsWith('12')) {
                     flujoInversion += contraMonto;
-                } else if (m.cuentaId.startsWith('22') || m.cuentaId.startsWith('3')) {
+                } else if (cId.startsWith('22') || cId.startsWith('3')) {
                     flujoFinanciamiento += contraMonto;
                 }
             });

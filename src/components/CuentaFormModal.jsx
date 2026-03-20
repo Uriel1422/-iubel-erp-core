@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCuentas } from '../context/CuentasContext';
 import { X } from 'lucide-react';
 

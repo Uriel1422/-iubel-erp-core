@@ -1224,6 +1224,17 @@ app.get('/api/auditoria', authMiddleware, async (req, res) => {
     }
 });
 
+// ⚡ CACHE PURGE (Elite Maintenance)
+app.post('/api/system/clear-cache', authMiddleware, async (req, res) => {
+    try {
+        AnalyticCache.invalidate(req.auth.empresaId);
+        await logAudit(req.auth.empresaId, req.auth.userId, 'CACHE_PURGE', 'system', null, req.ip);
+        res.json({ success: true, message: 'Caché analítico invalidado exitosamente.' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/:entity', authMiddleware, async (req, res) => {
     try {
         const tableName = req.tablePrefix + req.params.entity;
@@ -1253,39 +1264,64 @@ app.post('/api/:entity', authMiddleware, async (req, res) => {
         }
 
         if (Array.isArray(body)) {
+            // 🛡️ SCHEME SHIELD: Prevent data leakage from other modules (e.g. settings into inventory)
+            if (req.params.entity === 'inventario' && body.length > 0) {
+                const isGarbage = body.some(it => it.preferencias || it.empresa || it.moneda);
+                if (isGarbage) {
+                    console.error(`🛡️ SCHEME SHIELD: Blocked garbage sync for ${tableName}`);
+                    return res.status(400).json({ error: 'Payload incompatible with inventory schema' });
+                }
+            }
             await ensureTable(tableName);
             
             // 🛡️ IUBEL SOVEREIGN GUARD v3: Shadow Ledger Protection
             // Antes de cualquier operación masiva, creamos un snapshot de seguridad.
-            await createSnapshot(req.auth.empresaId, req.params.entity);
+            await createSnapshot(req.auth.empresaId, req.params.entity, 'BEFORE_SYNC_OVERWRITE');
 
             if (body.length > 0) {
-                // Paso 1: Obtener IDs actuales en BD
+                // Paso 1: Obtener IDs actuales en BD antes de la operación
                 const [existingRows] = await pool.execute(`SELECT id FROM \`${tableName}\``);
                 const existingIds = new Set(existingRows.map(r => String(r.id)));
                 const incomingIds = new Set(body.map(item => String(item.id || '')).filter(Boolean));
                 
-                // Paso 2: Upsert de todos los items entrantes
+                // Paso 2: Upsert de todos los items entrantes (No destructivo)
                 for (let item of body) {
                     const id = String(item.id || `${Date.now()}_${Math.random()}`);
                     const securedItem = ImmutableLedger.signTransaction(item, null);
                     await upsertRow(tableName, id, securedItem);
                 }
                 
-                // Paso 3: Solo borrar huérfanos si la lista cubre ≥90% de los registros en BD
-                // Esto evita que un save parcial por race condition borre datos válidos.
+                // Paso 3: Blindaje de Integridad - Solo borrar si la lista entrante es representativa
+                // Esto protege contra fallos de carga en el frontend que resulten en listas incompletas.
                 const coverageRatio = existingIds.size === 0 ? 1 : incomingIds.size / existingIds.size;
-                if (coverageRatio >= 0.90) {
+                
+                // CRITERIO ÉLITE: Si la lista entrante es muy pequeña (< 10% del total actual)
+                // y el total es significativo (> 5 items), BLOQUEAR EL BORRADO.
+                const isSuspiciouslySmall = existingIds.size > 5 && coverageRatio < 0.10;
+
+                if (coverageRatio >= 0.90 && !isSuspiciouslySmall) {
+                    // Sincronización completa: Borrar lo que ya no está
+                    let deleted = 0;
                     for (const existingId of existingIds) {
                         if (!incomingIds.has(existingId)) {
                             await pool.execute(`DELETE FROM \`${tableName}\` WHERE id = ?`, [existingId]);
+                            deleted++;
                         }
                     }
+                    if (deleted > 0) console.log(`🧹 [SOVEREIGN GUARD] ${tableName}: Purga completada (${deleted} registros eliminados).`);
                 } else {
-                    // 🚨 ALERTA: Lista entrante muy pequeña vs BD. Bloqueando borrado para proteger datos.
-                    console.warn(`[SOVEREIGN GUARD] ${tableName}: Cobertura ${Math.round(coverageRatio * 100)}% (${incomingIds.size}/${existingIds.size}). Operación de borrado BLOQUEADA.`);
-                    await logAudit(req.auth.empresaId, req.auth.userId, 'PARTIAL_SAVE_GUARDED', req.params.entity, null, req.ip);
+                    // 🚨 ALERTA DE INTEGRIDAD: Bloqueando purga debido a riesgo de pérdida de datos.
+                    console.warn(`⚠️ [SOVEREIGN GUARD] ${tableName}: Intento de sincronización parcial detectado. Cobertura: ${Math.round(coverageRatio * 100)}%. BORRADO BLOQUEADO para prevenir pérdida.`);
+                    await logAudit(req.auth.empresaId, req.auth.userId, 'PARTIAL_SYNC_PROTECTED', req.params.entity, `Ratio: ${coverageRatio.toFixed(2)}`, req.ip);
                 }
+            } else {
+                // 🛑 BLOQUEO TOTAL: No se permite vaciar una tabla mediante un save vacío desde el frontend.
+                console.error(`🛑 [SOVEREIGN GUARD] ${tableName}: Intento de vaciado (0 ítems). OPERACIÓN CANCELADA.`);
+                await logAudit(req.auth.empresaId, req.auth.userId, 'EMPTY_SYNC_BLOCKED', req.params.entity, null, req.ip);
+                return res.status(400).json({ 
+                    error: 'Error de Sincronización', 
+                    message: 'No puedes guardar una lista vacía. Si deseas borrar todo, hazlo ítem por ítem o contacta a soporte.' 
+                });
             }
         } else {
             const id = String(body.id || Date.now().toString());
