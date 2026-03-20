@@ -148,7 +148,7 @@ const Reportes = () => {
     const trialBalanceRows = cuentas
         .filter(c => c.subtipo === 'Cuenta Detalle')
         .filter(c => (saldosRaw0[c.id]?.debito || 0) !== 0 || (saldosRaw0[c.id]?.credito || 0) !== 0)
-        .sort((a, b) => a.codigo.localeCompare(b.codigo));
+        .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || '')));
 
     const trialTotalDebito = trialBalanceRows.reduce((s, c) => s + (saldosRaw0[c.id]?.debito || 0), 0);
     const trialTotalCredito = trialBalanceRows.reduce((s, c) => s + (saldosRaw0[c.id]?.credito || 0), 0);

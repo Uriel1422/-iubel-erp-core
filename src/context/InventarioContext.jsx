@@ -66,17 +66,31 @@ export const InventarioProvider = ({ children }) => {
 
     // Función para mover stock (desde Compras o Facturación)
     const ajustarStock = (id, cantidad, tipoMovimiento) => { // 'ENTRADA' o 'SALIDA'
-        setArticulos(prevArticulos => prevArticulos.map(a => {
-            if (String(a.id) === String(id) && a.tipo === 'Producto') {
-                const q = Number(cantidad) || 0;
-                const ex = Number(a.existencia) || 0;
-                const nuevaExistencia = tipoMovimiento === 'ENTRADA'
-                    ? ex + q
-                    : ex - q;
-                return { ...a, existencia: nuevaExistencia };
+        console.log(`📦 [Stock Logic] ${tipoMovimiento}: ID ${id}, Qty ${cantidad}`);
+        
+        setArticulos(prevArticulos => {
+            const index = prevArticulos.findIndex(a => String(a.id) === String(id));
+            if (index === -1) {
+                console.warn(`⚠️ [Stock Logic] Articulo ID ${id} no encontrado.`);
+                return prevArticulos;
             }
-            return a;
-        }));
+
+            const a = prevArticulos[index];
+            if (a.tipo !== 'Producto') {
+                console.log(`ℹ️ [Stock Logic] El item ${a.nombre} es ${a.tipo}, no mueve stock.`);
+                return prevArticulos;
+            }
+
+            const q = Number(cantidad) || 0;
+            const ex = Number(a.existencia) || 0;
+            const nuevaExistencia = tipoMovimiento === 'ENTRADA' ? ex + q : ex - q;
+
+            console.log(`✅ [Stock Logic] ${a.nombre}: ${ex} -> ${nuevaExistencia}`);
+            
+            const nuevosArticulos = [...prevArticulos];
+            nuevosArticulos[index] = { ...a, existencia: nuevaExistencia };
+            return nuevosArticulos;
+        });
     };
 
     return (

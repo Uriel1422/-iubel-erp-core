@@ -20,7 +20,7 @@ const Presupuestos = () => {
         return cuentas.filter(c =>
             (c.codigo.startsWith('4') || c.codigo.startsWith('5') || c.codigo.startsWith('6')) &&
             c.subtipo === 'Cuenta Detalle'
-        ).sort((a, b) => a.codigo.localeCompare(b.codigo));
+        ).sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || '')));
     }, [cuentas]);
 
     // Calcular montos reales para el periodo

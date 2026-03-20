@@ -108,7 +108,7 @@ const Inventario = () => {
                                     {articulo.tipo === 'Servicio' ? '--' : articulo.existencia}
                                 </td>
                                 <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 500 }}>
-                                    {formatMoney(articulo.precioVenta)}
+                                    {formatMoney(Number(articulo.precioVenta) || 0)}
                                 </td>
                                 <td style={{ padding: '1rem', textAlign: 'center' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>

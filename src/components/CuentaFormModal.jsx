@@ -58,9 +58,11 @@ const CuentaFormModal = ({ isOpen, onClose, cuentaToEdit }) => {
     };
 
     // Only allow selecting parent accounts (not level 4 details)
-    const posiblesPadres = [...cuentas]
-        .filter(c => c.nivel < 4)
-        .sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
+    const parentOptions = useMemo(() => {
+        return cuentas
+            .filter(c => c.subtipo === 'Cuenta Control')
+            .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || ''), undefined, { numeric: true }));
+    }, [cuentas]);
 
     return (
         <div style={{
