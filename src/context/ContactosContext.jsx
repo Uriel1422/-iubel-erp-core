@@ -24,6 +24,8 @@ export const ContactosProvider = ({ children }) => {
 
     useEffect(() => {
         if (hasLoaded) {
+            // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
+            if (contactos.length === 0) return;
             api.save('contactos', contactos);
         }
     }, [contactos, hasLoaded]);

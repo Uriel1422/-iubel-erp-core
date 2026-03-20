@@ -63,6 +63,7 @@ const Inventario = () => {
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem' }}>Código</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem' }}>Descripción</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem' }}>Tipo / ITBIS</th>
+                            <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'right' }}>Entrada</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'right' }}>Existencia</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'right' }}>Precio</th>
                             <th style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'center' }}>Acciones</th>
@@ -84,6 +85,24 @@ const Inventario = () => {
                                             </span>
                                         )}
                                     </div>
+                                </td>
+                                <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                    {articulo.tipo === 'Producto' && (
+                                        <button 
+                                            className="btn-circle-elite"
+                                            onClick={() => setIsCompraAvanzadaOpen(true)}
+                                            title="Añadir Stock"
+                                            style={{ 
+                                                width: '24px', height: '24px', padding: 0, 
+                                                borderRadius: '50%', background: 'var(--success-light)', 
+                                                color: 'var(--success)', border: 'none',
+                                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                                cursor: 'pointer', transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <FilePlus size={14} />
+                                        </button>
+                                    )}
                                 </td>
                                 <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: articulo.tipo === 'Servicio' ? 'var(--text-muted)' : (articulo.existencia <= 0 ? 'var(--danger)' : 'var(--text-main)') }}>
                                     {articulo.tipo === 'Servicio' ? '--' : articulo.existencia}

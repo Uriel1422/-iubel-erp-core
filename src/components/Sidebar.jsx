@@ -177,66 +177,74 @@ const Sidebar = () => {
                 ))}
             </nav>
 
-            {/* 🛰️ SOVEREIGN INTELLIGENCE NODE STATUS */}
+            {/* 🛰️ SOVEREIGN INTELLIGENCE NODE v3 - ELITE SECURITY */}
             <div style={{
                 margin: '1.25rem',
-                padding: '1rem',
-                background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%)',
-                borderRadius: '16px',
-                border: '1px solid rgba(56, 189, 248, 0.2)',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-                fontFamily: 'system-ui, -apple-system, sans-serif'
+                padding: '1.25rem',
+                background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 0 20px rgba(99, 102, 241, 0.1)',
+                position: 'relative',
+                overflow: 'hidden'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                {/* Scanline Effect */}
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '2px',
+                    background: 'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.4), transparent)',
+                    animation: 'scanline 4s linear infinite'
+                }}></div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <div style={{ position: 'relative' }}>
-                            <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', boxShadow: '0 0 10px #22c55e' }}></div>
-                            <div style={{ position: 'absolute', top: 0, left: 0, width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%', animation: 'sidebar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite' }}></div>
+                            <div style={{ width: '10px', height: '10px', background: '#4ade80', borderRadius: '50%', boxShadow: '0 0 15px #4ade80' }}></div>
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: '10px', height: '10px', background: '#4ade80', borderRadius: '50%', animation: 'sidebar-ping 1.5s infinite' }}></div>
                         </div>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Sovereign Node v2</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#818cf8', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Sovereign Guard v3</span>
                     </div>
-                    <Cpu size={14} color="#38bdf8" style={{ opacity: 0.7 }} />
+                    <ShieldCheck size={16} color="#4ade80" />
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.8rem' }}>
-                    <div style={{ width: '36px', height: '36px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <UserSquare size={20} color="#38bdf8" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem' }}>
+                    <div style={{ 
+                        width: '40px', height: '40px', 
+                        background: 'rgba(99, 102, 241, 0.15)', 
+                        borderRadius: '12px', display: 'flex', 
+                        alignItems: 'center', justifyContent: 'center',
+                        border: '1px solid rgba(99, 102, 241, 0.2)'
+                    }}>
+                        <Brain size={22} color="#818cf8" className="animate-pulse" />
                     </div>
                     <div style={{ overflow: 'hidden' }}>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.nombre}</div>
-                        <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{empresa?.nombre}</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.nombre}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#6366f1', fontWeight: 600 }}>ELITE ACCESS</div>
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 600, marginBottom: '0.2rem' }}>TIER PLAN</div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <Star size={10} fill="#fbbf24" stroke="none" />
-                            {empresa?.plan?.toUpperCase() || 'CORE'}
-                        </div>
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 700 }}>SHADOW LEDGER</span>
+                        <span style={{ fontSize: '0.6rem', color: '#4ade80', fontWeight: 800 }}>ACTIVE</span>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 600, marginBottom: '0.2rem' }}>FEATURES</div>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#22c55e' }}>Interconnected</div>
+                    <div style={{ height: '3px', width: '100%', background: '#1e293b', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: '100%', background: 'linear-gradient(90deg, #6366f1, #a855f7)', animation: 'progress-glow 2s ease-in-out infinite' }}></div>
                     </div>
                 </div>
 
-                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: '0.55rem', color: '#475569', letterSpacing: '0.02em' }}>
-                        SID: {empresa?.id?.slice(0, 12)}...
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                        <Activity size={10} color="#22c55e" />
-                        <ShieldCheck size={10} color="#22c55e" />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.6rem' }}>
+                    <span style={{ color: '#475569' }}>SID: {empresa?.id?.slice(0, 8)}...</span>
+                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                        <Cpu size={10} color="#6366f1" />
+                        <span style={{ color: '#6366f1', fontWeight: 700 }}>VERIFIED</span>
                     </div>
                 </div>
             </div>
 
             <style>{`
-                @keyframes sidebar-ping {
-                    75%, 100% { transform: scale(3); opacity: 0; }
-                }
+                @keyframes sidebar-ping { 75%, 100% { transform: scale(3); opacity: 0; } }
+                @keyframes scanline { 0% { top: 0; } 100% { top: 100%; } }
+                @keyframes progress-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
             `}</style>
         </aside>
     );

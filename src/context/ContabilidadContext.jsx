@@ -25,6 +25,8 @@ export const ContabilidadProvider = ({ children }) => {
     // Sincronizar con el servidor al cambiar
     useEffect(() => {
         if (hasLoaded) {
+            // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
+            if (asientos.length === 0) return;
             api.save('asientos', asientos);
         }
     }, [asientos, hasLoaded]);

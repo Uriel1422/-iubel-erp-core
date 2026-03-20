@@ -26,6 +26,9 @@ export const InventarioProvider = ({ children }) => {
 
     useEffect(() => {
         if (hasLoaded) {
+            // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
+            // No sincronizar si la lista está vacía (evita purgas accidentales por fallos de carga)
+            if (articulos.length === 0) return;
             api.save('inventario', articulos);
         }
     }, [articulos, hasLoaded]);
@@ -63,11 +66,13 @@ export const InventarioProvider = ({ children }) => {
 
     // Función para mover stock (desde Compras o Facturación)
     const ajustarStock = (id, cantidad, tipoMovimiento) => { // 'ENTRADA' o 'SALIDA'
-        setArticulos(articulos.map(a => {
+        setArticulos(prevArticulos => prevArticulos.map(a => {
             if (String(a.id) === String(id) && a.tipo === 'Producto') {
+                const q = Number(cantidad) || 0;
+                const ex = Number(a.existencia) || 0;
                 const nuevaExistencia = tipoMovimiento === 'ENTRADA'
-                    ? Number(a.existencia) + Number(cantidad)
-                    : Number(a.existencia) - Number(cantidad);
+                    ? ex + q
+                    : ex - q;
                 return { ...a, existencia: nuevaExistencia };
             }
             return a;

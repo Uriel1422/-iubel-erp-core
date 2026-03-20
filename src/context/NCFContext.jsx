@@ -8,21 +8,24 @@ export const useNCF = () => useContext(NCFContext);
 export const NCFProvider = ({ children }) => {
     const [rangos, setRangos] = useState([]);
 
+    const [hasLoaded, setHasLoaded] = useState(false);
+
     useEffect(() => {
         const loadNCF = async () => {
             const data = await api.get('ncf_rangos');
             if (data && Array.isArray(data)) {
                 setRangos(data);
             }
+            setHasLoaded(true);
         };
         loadNCF();
     }, []);
 
     useEffect(() => {
-        if (rangos.length > 0) {
+        if (hasLoaded && rangos.length > 0) {
             api.save('ncf_rangos', rangos);
         }
-    }, [rangos]);
+    }, [rangos, hasLoaded]);
 
     const agregarRango = (nuevoRango) => {
         const rangoFull = {
