@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Plus, Trash2, ShoppingBag, PackagePlus } from 'lucide-react';
+import { X, Search, Plus, Trash2, ShoppingBag, PackagePlus, Users, FileText, Calendar, CreditCard, AlertTriangle } from 'lucide-react';
 import { useInventario } from '../context/InventarioContext';
 import { useCompras } from '../context/ComprasContext';
 import ArticuloFormModal from './ArticuloFormModal';
