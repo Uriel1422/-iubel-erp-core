@@ -23,14 +23,22 @@ export const SociosProvider = ({ children }) => {
         loadData();
     }, []);
 
-    useEffect(() => {
-        // 🛡️ IUBEL SOVEREIGN GUARD: No sincronizar hasta cargar y sin datos vacíos
-        if (hasLoaded && socios.length > 0) {
-            api.save('socios', socios);
-        }
-    }, [socios, hasLoaded]);
+    // Removed auto-save useEffect
 
-    const agregarSocio = (socio) => {
+    // ── Helper Atómico ────────────────────────────────────────────────────────
+    const atomicUpdate = async (socioId, mutatorFn) => {
+        let updatedSocio;
+        setSocios(prev => prev.map(s => {
+            if (s.id === socioId) {
+                updatedSocio = mutatorFn(s);
+                return updatedSocio;
+            }
+            return s;
+        }));
+        if (updatedSocio) await api.update('socios', socioId, updatedSocio);
+    };
+
+    const agregarSocio = async (socio) => {
         const nuevo = {
             ...getDefaultSocio(),
             ...socio,
@@ -42,97 +50,43 @@ export const SociosProvider = ({ children }) => {
             ingresoMensual: Number(socio.ingresoMensual) || 0,
         };
         setSocios(prev => [...prev, nuevo]);
+        await api.save('socios', nuevo);
         return nuevo;
     };
 
-    const actualizarSocio = (id, datos) => {
-        setSocios(prev => prev.map(s => s.id === id ? { ...s, ...datos } : s));
-    };
+    const actualizarSocio = (id, datos) => atomicUpdate(id, s => ({ ...s, ...datos }));
 
-    const eliminarSocio = (id) => {
+    const eliminarSocio = async (id) => {
         setSocios(prev => prev.filter(s => s.id !== id));
+        await api.delete('socios', id);
     };
 
-    const actualizarBalance = (id, tipo, monto) => {
-        setSocios(prev => prev.map(s => {
-            if (s.id === id) {
-                return { ...s, [tipo]: Number(s[tipo]) + Number(monto) };
-            }
-            return s;
-        }));
-    };
+    const actualizarBalance = (id, tipo, monto) => atomicUpdate(id, s => ({ ...s, [tipo]: Number(s[tipo]) + Number(monto) }));
 
     // ── Inmuebles ──────────────────────────────────────────────────────────────
-    const agregarInmueble = (socioId, inmueble) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, inmuebles: [...(s.inmuebles || []), { ...inmueble, id: Date.now().toString() }]
-        } : s));
-    };
-    const eliminarInmueble = (socioId, inmuebleId) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, inmuebles: (s.inmuebles || []).filter(i => i.id !== inmuebleId)
-        } : s));
-    };
+    const agregarInmueble = (socioId, inmueble) => atomicUpdate(socioId, s => ({ ...s, inmuebles: [...(s.inmuebles || []), { ...inmueble, id: Date.now().toString() }] }));
+    const eliminarInmueble = (socioId, inmuebleId) => atomicUpdate(socioId, s => ({ ...s, inmuebles: (s.inmuebles || []).filter(i => i.id !== inmuebleId) }));
 
     // ── Vehículos ─────────────────────────────────────────────────────────────
-    const agregarVehiculo = (socioId, vehiculo) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, vehiculos: [...(s.vehiculos || []), { ...vehiculo, id: Date.now().toString() }]
-        } : s));
-    };
-    const eliminarVehiculo = (socioId, vehiculoId) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, vehiculos: (s.vehiculos || []).filter(v => v.id !== vehiculoId)
-        } : s));
-    };
+    const agregarVehiculo = (socioId, vehiculo) => atomicUpdate(socioId, s => ({ ...s, vehiculos: [...(s.vehiculos || []), { ...vehiculo, id: Date.now().toString() }] }));
+    const eliminarVehiculo = (socioId, vehiculoId) => atomicUpdate(socioId, s => ({ ...s, vehiculos: (s.vehiculos || []).filter(v => v.id !== vehiculoId) }));
 
     // ── Referencias ───────────────────────────────────────────────────────────
-    const agregarReferencia = (socioId, ref) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, referencias: [...(s.referencias || []), { ...ref, id: Date.now().toString() }]
-        } : s));
-    };
-    const eliminarReferencia = (socioId, refId) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, referencias: (s.referencias || []).filter(r => r.id !== refId)
-        } : s));
-    };
+    const agregarReferencia = (socioId, ref) => atomicUpdate(socioId, s => ({ ...s, referencias: [...(s.referencias || []), { ...ref, id: Date.now().toString() }] }));
+    const eliminarReferencia = (socioId, refId) => atomicUpdate(socioId, s => ({ ...s, referencias: (s.referencias || []).filter(r => r.id !== refId) }));
 
     // ── Dependientes ──────────────────────────────────────────────────────────
-    const agregarDependiente = (socioId, dep) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, dependientes: [...(s.dependientes || []), { ...dep, id: Date.now().toString() }]
-        } : s));
-    };
-    const eliminarDependiente = (socioId, depId) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, dependientes: (s.dependientes || []).filter(d => d.id !== depId)
-        } : s));
-    };
+    const agregarDependiente = (socioId, dep) => atomicUpdate(socioId, s => ({ ...s, dependientes: [...(s.dependientes || []), { ...dep, id: Date.now().toString() }] }));
+    const eliminarDependiente = (socioId, depId) => atomicUpdate(socioId, s => ({ ...s, dependientes: (s.dependientes || []).filter(d => d.id !== depId) }));
 
     // ── Beneficiarios ─────────────────────────────────────────────────────────
-    const agregarBeneficiario = (socioId, ben) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, beneficiarios: [...(s.beneficiarios || []), { ...ben, id: Date.now().toString() }]
-        } : s));
-    };
-    const eliminarBeneficiario = (socioId, benId) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, beneficiarios: (s.beneficiarios || []).filter(b => b.id !== benId)
-        } : s));
-    };
+    const agregarBeneficiario = (socioId, ben) => atomicUpdate(socioId, s => ({ ...s, beneficiarios: [...(s.beneficiarios || []), { ...ben, id: Date.now().toString() }] }));
+    const eliminarBeneficiario = (socioId, benId) => atomicUpdate(socioId, s => ({ ...s, beneficiarios: (s.beneficiarios || []).filter(b => b.id !== benId) }));
 
     // ── Casos de Seguimiento ──────────────────────────────────────────────────
-    const agregarCaso = (socioId, caso) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, casos: [...(s.casos || []), { ...caso, id: Date.now().toString(), fecha: new Date().toISOString() }]
-        } : s));
-    };
-    const eliminarCaso = (socioId, casoId) => {
-        setSocios(prev => prev.map(s => s.id === socioId ? {
-            ...s, casos: (s.casos || []).filter(c => c.id !== casoId)
-        } : s));
-    };
+    const agregarCaso = (socioId, caso) => atomicUpdate(socioId, s => ({ ...s, casos: [...(s.casos || []), { ...caso, id: Date.now().toString(), fecha: new Date().toISOString() }] }));
+    const eliminarCaso = (socioId, casoId) => atomicUpdate(socioId, s => ({ ...s, casos: (s.casos || []).filter(c => c.id !== casoId) }));
+
 
     const calcularSocioScore = (socio) => {
         if (!socio) return 0;

@@ -88,16 +88,9 @@ export const CuentasProvider = ({ children }) => {
         loadCuentas();
     }, []);
 
-    // Sincronizar con servidor al cambiar
-    useEffect(() => {
-        if (hasLoaded) {
-            // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía
-            if (cuentas.length === 0) return;
-            api.save('cuentas', cuentas);
-        }
-    }, [cuentas, hasLoaded]);
+    // Removed auto-save useEffect
 
-    const addCuenta = (nuevaCuenta) => {
+    const addCuenta = async (nuevaCuenta) => {
         const id = Date.now().toString();
         const cuentaNormalizada = {
             ...nuevaCuenta,
@@ -107,17 +100,23 @@ export const CuentasProvider = ({ children }) => {
             created_at: new Date().toISOString()
         };
         setCuentas(prev => [...prev, cuentaNormalizada]);
+        await api.save('cuentas', cuentaNormalizada); // ATOMIC SYNC
     };
 
-    const updateCuenta = (id, cuentaActualizada) => {
-        setCuentas(cuentas.map(c => c.id === id ? { ...c, ...cuentaActualizada } : c));
+    const updateCuenta = async (id, cuentaActualizada) => {
+        setCuentas(prev => prev.map(c => c.id === id ? { ...c, ...cuentaActualizada } : c));
+        await api.update('cuentas', id, cuentaActualizada);
     };
 
-    const toggleStatusCuenta = (id) => {
-        setCuentas(cuentas.map(c => c.id === id ? { ...c, activa: !c.activa } : c));
+    const toggleStatusCuenta = async (id) => {
+        const item = cuentas.find(c => c.id === id);
+        if(!item) return;
+        const updated = { ...item, activa: !item.activa };
+        setCuentas(prev => prev.map(c => c.id === id ? updated : c));
+        await api.update('cuentas', id, updated);
     };
 
-    const eliminarCuenta = (id) => {
+    const eliminarCuenta = async (id) => {
         // Prevent deleting root or level 2 accounts directly to maintain structure
         const cuentaTarget = cuentas.find(c => c.id === id);
         if (cuentaTarget && cuentaTarget.nivel <= 2) {
@@ -132,7 +131,8 @@ export const CuentasProvider = ({ children }) => {
             return;
         }
 
-        setCuentas(cuentas.filter(c => c.id !== id));
+        setCuentas(prev => prev.filter(c => c.id !== id));
+        await api.delete('cuentas', id);
     };
 
     // Helper function to build a tree

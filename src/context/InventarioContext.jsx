@@ -24,44 +24,53 @@ export const InventarioProvider = ({ children }) => {
         loadInventario();
     }, []);
 
-    useEffect(() => {
-        if (hasLoaded) {
-            // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
-            // No sincronizar si la lista está vacía (evita purgas accidentales por fallos de carga)
-            if (articulos.length === 0) return;
-            api.save('inventario', articulos);
-        }
-    }, [articulos, hasLoaded]);
+// Removed auto-save useEffect
 
-    const addArticulo = (nuevoArticulo) => {
-        setArticulos([...articulos, { ...nuevoArticulo, id: Date.now().toString() }]);
+    const addArticulo = async (nuevoArticulo) => {
+        const item = { ...nuevoArticulo, id: Date.now().toString() };
+        setArticulos(prev => [...prev, item]);
+        await api.save('inventario', item);
     };
 
-    const updateArticulo = (id, articuloActualizado) => {
-        setArticulos(articulos.map(a => a.id === id ? { ...a, ...articuloActualizado } : a));
+    const updateArticulo = async (id, articuloActualizado) => {
+        setArticulos(prev => prev.map(a => a.id === id ? { ...a, ...articuloActualizado } : a));
+        await api.update('inventario', id, articuloActualizado);
     };
 
     const actualizarPreciosDesdeCompra = (itemsComprados) => {
         // itemsComprados = [{ id: '...', costoNuevo: 100, precioNuevo: 150 }, ...]
+        const updatedItems = [];
         setArticulos(prevArticulos => prevArticulos.map(art => {
             const comprado = itemsComprados.find(i => String(i.id) === String(art.id));
             if (comprado) {
-                return {
+                const updated = {
                     ...art,
                     costo: Number(comprado.costoNuevo) || art.costo,
                     precioVenta: Number(comprado.precioNuevo) || art.precioVenta
                 };
+                updatedItems.push(updated);
+                return updated;
             }
             return art;
         }));
+        
+        // Sincronización atómica en lote
+        updatedItems.forEach(item => {
+            api.update('inventario', item.id, item);
+        });
     };
 
-    const toggleStatusArticulo = (id) => {
-        setArticulos(articulos.map(a => a.id === id ? { ...a, activa: !a.activa } : a));
+    const toggleStatusArticulo = async (id) => {
+        const item = articulos.find(a => a.id === id);
+        if(!item) return;
+        const updated = { ...item, activa: !item.activa };
+        setArticulos(prev => prev.map(a => a.id === id ? updated : a));
+        await api.update('inventario', id, updated);
     };
 
-    const eliminarArticulo = (id) => {
-        setArticulos(articulos.filter(a => a.id !== id));
+    const eliminarArticulo = async (id) => {
+        setArticulos(prev => prev.filter(a => a.id !== id));
+        await api.delete('inventario', id);
     };
 
     // Función para mover stock (desde Compras o Facturación)
@@ -88,7 +97,12 @@ export const InventarioProvider = ({ children }) => {
             console.log(`✅ [Stock Logic] ${a.nombre}: ${ex} -> ${nuevaExistencia}`);
             
             const nuevosArticulos = [...prevArticulos];
-            nuevosArticulos[index] = { ...a, existencia: nuevaExistencia };
+            const updatedArticulo = { ...a, existencia: nuevaExistencia };
+            nuevosArticulos[index] = updatedArticulo;
+            
+            // Sincronización atómica
+            api.update('inventario', a.id, { existencia: nuevaExistencia });
+            
             return nuevosArticulos;
         });
     };

@@ -22,14 +22,7 @@ export const ContabilidadProvider = ({ children }) => {
         loadAsientos();
     }, []);
 
-    // Sincronizar con el servidor al cambiar
-    useEffect(() => {
-        if (hasLoaded) {
-            // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
-            if (asientos.length === 0) return;
-            api.save('asientos', asientos);
-        }
-    }, [asientos, hasLoaded]);
+    // Removed auto-save useEffect
 
     // Registra un nuevo asiento en el diario general
     // detalles: [{ cuentaId, debito, credito }]
@@ -55,26 +48,33 @@ export const ContabilidadProvider = ({ children }) => {
         };
 
         setAsientos(prev => [...prev, nuevoAsiento]);
+        api.save('asientos', nuevoAsiento); // ATOMIC SYNC
         return nuevoAsiento;
     };
 
-    const eliminarAsiento = (id) => {
-        setAsientos(asientos.filter(a => a.id !== id));
+    const eliminarAsiento = async (id) => {
+        setAsientos(prev => prev.filter(a => a.id !== id));
+        await api.delete('asientos', id);
     };
 
-    const editarAsiento = (id, descripcion, detalles, fecha, referencia) => {
+    const editarAsiento = async (id, descripcion, detalles, fecha, referencia) => {
         const totalDebito = detalles.reduce((acc, curr) => acc + (Number(curr.debito) || 0), 0);
         const totalCredito = detalles.reduce((acc, curr) => acc + (Number(curr.credito) || 0), 0);
         if (Math.abs(totalDebito - totalCredito) > 0.05) {
             throw new Error(`Asiento descuadrado. Débitos: ${totalDebito}, Créditos: ${totalCredito}`);
         }
+        
+        const detallesLimpios = detalles.filter(d => Number(d.debito) > 0 || Number(d.credito) > 0);
+        
         setAsientos(prev => prev.map(a => a.id === id ? {
             ...a,
             descripcion,
             fecha,
             referencia,
-            detalles: detalles.filter(d => Number(d.debito) > 0 || Number(d.credito) > 0)
+            detalles: detallesLimpios
         } : a));
+        
+        await api.update('asientos', id, { descripcion, fecha, referencia, detalles: detallesLimpios });
     };
 
     return (
