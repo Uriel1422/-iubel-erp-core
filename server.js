@@ -228,7 +228,7 @@ const createSnapshot = async (empresaId, tableName, reason = 'AUTO_BEFORE_BATCH'
                 id          INT AUTO_INCREMENT PRIMARY KEY,
                 empresa_id  VARCHAR(64),
                 table_name  VARCHAR(128),
-                data_snapshot LONGJSON,
+                data_snapshot LONGTEXT,
                 reason      VARCHAR(64),
                 created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -1117,6 +1117,100 @@ app.get('/api/fiscal/export-607', authMiddleware, async (req, res) => {
 });
 
 // ─── GENERIC ENTORY CRUD (protected, multi-tenant) ───────────────────────────
+
+// 🆘 EMERGENCY RECOVERY ENDPOINTS (Superadmin Only)
+app.get('/api/superadmin/emergency-recovery/:empresaId', authMiddleware, async (req, res) => {
+    if (req.auth.role !== 'sysadmin') return res.status(403).json({ error: 'Requiere acceso sysadmin' });
+    try {
+        const empresaId = req.params.empresaId;
+        const prefix = empresaId.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+        
+        // List all tables for this empresa
+        const [tables] = await pool.execute(`SHOW TABLES`);
+        const tableKey = Object.keys(tables[0])[0];
+        const empresaTables = tables
+            .map(t => t[tableKey])
+            .filter(t => t.startsWith(prefix));
+        
+        const report = {};
+        for (const tbl of empresaTables) {
+            const [rows] = await pool.execute(`SELECT COUNT(*) as count FROM \`${tbl}\``);
+            const [sample] = await pool.execute(`SELECT data FROM \`${tbl}\` LIMIT 3`);
+            report[tbl] = {
+                count: rows[0].count,
+                sampleIds: sample.map(r => {
+                    try { const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data; return d.id || d.codigo || '?'; } catch { return '?'; }
+                })
+            };
+        }
+        
+        // Check shadow_ledger status
+        let shadowStatus = [];
+        try {
+            const [sl] = await pool.execute(
+                'SELECT table_name, reason, created_at FROM shadow_ledger WHERE empresa_id = ? ORDER BY created_at DESC LIMIT 20',
+                [empresaId]
+            );
+            shadowStatus = sl;
+        } catch (slErr) {
+            shadowStatus = [{ error: slErr.message }];
+        }
+        
+        res.json({ empresaId, prefix, tables: report, shadowLedger: shadowStatus });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 🆘 RESTORE all data from shadow_ledger snapshot
+app.post('/api/superadmin/emergency-restore/:empresaId/:tableName', authMiddleware, async (req, res) => {
+    if (req.auth.role !== 'sysadmin') return res.status(403).json({ error: 'Requiere acceso sysadmin' });
+    try {
+        const { empresaId, tableName } = req.params;
+        const prefix = empresaId.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+        const fullTableName = tableName.startsWith(prefix) ? tableName : prefix + tableName;
+        
+        const [snapshots] = await pool.execute(
+            'SELECT id, data_snapshot, reason, created_at FROM shadow_ledger WHERE empresa_id = ? AND table_name = ? ORDER BY created_at DESC LIMIT 1',
+            [empresaId, fullTableName]
+        );
+        
+        if (snapshots.length === 0) return res.status(404).json({ error: 'No hay snapshots disponibles para esta tabla' });
+        
+        const snapshot = snapshots[0];
+        const rows = typeof snapshot.data_snapshot === 'string' ? JSON.parse(snapshot.data_snapshot) : snapshot.data_snapshot;
+        
+        await ensureTable(fullTableName);
+        let restored = 0;
+        for (const row of rows) {
+            const data = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+            const id = data.id || String(Date.now() + restored);
+            await upsertRow(fullTableName, id, data);
+            restored++;
+        }
+        
+        await logAudit(empresaId, req.auth.userId, 'EMERGENCY_RESTORE', tableName, snapshot.id, req.ip);
+        res.json({ success: true, restored, snapshotDate: snapshot.created_at, snapshotId: snapshot.id });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 🆘 FULL DATA DUMP for a specific empresa table (to verify/export data)
+app.get('/api/superadmin/dump/:empresaId/:tableName', authMiddleware, async (req, res) => {
+    if (req.auth.role !== 'sysadmin') return res.status(403).json({ error: 'Requiere acceso sysadmin' });
+    try {
+        const { empresaId, tableName } = req.params;
+        const prefix = empresaId.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+        const fullTableName = tableName.startsWith(prefix) ? tableName : prefix + tableName;
+        await ensureTable(fullTableName);
+        const [rows] = await pool.execute(`SELECT id, data, created_at, updated_at FROM \`${fullTableName}\` ORDER BY created_at ASC`);
+        res.json({ table: fullTableName, count: rows.length, rows });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 app.get('/api/auditoria', authMiddleware, async (req, res) => {
     try {
