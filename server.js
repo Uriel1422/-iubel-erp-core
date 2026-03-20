@@ -1332,6 +1332,32 @@ app.delete('/api/:entity/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// ─── EMERGENCY RECOVERY ENDPOINTS (SUPERADMIN ONLY) ──────────────────────────
+app.get('/api/recovery/inspect', authMiddleware, async (req, res) => {
+    if (req.auth.role !== 'admin' && req.auth.role !== 'sysadmin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+        const { query } = req.query;
+        if (!query) return res.status(400).json({ error: 'Query required' });
+        const [rows] = await pool.execute(query);
+        res.json({ success: true, count: rows.length, sample: rows.slice(0, 5) });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/recovery/restore', authMiddleware, async (req, res) => {
+    if (req.auth.role !== 'admin' && req.auth.role !== 'sysadmin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+        const { source, target } = req.body;
+        if (!source || !target) return res.status(400).json({ error: 'Source and target required' });
+        await pool.execute(`CREATE TABLE IF NOT EXISTS \`${target}\` LIKE \`${source}\``);
+        const [result] = await pool.execute(`INSERT IGNORE INTO \`${target}\` SELECT * FROM \`${source}\``);
+        res.json({ success: true, restored: result.affectedRows });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // ─── CATCH-ALL ROUTER ────────────────────────────────────────────────────────
 app.use((req, res) => {
     const indexPath = path.resolve(__dirname, 'dist', 'index.html');
