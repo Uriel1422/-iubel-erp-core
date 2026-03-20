@@ -10,6 +10,7 @@ const defaultSocios = [];
 
 export const SociosProvider = ({ children }) => {
     const [socios, setSocios] = useState([]);
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -17,16 +18,17 @@ export const SociosProvider = ({ children }) => {
             if (sData && Array.isArray(sData)) {
                 setSocios(sData);
             }
+            setHasLoaded(true);
         };
         loadData();
     }, []);
 
     useEffect(() => {
-        // 🛡️ PROTECCIÓN: No sincronizar si la lista está vacía (evita purgas por fallos de red)
-        if (socios.length > 0) {
+        // 🛡️ IUBEL SOVEREIGN GUARD: No sincronizar hasta cargar y sin datos vacíos
+        if (hasLoaded && socios.length > 0) {
             api.save('socios', socios);
         }
-    }, [socios]);
+    }, [socios, hasLoaded]);
 
     const agregarSocio = (socio) => {
         const nuevo = {

@@ -28,6 +28,8 @@ export const NotasProvider = ({ children }) => {
     // Sincronizar con el servidor al cambiar
     useEffect(() => {
         if (hasLoaded) {
+            // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
+            if (notas.length === 0) return;
             api.save('notas', notas);
         }
     }, [notas, hasLoaded]);

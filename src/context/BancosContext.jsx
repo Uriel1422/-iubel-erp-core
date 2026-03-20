@@ -10,6 +10,7 @@ export const BancosProvider = ({ children }) => {
     const { asientos } = useContabilidad();
 
     const [movimientosExtra, setMovimientosExtra] = useState([]);
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     useEffect(() => {
         const loadBancos = async () => {
@@ -17,15 +18,17 @@ export const BancosProvider = ({ children }) => {
             if (data && Array.isArray(data)) {
                 setMovimientosExtra(data);
             }
+            setHasLoaded(true);
         };
         loadBancos();
     }, []);
 
     useEffect(() => {
-        if (movimientosExtra.length > 0) {
+        // 🛡️ IUBEL SOVEREIGN GUARD: Empty Sync Protection
+        if (hasLoaded && movimientosExtra.length > 0) {
             api.save('bancos_extra', movimientosExtra);
         }
-    }, [movimientosExtra]);
+    }, [movimientosExtra, hasLoaded]);
 
     // Calcular saldo en libros (basado en asientos contables para la cuenta 110101)
     const saldoLibros = useMemo(() => {
