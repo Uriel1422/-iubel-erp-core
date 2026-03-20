@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useInventario } from '../context/InventarioContext';
-import { Edit2, Play, Square, Package, Trash2, ShoppingBag } from 'lucide-react';
+import { Edit2, Play, Square, Package, Trash2, ShoppingBag, FilePlus } from 'lucide-react';
 import ArticuloFormModal from '../components/ArticuloFormModal';
 import ConfirmModal from '../components/ConfirmModal';
 import CompraAvanzadaModal from '../components/CompraAvanzadaModal';
