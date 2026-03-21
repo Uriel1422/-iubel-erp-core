@@ -42,16 +42,21 @@ table tr {
 }
 
 table tbody tr:hover {
-    background-color: #eff6ff !important; /* Solid bright blue-50 instead of transparent */
+    background-color: #eff6ff !important;
+    color: #0f172a !important; /* Fix: Force deep dark color so it doesn't wash out */
+    font-weight: 500;
     transform: scale(1.002) translateX(4px);
     box-shadow: inset 4px 0 0 #2563eb, 0 4px 15px rgba(37, 99, 235, 0.1);
     z-index: 5;
     position: relative;
 }
 
-/* Fix for "Fading" feeling: Ensure text contrast remains high */
+table tbody tr:hover td {
+    color: #0f172a !important; /* Ensure all cells stay dark and sharp */
+}
+
+/* Fix for "Fading" feeling: remove blurry text shadows */
 .nav-item:hover span {
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
     font-weight: 600;
 }
 
