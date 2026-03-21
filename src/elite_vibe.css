@@ -55,6 +55,21 @@ table tbody tr:hover td {
     color: #0f172a !important; /* Ensure all cells stay dark and sharp */
 }
 
+/* Cuentas Rows (Custom Divs) */
+.cuenta-row-elite:hover {
+    background-color: #eff6ff !important;
+    transform: scale(1.002) translateX(4px);
+    box-shadow: inset 4px 0 0 #2563eb, 0 4px 15px rgba(37, 99, 235, 0.1);
+    z-index: 5;
+    position: relative;
+}
+
+.cuenta-row-elite:hover span {
+    color: #0f172a !important; /* Force deep dark color */
+    font-weight: 600 !important; /* Ensure visibility */
+    text-shadow: none !important; /* Kill any fading text-shadows */
+}
+
 /* Fix for "Fading" feeling: remove blurry text shadows */
 .nav-item:hover span {
     font-weight: 600;

@@ -20,6 +20,7 @@ const CuentaRow = ({ cuenta, onEdit, onDelete }) => {
     return (
         <div style={{ marginBottom: isRoot ? '1rem' : '0' }}>
             <div
+                className="cuenta-row-elite"
                 style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -29,6 +30,7 @@ const CuentaRow = ({ cuenta, onEdit, onDelete }) => {
                     borderRadius: isRoot ? 'var(--radius-md)' : '0',
                     marginLeft: `${(cuenta.nivel - 1) * 1.5}rem`,
                     opacity: cuenta.activa ? 1 : 0.6,
+                    transition: 'all 0.2s ease',
                 }}
             >
                 <div style={{ width: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: hasChildren ? 'pointer' : 'default' }} onClick={() => hasChildren && setExpanded(!expanded)}>
