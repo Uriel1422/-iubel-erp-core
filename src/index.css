@@ -89,17 +89,23 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--background);
-    background-image:
-        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(37, 99, 235, 0.09) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(124, 58, 237, 0.07) 0%, transparent 60%);
+    font-family: 'Outfit', 'Inter', sans-serif;
+    background: linear-gradient(110deg, #f0f4ff 0%, #ffffff 25%, #f5f3ff 50%, #ffffff 75%, #f0fdf4 100%);
+    background-size: 400% 400%;
+    animation: elite-bg-shift 20s ease infinite;
     background-attachment: fixed;
     color: var(--text-main);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+@keyframes elite-bg-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 
 h1,
 h2,
