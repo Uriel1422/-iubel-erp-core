@@ -24,6 +24,13 @@ const CuentaFormModal = ({ isOpen, onClose, cuentaToEdit }) => {
         }
     }, [cuentaToEdit, isOpen]);
 
+    // Only allow selecting parent accounts (not level 4 details)
+    const parentOptions = useMemo(() => {
+        return cuentas
+            .filter(c => c.subtipo === 'Cuenta Control')
+            .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || ''), undefined, { numeric: true }));
+    }, [cuentas]);
+
     if (!isOpen) return null;
 
     const handleChange = (e) => {
@@ -57,13 +64,6 @@ const CuentaFormModal = ({ isOpen, onClose, cuentaToEdit }) => {
         onClose();
     };
 
-    // Only allow selecting parent accounts (not level 4 details)
-    const parentOptions = useMemo(() => {
-        return cuentas
-            .filter(c => c.subtipo === 'Cuenta Control')
-            .sort((a, b) => String(a.codigo || '').localeCompare(String(b.codigo || ''), undefined, { numeric: true }));
-    }, [cuentas]);
-
     return (
         <div style={{
             position: 'fixed',
@@ -87,7 +87,7 @@ const CuentaFormModal = ({ isOpen, onClose, cuentaToEdit }) => {
                         <label className="input-label">Cuenta Padre</label>
                         <select className="input-field" name="padreId" value={formData.padreId || ''} onChange={handleChange}>
                             <option value="">-- Ninguna (Cuenta Principal/Nivel 1) --</option>
-                            {posiblesPadres.map(c => (
+                            {parentOptions.map(c => (
                                 <option key={c.id} value={c.id}>
                                     {c.codigo} - {c.nombre} (Nivel {c.nivel})
                                 </option>
