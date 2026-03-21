@@ -12,18 +12,18 @@
     --accent-light: rgba(124, 58, 237, 0.08);
 
     /* Surfaces */
-    --background: #f0f4ff;
-    --sidebar-bg: #06091a;
-    --sidebar-text: #94a3b8;
-    --sidebar-active: #ffffff;
+    --background: #f8fafc;
+    --sidebar-bg: rgba(255, 255, 255, 0.75); /* Frosted Glass Light Sidebar */
+    --sidebar-text: #64748b;
+    --sidebar-active: #4f46e5;
     --white: #ffffff;
-    --bg-card: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.9);
     --bg-input: #ffffff;
 
     /* Typography */
-    --text-main: #1e293b;
+    --text-main: #0f172a;
     --text-muted: #64748b;
-    --border: rgba(203, 213, 225, 0.7);
+    --border: rgba(203, 213, 225, 0.8);
 
     /* Status */
     --danger: #ef4444;
@@ -141,18 +141,17 @@ textarea {
 
 .sidebar {
     width: 280px;
-    background: var(--grad-dark);
-    background-image:
-        radial-gradient(ellipse 120% 80% at 20% 10%, rgba(37, 99, 235, 0.18) 0%, transparent 60%),
-        radial-gradient(ellipse 80% 60% at 90% 90%, rgba(124, 58, 237, 0.15) 0%, transparent 60%),
-        var(--grad-dark);
-    color: var(--white);
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     z-index: 100;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    border-right: 1px solid rgba(255, 255, 255, 0.04);
+    border-right: 1px solid var(--border);
+    box-shadow: 1px 0 20px rgba(0, 0, 0, 0.02);
 }
 
 .main-content {

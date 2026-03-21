@@ -7,15 +7,25 @@
 }
 
 .nav-item:hover {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(59, 130, 246, 0.3) 100%) !important;
-    color: #ffffff !important;
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.05) 0%, rgba(37, 99, 235, 0.1) 100%) !important;
+    color: #1e3a8a !important;
     transform: translateX(8px) !important;
-    box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.3) !important;
+    box-shadow: inset 3px 0 0 #2563eb !important;
 }
 
 .nav-item:hover .nav-icon {
     transform: scale(1.1) rotate(5deg);
-    color: #60a5fa;
+    color: #2563eb;
+}
+
+.nav-item.active {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(124, 58, 237, 0.08) 100%) !important;
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+.nav-item.active .nav-icon {
+    color: #2563eb !important;
 }
 
 /* Premium Reveal for Cards - Glassmorphism */
@@ -77,4 +87,5 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.1) !important;
     border-color: #3b82f6 !important;
     background-color: #eff6ff !important;
+    color: #0f172a !important; /* Force high-contrast text to avoid white-on-white invisible typing */
 }
