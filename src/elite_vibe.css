@@ -86,3 +86,14 @@ input:focus, select:focus, textarea:focus {
     border-color: #3b82f6 !important;
     background-color: rgba(30, 58, 138, 0.15) !important; /* Fixed: Not #eff6ff anymore, respects Dark Mode */
 }
+
+/* 🎯 ELITE AUTOFILL FIX: Destruye el fondo blanco de Chrome/Navegadores */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1e1b4b inset !important; /* Fondo oscuro que combina con la app */
+    -webkit-text-fill-color: #ffffff !important; /* Letra blanca forzada */
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: #ffffff;
+}
