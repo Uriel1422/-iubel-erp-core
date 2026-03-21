@@ -7,10 +7,10 @@
 }
 
 .nav-item:hover {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(37, 99, 235, 0.08) 100%) !important;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(59, 130, 246, 0.3) 100%) !important;
     color: #ffffff !important;
     transform: translateX(8px) !important;
-    box-shadow: inset 0 0 20px rgba(37, 99, 235, 0.15) !important;
+    box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.3) !important;
 }
 
 .nav-item:hover .nav-icon {
@@ -29,10 +29,11 @@
 
 .card:hover {
     transform: translateY(-8px) scale(1.01) !important;
+    background: #ffffff !important; /* Brighter, solid white on hover */
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.20), 
-                0 0 0 1px rgba(37, 99, 235, 0.15),
-                0 0 40px rgba(37, 99, 235, 0.1) !important;
-    border: 1px solid rgba(37, 99, 235, 0.2) !important;
+                0 0 0 1px rgba(37, 99, 235, 0.25),
+                0 0 40px rgba(37, 99, 235, 0.15) !important;
+    border: 1px solid rgba(37, 99, 235, 0.4) !important;
 }
 
 /* Elite Table Rows (Inventory & Catalog) */
@@ -41,9 +42,9 @@ table tr {
 }
 
 table tbody tr:hover {
-    background-color: rgba(37, 99, 235, 0.04) !important;
+    background-color: #eff6ff !important; /* Solid bright blue-50 instead of transparent */
     transform: scale(1.002) translateX(4px);
-    box-shadow: inset 4px 0 0 #2563eb, 0 4px 12px rgba(0, 0, 0, 0.03);
+    box-shadow: inset 4px 0 0 #2563eb, 0 4px 15px rgba(37, 99, 235, 0.1);
     z-index: 5;
     position: relative;
 }
