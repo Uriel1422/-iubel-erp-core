@@ -42,32 +42,20 @@ table tr {
 }
 
 table tbody tr:hover {
-    background-color: #eff6ff !important;
-    color: #0f172a !important; /* Fix: Force deep dark color so it doesn't wash out */
-    font-weight: 500;
+    background-color: rgba(30, 58, 138, 0.3) !important; /* Premium dark-blue neon glow */
     transform: scale(1.002) translateX(4px);
-    box-shadow: inset 4px 0 0 #2563eb, 0 4px 15px rgba(37, 99, 235, 0.1);
+    box-shadow: inset 4px 0 0 #3b82f6, 0 4px 15px rgba(37, 99, 235, 0.2);
     z-index: 5;
     position: relative;
-}
-
-table tbody tr:hover td {
-    color: #0f172a !important; /* Ensure all cells stay dark and sharp */
 }
 
 /* Cuentas Rows (Custom Divs) */
 .cuenta-row-elite:hover {
-    background-color: #eff6ff !important;
+    background-color: rgba(30, 58, 138, 0.3) !important; /* Premium dark-blue neon glow */
     transform: scale(1.002) translateX(4px);
-    box-shadow: inset 4px 0 0 #2563eb, 0 4px 15px rgba(37, 99, 235, 0.1);
+    box-shadow: inset 4px 0 0 #3b82f6, 0 4px 15px rgba(37, 99, 235, 0.2);
     z-index: 5;
     position: relative;
-}
-
-.cuenta-row-elite:hover span {
-    color: #0f172a !important; /* Force deep dark color */
-    font-weight: 600 !important; /* Ensure visibility */
-    text-shadow: none !important; /* Kill any fading text-shadows */
 }
 
 /* Fix for "Fading" feeling: remove blurry text shadows */
